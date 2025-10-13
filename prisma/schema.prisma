@@ -1,0 +1,394 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  EXPLORER
+  ORGANIZER
+  ADMIN
+}
+
+enum OrganizerStatus {
+  NOT_APPLIED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ExperienceBookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ExperienceStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+  UNLISTED
+  ARCHIVED
+}
+
+enum ExperienceVerificationStatus {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  name               String?
+  email              String?             @unique
+  emailVerified      DateTime?
+  image              String?
+  headline           String?
+  bio                String?
+  location           String?
+  website            String?
+  phone              String?
+  hashedPassword     String?
+  role               UserRole            @default(EXPLORER)
+  activeRole         UserRole            @default(EXPLORER)
+  organizerStatus    OrganizerStatus     @default(NOT_APPLIED)
+  preferredLanguage  String              @default("en")
+  preferredCurrency  String              @default("USD")
+  preferredTimezone  String              @default("UTC")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  accounts           Account[]
+  sessions           Session[]
+  experiences        Experience[]
+  explorerReviews    ExperienceReview[]  @relation("ExplorerReviews")
+  experienceBookings ExperienceBooking[] @relation("ExplorerBookings")
+  savedExperiences   Experience[]        @relation("SavedExperiences")
+  notifications      Notification[]
+  notificationPreference NotificationPreference?
+
+  @@index([role])
+  @@index([activeRole])
+}
+
+model Experience {
+  id                 String                    @id @default(cuid())
+  organizerId        String
+  organizer          User                      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  title              String
+  slug               String                    @unique
+  summary            String
+  description        String?
+  location           String
+  status             ExperienceStatus          @default(PUBLISHED)
+  verificationStatus ExperienceVerificationStatus @default(NOT_SUBMITTED)
+  verificationNote   String?
+  heroImage          String?
+  price              Int
+  currency           String                    @default("USD")
+  duration           String
+  category           String                    @default("general")
+  categoryId         String?
+  audience           String                    @default("all")
+  tags               String[]                  @default([])
+  galleryImages      String[]                  @default([])
+  meetingAddress     String?
+  meetingCity        String?
+  meetingCountry     String?
+  meetingLatitude    Decimal?                  @db.Decimal(10, 7)
+  meetingLongitude   Decimal?                  @db.Decimal(10, 7)
+  experienceCategory ExperienceCategory?       @relation("CategoryExperiences", fields: [categoryId], references: [id])
+  cityId             String?
+  stateId            String?
+  countryId          String?
+  city               City?                     @relation("CityExperiences", fields: [cityId], references: [id])
+  state              State?                    @relation("StateExperiences", fields: [stateId], references: [id])
+  country            Country?                  @relation("CountryExperiences", fields: [countryId], references: [id])
+  averageRating      Float                     @default(0)
+  reviewCount        Int                       @default(0)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  sessions           ExperienceSession[]
+  itinerarySteps     ExperienceItineraryStep[]
+  reviews            ExperienceReview[]
+  bookings           ExperienceBooking[]
+  savedBy            User[]                    @relation("SavedExperiences")
+
+  @@index([organizerId])
+  @@index([slug])
+  @@index([categoryId])
+  @@index([countryId])
+  @@index([stateId])
+  @@index([cityId])
+}
+
+model ExperienceCategory {
+  id          String       @id @default(cuid())
+  name        String
+  subtitle    String
+  picture     String
+  experiences Experience[] @relation("CategoryExperiences")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([name])
+}
+
+model Country {
+  id          String       @id @default(cuid())
+  name        String
+  subtitle    String?
+  picture     String
+  latitude    Decimal      @db.Decimal(10, 7)
+  longitude   Decimal      @db.Decimal(10, 7)
+  states      State[]
+  cities      City[]
+  experiences Experience[] @relation("CountryExperiences")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([name])
+}
+
+model State {
+  id          String       @id @default(cuid())
+  name        String
+  subtitle    String?
+  picture     String?
+  latitude    Decimal?     @db.Decimal(10, 7)
+  longitude   Decimal?     @db.Decimal(10, 7)
+  countryId   String
+  country     Country      @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  cities      City[]
+  experiences Experience[] @relation("StateExperiences")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([countryId, name])
+  @@index([countryId])
+}
+
+model City {
+  id          String       @id @default(cuid())
+  name        String
+  subtitle    String?
+  picture     String
+  latitude    Decimal      @db.Decimal(10, 7)
+  longitude   Decimal      @db.Decimal(10, 7)
+  countryId   String
+  stateId     String?
+  country     Country      @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  state       State?       @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  experiences Experience[] @relation("CityExperiences")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([countryId, stateId, name])
+  @@index([countryId])
+  @@index([stateId])
+}
+
+model ExperienceReview {
+  id           String     @id @default(cuid())
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  explorerId   String
+  explorer     User       @relation("ExplorerReviews", fields: [explorerId], references: [id], onDelete: Cascade)
+  rating       Int
+  comment      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([experienceId])
+  @@index([explorerId])
+}
+
+model ExperienceSession {
+  id             String     @id @default(cuid())
+  experienceId   String
+  experience     Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  startAt        DateTime
+  duration       String?
+  capacity       Int
+  priceOverride  Int?
+  locationLabel  String?
+  meetingAddress String?
+  meetingLatitude  Decimal?  @db.Decimal(10, 7)
+  meetingLongitude Decimal?  @db.Decimal(10, 7)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  bookings ExperienceBooking[]
+
+  @@index([experienceId])
+  @@index([startAt])
+}
+
+model ExperienceBooking {
+  id           String                  @id @default(cuid())
+  experienceId String
+  sessionId    String
+  explorerId   String
+  guests       Int
+  status       ExperienceBookingStatus @default(PENDING)
+  totalPrice   Int
+  notes        String?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  experience Experience        @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  session    ExperienceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  explorer   User              @relation("ExplorerBookings", fields: [explorerId], references: [id], onDelete: Cascade)
+
+  @@index([experienceId])
+  @@index([sessionId])
+  @@index([explorerId])
+}
+
+model ExperienceItineraryStep {
+  id           String     @id @default(cuid())
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  order        Int
+  title        String
+  subtitle     String?
+  image        String
+  duration     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([experienceId, order])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model EmailSettings {
+  id         String   @id @default(cuid())
+  provider   String   @default("smtp")
+  fromName   String
+  fromEmail  String   @unique
+  smtpHost   String
+  smtpPort   Int      @default(587)
+  smtpUser   String
+  smtpPass   String
+  secure     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  subject   String
+  html      String
+  text      String?
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Notification system
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum NotificationChannel {
+  TOAST
+  PUSH
+  EMAIL
+}
+
+enum NotificationEventType {
+  BOOKING_CREATED
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  EXPERIENCE_PUBLISHED
+  EXPERIENCE_UNPUBLISHED
+  EXPERIENCE_VERIFICATION_APPROVED
+  EXPERIENCE_VERIFICATION_REJECTED
+  GENERAL
+}
+
+model Notification {
+  id           String                 @id @default(cuid())
+  userId       String
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  message      String
+  priority     NotificationPriority   @default(NORMAL)
+  eventType    NotificationEventType  @default(GENERAL)
+  channels     NotificationChannel[]  @default([TOAST])
+  href         String?
+  metadata     Json?
+  readAt       DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
+model NotificationPreference {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Global channel opt-ins
+  toastEnabled         Boolean  @default(true)
+  pushEnabled          Boolean  @default(false)
+  emailEnabled         Boolean  @default(true)
+  // Event-specific toggles (defaults chosen conservatively)
+  onBookingCreated     Boolean  @default(true)
+  onBookingConfirmed   Boolean  @default(true)
+  onBookingCancelled   Boolean  @default(true)
+  onExperiencePublished Boolean @default(true)
+  onExperienceUnpublished Boolean @default(false)
+  onVerificationApproved Boolean @default(true)
+  onVerificationRejected Boolean @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
