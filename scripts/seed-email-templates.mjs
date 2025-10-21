@@ -1,5 +1,7 @@
 import { PrismaClient } from "../src/generated/prisma/index.js"
 
+const DEFAULT_LOGO_URL = "https://i.postimg.cc/3JKR3X1V/logo.png"
+
 const prisma = new PrismaClient()
 
 function baseLayout({ title, preview, bodyHtml }) {
@@ -168,10 +170,41 @@ function templates() {
   })
   const bookingCancelledExplorerText = `Hi {{ name }}, your reservation for {{ experienceTitle }} on {{ sessionDate }} was cancelled. View: {{ dashboardUrl }}`
 
+  const welcomeVerifySubject = "Welcome to Kamleen — Confirm your email"
+  const welcomeVerifyHtml = baseLayout({
+    title: welcomeVerifySubject,
+    preview: "Welcome aboard! Confirm your email to unlock your account.",
+    bodyHtml: `
+      <h1 class="text" style="margin:0 0 8px;font-size:22px;line-height:30px;color:#e5e7eb;">Welcome to Kamleen 🎉</h1>
+      <p class="muted" style="margin:0 0 12px;font-size:14px;line-height:22px;color:#a3aab8;">Hi {{ name }}, we’re excited to have you. First, please confirm your email address to secure your account.</p>
+      ${button({ href: "{{ actionUrl }}", label: "Verify email" })}
+      <hr style="border:none;border-top:1px solid #2b3042;margin:20px 0;" />
+      <p class="muted" style="margin:0 0 12px;font-size:13px;line-height:20px;color:#a3aab8;">Once verified, we’ll guide you through setting up your profile. It takes less than a minute.</p>
+    `,
+  })
+  const welcomeVerifyText = `Welcome to Kamleen!\n\nConfirm your email to get started: {{ actionUrl }}\n\nWe’ll guide you through a quick setup next.`
+
+  const ticketsDeliverySubject = "Your tickets for {{ experienceTitle }}"
+  const ticketsDeliveryHtml = baseLayout({
+    title: ticketsDeliverySubject,
+    preview: "Your tickets are attached as a PDF",
+    bodyHtml: `
+      <h1 class="text" style="margin:0 0 8px;font-size:22px;line-height:30px;color:#e5e7eb;">Here are your tickets</h1>
+      <p class="muted" style="margin:0 0 12px;font-size:14px;line-height:22px;color:#a3aab8;">Hi {{ name }}, your reservation for <strong style="color:#e5e7eb;">{{ experienceTitle }}</strong> on {{ sessionDate }} is confirmed.</p>
+      <div style="margin:12px 0 18px;padding:12px 14px;border:1px solid #24283a;border-radius:12px;">
+        <p class="muted" style="margin:0;font-size:13px;line-height:20px;color:#a3aab8;">Your tickets are attached as a PDF. You can also download them from your dashboard.</p>
+      </div>
+      ${button({ href: "{{ dashboardUrl }}", label: "View reservation" })}
+      <p class="muted" style="margin:18px 0 0;font-size:12px;line-height:18px;color:#8791a4;">Please bring a valid ID. Tickets are non-transferable.</p>
+    `,
+  })
+  const ticketsDeliveryText = `Hi {{ name }}, your reservation for {{ experienceTitle }} on {{ sessionDate }} is confirmed. Your tickets are attached as a PDF. View: {{ dashboardUrl }}`
+
   return [
     {
       key: "email_verification",
       name: "Email verification",
+      category: "ALL",
       subject: verificationSubject,
       html: verificationHtml,
       text: verificationText,
@@ -179,6 +212,7 @@ function templates() {
     {
       key: "booking_request",
       name: "Booking request",
+      category: "ORGANIZER",
       subject: bookingReqSubject,
       html: bookingReqHtml,
       text: bookingReqText,
@@ -186,13 +220,23 @@ function templates() {
     {
       key: "booking_confirmation",
       name: "Booking confirmation",
+      category: "EXPLORER",
       subject: bookingConfSubject,
       html: bookingConfHtml,
       text: bookingConfText,
     },
     {
+      key: "tickets_delivery",
+      name: "Tickets delivery",
+      category: "EXPLORER",
+      subject: ticketsDeliverySubject,
+      html: ticketsDeliveryHtml,
+      text: ticketsDeliveryText,
+    },
+    {
       key: "booking_notification_organizer",
       name: "Organizer booking notification",
+      category: "ORGANIZER",
       subject: organizerNotifSubject,
       html: organizerNotifHtml,
       text: organizerNotifText,
@@ -200,6 +244,7 @@ function templates() {
     {
       key: "booking_request_explorer",
       name: "Reservation request (explorer)",
+      category: "EXPLORER",
       subject: bookingReqExplorerSubject,
       html: bookingReqExplorerHtml,
       text: bookingReqExplorerText,
@@ -207,9 +252,18 @@ function templates() {
     {
       key: "booking_cancelled_explorer",
       name: "Reservation cancelled (explorer)",
+      category: "EXPLORER",
       subject: bookingCancelledExplorerSubject,
       html: bookingCancelledExplorerHtml,
       text: bookingCancelledExplorerText,
+    },
+    {
+      key: "welcome_verify",
+      name: "Welcome + Verify Email",
+      category: "ALL",
+      subject: welcomeVerifySubject,
+      html: welcomeVerifyHtml,
+      text: welcomeVerifyText,
     },
   ]
 }
@@ -219,8 +273,8 @@ async function upsertTemplates() {
   for (const tpl of list) {
     await prisma.emailTemplate.upsert({
       where: { key: tpl.key },
-      update: { name: tpl.name, subject: tpl.subject, html: tpl.html, text: tpl.text },
-      create: { key: tpl.key, name: tpl.name, subject: tpl.subject, html: tpl.html, text: tpl.text },
+      update: { name: tpl.name, subject: tpl.subject, html: tpl.html, text: tpl.text, logoUrl: DEFAULT_LOGO_URL, category: tpl.category },
+      create: { key: tpl.key, name: tpl.name, subject: tpl.subject, html: tpl.html, text: tpl.text, logoUrl: DEFAULT_LOGO_URL, category: tpl.category },
     })
   }
 }

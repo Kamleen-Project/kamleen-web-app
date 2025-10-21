@@ -10,11 +10,14 @@ type ConsoleSectionProps = {
 	className?: string;
 	headerClassName?: string;
 	contentClassName?: string;
+	variant?: "card" | "plain";
 };
 
-export function ConsoleSection({ title, subtitle, action, children, className, headerClassName, contentClassName }: ConsoleSectionProps) {
+export function ConsoleSection({ title, subtitle, action, children, className, headerClassName, contentClassName, variant = "card" }: ConsoleSectionProps) {
 	return (
-		<section className={cn("grid gap-6 rounded-lg border border-border/40 bg-white p-6 shadow-sm", className)}>
+		<section
+			className={cn("grid gap-6", variant === "card" && "rounded-lg border border-border/40 bg-white p-6 shadow-sm", variant === "plain" && "", className)}
+		>
 			{title || subtitle || action ? (
 				<div className={cn("flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between", headerClassName)}>
 					<div className="space-y-1">

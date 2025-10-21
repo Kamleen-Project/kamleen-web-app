@@ -39,10 +39,10 @@ export async function getTransport() {
   }
 }
 
-export async function sendEmail(opts: { to: string | string[]; subject: string; html: string; text?: string }) {
+export async function sendEmail(opts: { to: string | string[]; subject: string; html: string; text?: string; attachments?: { filename: string; content: Buffer; contentType?: string }[] }) {
   const { transporter, from } = await getTransport()
   try {
-    const info = await transporter.sendMail({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text })
+    const info = await transporter.sendMail({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text, attachments: opts.attachments })
     return info
   } catch (e) {
     console.error("[email] sendMail error", e)

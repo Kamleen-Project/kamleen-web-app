@@ -2,19 +2,22 @@
 
 import { useCallback } from "react";
 
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 
 export function OpenReservationButton({ targetButtonId, className }: { targetButtonId: string; className?: string }) {
 	const handleClick = useCallback(() => {
-		const target = document.getElementById(targetButtonId) as HTMLButtonElement | null;
-		if (target && !target.disabled) {
+		const target = document.getElementById(targetButtonId) as HTMLElement | null;
+		if (target) {
 			target.click();
+			return;
 		}
+		// Fallback: dispatch event consumed by ExperienceReservationModal
+		window.dispatchEvent(new Event("open-experience-reservation"));
 	}, [targetButtonId]);
 
 	return (
-		<Button type="button" onClick={handleClick} className={className} variant="outline">
+		<CtaButton type="button" onClick={handleClick} className={className} color="whiteBorder">
 			Show all sessions
-		</Button>
+		</CtaButton>
 	);
 }

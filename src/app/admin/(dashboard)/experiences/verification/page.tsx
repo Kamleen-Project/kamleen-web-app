@@ -22,33 +22,14 @@ export default async function AdminExperiencesVerificationPage() {
 		},
 	});
 
+	// Temporary: keep old page rendering a minimal note and a link to the new listing.
 	return (
-		<ConsolePage title="Experiences verification" subtitle="Review submissions, approve or reject with notes.">
-			<div className="space-y-4">
-				{experiences.length ? (
-					experiences.map((exp) => (
-						<Card key={exp.id} className="border-border/60 bg-card/80 shadow-sm">
-							<CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-								<div>
-									<h3 className="text-base font-semibold text-foreground">{exp.title}</h3>
-									<p className="text-xs text-muted-foreground">Verification: {exp.verificationStatus.toLowerCase().replace(/_/g, " ")}</p>
-									{exp.verificationNote ? <p className="text-xs text-amber-600">Note: {exp.verificationNote}</p> : null}
-								</div>
-								<div className="flex items-center gap-2">
-									<EditExperienceModal experienceId={exp.id} variant="outline" size="sm" initialStep={0} enableVerification>
-										Review details
-									</EditExperienceModal>
-									<VerifyActions experienceId={exp.id} />
-								</div>
-							</CardHeader>
-						</Card>
-					))
-				) : (
-					<Card className="border-dashed border-border/60 bg-card/60">
-						<CardContent className="py-12 text-center text-sm text-muted-foreground">No submissions at the moment.</CardContent>
-					</Card>
-				)}
-			</div>
+		<ConsolePage title="Experiences" subtitle="This view moved. Use the main listing to filter and verify.">
+			<Card className="border-dashed border-border/60 bg-card/60">
+				<CardContent className="py-6 text-sm text-muted-foreground">
+					The verification workflow now lives in the Experiences table. Use the Verify action there.
+				</CardContent>
+			</Card>
 		</ConsolePage>
 	);
 }

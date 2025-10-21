@@ -10,7 +10,7 @@ export default async function RegisterPage() {
 	const session = await getServerAuthSession();
 
 	if (session?.user) {
-		redirect("/dashboard");
+		redirect("/onboarding");
 	}
 
 	return (

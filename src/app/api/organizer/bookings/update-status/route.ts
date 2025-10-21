@@ -4,6 +4,7 @@ import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 import { renderTemplate, sendEmail } from "@/lib/email"
+import { buildTicketsPdfForBooking, createTicketsForBooking } from "@/lib/tickets"
 
 const ALLOWED_STATUSES = ["CONFIRMED", "CANCELLED"] as const
 
@@ -90,6 +91,38 @@ export async function POST(request: Request) {
         href: "/dashboard/explorer/reservations",
         metadata: { bookingId: updated.id, experienceId: updated.experience.id },
       })
+
+      // Generate tickets and email them as PDF attachment
+      try {
+        await createTicketsForBooking(updated.id)
+        const pdf = await buildTicketsPdfForBooking(updated.id)
+        const userEmail = updated.explorer.email
+        if (userEmail) {
+          const origin = (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.length > 0)
+            ? process.env.NEXT_PUBLIC_APP_URL
+            : new URL(request.url).origin
+          const sessionDate = new Date(updated.session.startAt).toLocaleString()
+          const tpl = await renderTemplate("tickets_delivery", {
+            name: updated.explorer.name || "",
+            experienceTitle: updated.experience.title,
+            sessionDate,
+            dashboardUrl: `${origin}/dashboard/explorer/reservations`,
+          })
+          if (tpl) {
+            void sendEmail({
+              to: userEmail,
+              subject: tpl.subject,
+              html: tpl.html,
+              text: tpl.text,
+              attachments: [
+                { filename: `tickets-${updated.id}.pdf`, content: pdf, contentType: "application/pdf" },
+              ],
+            }).catch(() => {})
+          }
+        }
+      } catch (e) {
+        console.error("[tickets] failed to generate/send", e)
+      }
     } else if (nextStatus === "CANCELLED") {
       await createNotification({
         userId: updated.explorer.id,

@@ -16,7 +16,7 @@ function slugify(input) {
 
 const hosts = [
   {
-    email: "amara.rivera@together.dev",
+    email: "amara.rivera@kamleen.com",
     name: "Amara Rivera",
     headline: "Chef & cultural storyteller",
     bio: "I host intimate culinary journeys that celebrate Afro-Caribbean flavors, shared on a historic brownstone rooftop overlooking the city skyline.",
@@ -127,7 +127,7 @@ const hosts = [
     ],
   },
   {
-    email: "li.wei@together.dev",
+    email: "li.wei@kamleen.com",
     name: "Li Wei",
     headline: "Ceramicist & tea ceremony guide",
     bio: "I craft mindful tea experiences and wheel-throwing residencies inside a tranquil courtyard studio that has been in my family for generations.",
@@ -238,7 +238,7 @@ const hosts = [
     ],
   },
   {
-    email: "sebastien.laurent@together.dev",
+    email: "sebastien.laurent@kamleen.com",
     name: "Sébastien Laurent",
     headline: "Adventure curator & eco-guide",
     bio: "I lead immersive alpine journeys focused on slow travel, glacier preservation, and locally crafted cuisine in the French Alps.",
@@ -349,7 +349,7 @@ const hosts = [
     ],
   },
   {
-    email: "organizer.demo@together.dev",
+    email: "organizer@kamleen.com",
     name: "Demo Organizer",
     headline: "Curator of sensory experiences",
     bio: "I host modern city adventures that blend food, art and mindfulness.",
@@ -431,49 +431,49 @@ const hosts = [
 
 const explorers = [
   {
-    email: "ella.martinez@together.dev",
+    email: "ella.martinez@kamleen.com",
     name: "Ella Martinez",
     image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80",
     location: "Austin, USA",
   },
   {
-    email: "sami.iyengar@together.dev",
+    email: "sami.iyengar@kamleen.com",
     name: "Sami Iyengar",
     image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80",
     location: "London, UK",
   },
   {
-    email: "noor.almasri@together.dev",
+    email: "noor.almasri@kamleen.com",
     name: "Noor Almasri",
     image: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80",
     location: "Dubai, UAE",
   },
   {
-    email: "tomoko.kawai@together.dev",
+    email: "tomoko.kawai@kamleen.com",
     name: "Tomoko Kawai",
     image: "https://images.unsplash.com/photo-1544723795-43253775f2c9?auto=format&fit=crop&w=400&q=80",
     location: "Kyoto, Japan",
   },
   {
-    email: "liam.okafor@together.dev",
+    email: "liam.okafor@kamleen.com",
     name: "Liam Okafor",
     image: "https://images.unsplash.com/photo-1544723795-3fb364642b4b?auto=format&fit=crop&w=400&q=80",
     location: "Accra, Ghana",
   },
   {
-    email: "charlotte.ives@together.dev",
+    email: "charlotte.ives@kamleen.com",
     name: "Charlotte Ives",
     image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=400&q=80",
     location: "Seattle, USA",
   },
   {
-    email: "mateo.silva@together.dev",
+    email: "mateo.silva@kamleen.com",
     name: "Mateo Silva",
     image: "https://images.unsplash.com/photo-1544723795-3fb764c94737?auto=format&fit=crop&w=400&q=80",
     location: "Lisbon, Portugal",
   },
   {
-    email: "jin.park@together.dev",
+    email: "jin.park@kamleen.com",
     name: "Jin Park",
     image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e2?auto=format&fit=crop&w=400&q=80",
     location: "Seoul, South Korea",
@@ -548,45 +548,78 @@ async function seed() {
   const explorerPassword = await bcrypt.hash("explorer123", 10)
 
   // Quick-fill demo organizer used in login button
-  await prisma.user.upsert({
-    where: { email: "organizer.demo@together.dev" },
-    update: {
-      name: "Demo Organizer",
-      role: "ORGANIZER",
-      activeRole: "ORGANIZER",
-      organizerStatus: "APPROVED",
-      hashedPassword: organizerPassword,
-    },
-    create: {
-      email: "organizer.demo@together.dev",
-      name: "Demo Organizer",
-      role: "ORGANIZER",
-      activeRole: "ORGANIZER",
-      organizerStatus: "APPROVED",
-      hashedPassword: organizerPassword,
-    },
-  })
+  {
+    const now = new Date()
+    const organizer = await prisma.user.upsert({
+      where: { email: "organizer@kamleen.com" },
+      update: {
+        name: "Demo Organizer",
+        role: "ORGANIZER",
+        activeRole: "ORGANIZER",
+        organizerStatus: "APPROVED",
+        hashedPassword: organizerPassword,
+        emailVerified: now,
+        termsAcceptedAt: now,
+        onboardingCompletedAt: now,
+        accountStatus: "ACTIVE",
+      },
+      create: {
+        email: "organizer@kamleen.com",
+        name: "Demo Organizer",
+        role: "ORGANIZER",
+        activeRole: "ORGANIZER",
+        organizerStatus: "APPROVED",
+        hashedPassword: organizerPassword,
+        emailVerified: now,
+        termsAcceptedAt: now,
+        onboardingCompletedAt: now,
+        accountStatus: "ACTIVE",
+      },
+    })
+    await prisma.notificationPreference.upsert({
+      where: { userId: organizer.id },
+      update: {},
+      create: { userId: organizer.id },
+    })
+  }
 
   // Admin user
-  await prisma.user.upsert({
-    where: { email: "admin@together.dev" },
-    update: {
-      name: "Admin",
-      role: "ADMIN",
-      activeRole: "ADMIN",
-      hashedPassword: adminPassword,
-    },
-    create: {
-      email: "admin@together.dev",
-      name: "Admin",
-      role: "ADMIN",
-      activeRole: "ADMIN",
-      hashedPassword: adminPassword,
-    },
-  })
+  {
+    const now = new Date()
+    const admin = await prisma.user.upsert({
+      where: { email: "dev@kamleen.com" },
+      update: {
+        name: "Admin",
+        role: "ADMIN",
+        activeRole: "ADMIN",
+        hashedPassword: adminPassword,
+        emailVerified: now,
+        termsAcceptedAt: now,
+        onboardingCompletedAt: now,
+        accountStatus: "ACTIVE",
+      },
+      create: {
+        email: "dev@kamleen.com",
+        name: "Admin",
+        role: "ADMIN",
+        activeRole: "ADMIN",
+        hashedPassword: adminPassword,
+        emailVerified: now,
+        termsAcceptedAt: now,
+        onboardingCompletedAt: now,
+        accountStatus: "ACTIVE",
+      },
+    })
+    await prisma.notificationPreference.upsert({
+      where: { userId: admin.id },
+      update: {},
+      create: { userId: admin.id },
+    })
+  }
   const explorerRecords = []
 
   for (const explorer of explorers) {
+    const now = new Date()
     const record = await prisma.user.upsert({
       where: { email: explorer.email },
       update: {
@@ -596,6 +629,10 @@ async function seed() {
         role: "EXPLORER",
         activeRole: "EXPLORER",
         hashedPassword: explorerPassword,
+        emailVerified: now,
+        termsAcceptedAt: now,
+        onboardingCompletedAt: now,
+        accountStatus: "ACTIVE",
       },
       create: {
         email: explorer.email,
@@ -605,13 +642,23 @@ async function seed() {
         role: "EXPLORER",
         activeRole: "EXPLORER",
         hashedPassword: explorerPassword,
+        emailVerified: now,
+        termsAcceptedAt: now,
+        onboardingCompletedAt: now,
+        accountStatus: "ACTIVE",
       },
     })
 
     explorerRecords.push(record)
+    await prisma.notificationPreference.upsert({
+      where: { userId: record.id },
+      update: {},
+      create: { userId: record.id },
+    })
   }
 
   for (const host of hosts) {
+    const now = new Date()
     const organizer = await prisma.user.upsert({
       where: { email: host.email },
       update: {
@@ -625,6 +672,10 @@ async function seed() {
         activeRole: "ORGANIZER",
         organizerStatus: "APPROVED",
         hashedPassword: organizerPassword,
+        emailVerified: now,
+        termsAcceptedAt: now,
+        onboardingCompletedAt: now,
+        accountStatus: "ACTIVE",
       },
       create: {
         email: host.email,
@@ -638,7 +689,16 @@ async function seed() {
         activeRole: "ORGANIZER",
         organizerStatus: "APPROVED",
         hashedPassword: organizerPassword,
+        emailVerified: now,
+        termsAcceptedAt: now,
+        onboardingCompletedAt: now,
+        accountStatus: "ACTIVE",
       },
+    })
+    await prisma.notificationPreference.upsert({
+      where: { userId: organizer.id },
+      update: {},
+      create: { userId: organizer.id },
     })
 
     for (const experience of host.experiences) {

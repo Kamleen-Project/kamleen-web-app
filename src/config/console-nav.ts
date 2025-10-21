@@ -1,7 +1,9 @@
 export type ConsoleNavItem = {
-	href: string;
-	label: string;
-	description?: string;
+  href: string;
+  label: string;
+  description?: string;
+  // Optional nested items to render as a collapsible submenu in the console sidebar
+  children?: ConsoleNavItem[];
 };
 
 export const organizerNavItems: ConsoleNavItem[] = [
@@ -76,11 +78,11 @@ export const adminNavItems: ConsoleNavItem[] = [
 		label: "Organizer requests",
 		description: "Review onboarding submissions",
 	},
-  {
-    href: "/admin/experiences/verification",
-    label: "Experiences verification",
-    description: "Approve or reject publish requests",
-  },
+	{
+		href: "/admin/experiences",
+		label: "Experiences",
+		description: "Browse, filter, and verify listings",
+	},
 	{
 		href: "/admin/data-manager",
 		label: "Data manager",
@@ -92,9 +94,21 @@ export const adminNavItems: ConsoleNavItem[] = [
 		description: "Your account details",
 	},
 	{
-		href: "/admin/settings",
-		label: "Settings",
-		description: "Configure platform email and templates",
+	    href: "/admin/settings",
+	    label: "Settings",
+	    description: "Configure platform settings",
+	    children: [
+	      {
+	        href: "/admin/settings/email",
+	        label: "Email settings",
+	        description: "SMTP and email template management",
+	      },
+	      {
+	        href: "/admin/settings/ticket-templates",
+	        label: "Ticket Templates",
+	        description: "Design and branding for PDF tickets",
+	      },
+	    ],
 	},
 ];
 

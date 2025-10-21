@@ -1,4 +1,4 @@
-import type { OrganizerStatus, UserRole } from "@/generated/prisma"
+import type { AccountStatus, OrganizerStatus, UserRole } from "@/generated/prisma"
 
 export type NotificationPreferenceData = {
   toastEnabled: boolean
@@ -29,4 +29,6 @@ export type AdminUserProfileData = UserProfileData & {
   role: UserRole
   activeRole: UserRole
   organizerStatus: OrganizerStatus
+  accountStatus: AccountStatus
+  lastLoginAt?: string | Date | null
 }

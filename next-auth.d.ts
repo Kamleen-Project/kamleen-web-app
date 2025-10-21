@@ -1,5 +1,5 @@
 import { type DefaultSession } from "next-auth"
-import { OrganizerStatus, UserRole } from "@/generated/prisma"
+import { AccountStatus, OrganizerStatus, UserRole } from "@/generated/prisma"
 
 declare module "next-auth" {
   interface Session {
@@ -8,6 +8,7 @@ declare module "next-auth" {
       role: UserRole
       activeRole: UserRole
       organizerStatus: OrganizerStatus
+      accountStatus: AccountStatus
     }
   }
 
@@ -15,6 +16,7 @@ declare module "next-auth" {
     role: UserRole
     activeRole: UserRole
     organizerStatus: OrganizerStatus
+    accountStatus: AccountStatus
   }
 }
 
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
     role?: UserRole
     activeRole?: UserRole
     organizerStatus?: OrganizerStatus
+    accountStatus?: AccountStatus
   }
 }

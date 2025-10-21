@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { useNotifications } from "@/components/providers/notification-provider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import CtaIconButton from "@/components/ui/cta-icon-button";
 import { cn } from "@/lib/utils";
 
 function normalizeHref(href?: string | null) {
@@ -34,18 +35,9 @@ export function NotificationsBell() {
 	return (
 		<Popover open={open} onOpenChange={handleOpenChange}>
 			<PopoverTrigger asChild>
-				<button
-					type="button"
-					className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-background text-foreground shadow-sm transition-colors hover:bg-accent/40"
-					aria-label="Notifications"
-				>
+				<CtaIconButton color="whiteBorder" size="md" ariaLabel="Notifications" badgeCount={unreadCount}>
 					<Bell className="size-5" />
-					{unreadCount > 0 ? (
-						<span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white">
-							{unreadCount > 99 ? "99+" : unreadCount}
-						</span>
-					) : null}
-				</button>
+				</CtaIconButton>
 			</PopoverTrigger>
 			<PopoverContent className="w-96 p-0" align="end">
 				<div className="max-h-[28rem] overflow-auto">

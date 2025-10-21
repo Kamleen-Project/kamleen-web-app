@@ -119,7 +119,7 @@ export function ExperienceBookingStatus({ bookings, experience }: ExperienceBook
 	};
 
 	return (
-		<div className="space-y-4 rounded-2xl border border-border/60 bg-background/80 p-6 shadow-sm">
+		<div className="space-y-4">
 			<div className="space-y-1">
 				<p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Your reservation</p>
 				<h2 className="text-xl font-semibold text-foreground">Current booking status</h2>
@@ -128,7 +128,7 @@ export function ExperienceBookingStatus({ bookings, experience }: ExperienceBook
 			{errorMessage ? <p className="text-sm font-medium text-destructive">{errorMessage}</p> : null}
 			{successMessage ? <p className="text-sm font-medium text-emerald-600">{successMessage}</p> : null}
 
-			<div className="space-y-3">
+			<div className="space-y-6">
 				{activeBookings.map((booking) => (
 					<BookingStatusCard
 						key={booking.id}

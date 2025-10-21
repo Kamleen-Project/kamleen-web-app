@@ -52,3 +52,22 @@ export function getSessionName(options: {
 }
 
 
+// New helpers to let UIs render date and time-range separately when desired
+export function getSessionDateLabel(startAt: string | Date): string {
+  const start = typeof startAt === "string" ? new Date(startAt) : startAt;
+  return formatDateFull(start);
+}
+
+export function getSessionTimeRange(options: {
+  startAt: string | Date;
+  durationLabel?: string | null;
+  fallbackDurationLabel?: string | null;
+}): string {
+  const { startAt, durationLabel, fallbackDurationLabel } = options;
+  const start = typeof startAt === "string" ? new Date(startAt) : startAt;
+  const minutes = parseDurationToMinutes(durationLabel ?? fallbackDurationLabel ?? null);
+  const end = minutes ? new Date(start.getTime() + minutes * 60 * 1000) : null;
+  return end ? `${formatTime(start)} to ${formatTime(end)}` : formatTime(start);
+}
+
+

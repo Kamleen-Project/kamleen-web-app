@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ConsoleSidebarMenuItemProps {
@@ -10,9 +11,10 @@ export interface ConsoleSidebarMenuItemProps {
 	title: string;
 	subtitle?: string;
 	className?: string;
+	showTrailingChevron?: boolean;
 }
 
-export function ConsoleSidebarMenuItem({ href, title, subtitle, className }: ConsoleSidebarMenuItemProps) {
+export function ConsoleSidebarMenuItem({ href, title, subtitle, className, showTrailingChevron = false }: ConsoleSidebarMenuItemProps) {
 	const pathname = usePathname();
 	const isActive = pathname === href;
 
@@ -20,7 +22,7 @@ export function ConsoleSidebarMenuItem({ href, title, subtitle, className }: Con
 		<Link
 			href={href}
 			className={cn(
-				"group rounded-xl px-4 py-3 transition",
+				"group block relative rounded-xl px-4 py-3 transition",
 				isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
 				className
 			)}

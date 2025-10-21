@@ -9,6 +9,8 @@ import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/auth-modal";
+import { CtaButton } from "@/components/ui/cta-button";
+import { BecomeOrganizerModal } from "@/components/organizer/become-organizer-modal";
 
 const roleLabels: Record<string, string> = {
 	EXPLORER: "Explorer",
@@ -68,8 +70,9 @@ export function ProfileMenu() {
 	if (!session?.user) {
 		return (
 			<div className="flex items-center gap-2">
-				<Button
-					variant="ghost"
+				<CtaButton
+					color="white"
+					size="md"
 					className="text-sm font-medium"
 					onClick={() => {
 						setAuthMode("login");
@@ -77,8 +80,10 @@ export function ProfileMenu() {
 					}}
 				>
 					Log in
-				</Button>
-				<Button
+				</CtaButton>
+				<CtaButton
+					color="black"
+					size="md"
 					className="text-sm font-medium"
 					onClick={() => {
 						setAuthMode("register");
@@ -86,7 +91,7 @@ export function ProfileMenu() {
 					}}
 				>
 					Sign up
-				</Button>
+				</CtaButton>
 				<AuthModal open={authOpen} mode={authMode} onOpenChange={setAuthOpen} onModeChange={setAuthMode} />
 			</div>
 		);
@@ -102,6 +107,9 @@ export function ProfileMenu() {
 	const menuId = "profile-menu-dropdown";
 	const isAdmin = session.user.role === "ADMIN";
 	const isOrganizer = session.user.activeRole === "ORGANIZER";
+	const isExplorer = session.user.activeRole === "EXPLORER";
+	const isOrganizerApproved = session.user.organizerStatus === "APPROVED";
+	const showBecomeOrganizer = !isOrganizerApproved && isExplorer && !isAdmin;
 	const avatarSrc = session.user.image && !avatarError ? session.user.image : null;
 	const consoleHref = isOrganizer ? "/dashboard/organizer" : session.user.activeRole === "EXPLORER" ? "/dashboard/explorer" : "/dashboard";
 	const profileHref = isAdmin ? "/admin/profile" : isOrganizer ? "/dashboard/organizer/profile" : "/dashboard/explorer/profile";
@@ -132,7 +140,6 @@ export function ProfileMenu() {
 						initials
 					)}
 				</span>
-				<span>{session.user.name ?? "Account"}</span>
 			</Button>
 			{open ? (
 				<div
@@ -143,7 +150,8 @@ export function ProfileMenu() {
 					<div className="space-y-2 bg-muted/40 p-4">
 						<p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Signed in as</p>
 						<div className="flex flex-col">
-							<p className="font-semibold text-foreground">{session.user.email}</p>
+							{session.user.name ? <p className="font-semibold text-foreground">{session.user.name}</p> : null}
+							<p className="text-sm text-muted-foreground">{session.user.email}</p>
 							<Badge variant="soft" className="mt-1 w-fit text-[11px]">
 								{roleLabels[session.user.activeRole] ?? session.user.activeRole}
 							</Badge>
@@ -160,6 +168,15 @@ export function ProfileMenu() {
 							<Link href={consoleHref} role="menuitem" className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted">
 								{consoleLabel}
 							</Link>
+						) : null}
+						{showBecomeOrganizer ? (
+							<div className="px-0">
+								<BecomeOrganizerModal
+									triggerLabel="Become an organizer"
+									variant="ghost"
+									className="w-full justify-start rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+								/>
+							</div>
 						) : null}
 						{isOrganizer ? (
 							<Link

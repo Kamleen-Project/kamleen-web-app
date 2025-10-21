@@ -8,7 +8,8 @@ import { Stepper } from "@/components/ui/stepper";
 
 import type { VariantProps } from "class-variance-authority";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { SessionReservationCard } from "@/components/experiences/session-reservation-card";
 
 const overlayStyle: CSSProperties = { backdropFilter: "blur(6px)" };
@@ -217,6 +218,21 @@ export function ExperienceReservationModal({
 			document.body.classList.remove("overflow-hidden");
 		};
 	}, [closeModal, open]);
+
+	// Allow opening via a global custom event for external triggers (e.g., sticky header)
+	useEffect(() => {
+		const handleExternalOpen = () => {
+			if (!hasSessions) return;
+			setStep("select-session");
+			setSelectedSessionId(null);
+			setGuestCount(1);
+			setApiState({ status: "idle" });
+			setOpen(true);
+		};
+		const listener: EventListener = () => handleExternalOpen();
+		window.addEventListener("open-experience-reservation", listener);
+		return () => window.removeEventListener("open-experience-reservation", listener);
+	}, [hasSessions]);
 
 	const handleNext = useCallback(() => {
 		if (!selectedSession) {
@@ -448,13 +464,13 @@ export function ExperienceReservationModal({
 								<div className="shrink-0 border-t border-border/60 p-6">
 									{step === "select-session" ? (
 										<div className="flex justify-end">
-											<Button onClick={handleNext} disabled={!selectedSessionId}>
+											<CtaButton onClick={handleNext} disabled={!selectedSessionId} color="black">
 												Next
-											</Button>
+											</CtaButton>
 										</div>
 									) : null}
 									{step === "review" && selectedSession ? (
-										<Button onClick={handleSubmit} disabled={apiState.status === "submitting"} className="w-full">
+										<CtaButton onClick={handleSubmit} disabled={apiState.status === "submitting"} className="w-full" color="black">
 											{apiState.status === "submitting" ? (
 												<span className="inline-flex items-center gap-2">
 													<Loader2 className="size-4 animate-spin" /> Confirming…
@@ -462,12 +478,12 @@ export function ExperienceReservationModal({
 											) : (
 												"Confirm and pay"
 											)}
-										</Button>
+										</CtaButton>
 									) : null}
 									{step === "complete" && apiState.status === "success" ? (
-										<Button onClick={closeModal} className="w-full">
+										<CtaButton onClick={closeModal} className="w-full" color="black">
 											Close
-										</Button>
+										</CtaButton>
 									) : null}
 								</div>
 							</div>
@@ -478,9 +494,15 @@ export function ExperienceReservationModal({
 
 	return (
 		<>
-			<Button id={buttonId} type="button" variant={buttonVariant} size={buttonSize} className={buttonClassName} onClick={openModal} disabled={!hasSessions}>
-				{buttonLabel}
-			</Button>
+			<CtaButton
+				label={buttonLabel}
+				type="button"
+				color="black"
+				size={buttonSize === "lg" ? "lg" : buttonSize === "sm" ? "sm" : "md"}
+				className={buttonClassName}
+				onClick={openModal}
+				disabled={!hasSessions}
+			/>
 			{modalContent}
 		</>
 	);

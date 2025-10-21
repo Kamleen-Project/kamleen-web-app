@@ -7,6 +7,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
+import CtaIconButton from "@/components/ui/cta-icon-button";
 import { useNotifications } from "@/components/providers/notification-provider";
 
 export interface Experience {
@@ -119,19 +120,23 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
 						{formattedUpcomingDate}
 					</div>
 				) : null}
-				<button
-					type="button"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						toggleSaved();
-					}}
-					aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
-					className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-background/80 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background/90"
-					disabled={isPending}
-				>
-					<Heart className={cn("size-4 transition-colors", saved ? "fill-red-500 text-red-500" : "text-foreground")} />
-				</button>
+				<div className="absolute right-4 top-4">
+					<CtaIconButton
+						color="white"
+						size="md"
+						ariaLabel={saved ? "Remove from wishlist" : "Add to wishlist"}
+						className="bg-background/80 text-foreground hover:bg-background/90 backdrop-blur"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							toggleSaved();
+						}}
+						disabled={isPending}
+						isLoading={isPending}
+					>
+						<Heart className={cn("size-4 transition-colors", saved ? "fill-red-500 text-red-500" : "text-foreground")} />
+					</CtaIconButton>
+				</div>
 			</Link>
 			<div className="mt-2 flex flex-col gap-1">
 				<h3 className="text-md font-semibold tracking-tight">

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock3, Info, Loader2, X, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getSessionName } from "@/lib/session-name";
+import { getSessionDateLabel, getSessionTimeRange } from "@/lib/session-name";
 
 export type BookingStatusValue = "PENDING" | "CONFIRMED" | "CANCELLED";
 
@@ -41,18 +41,6 @@ function formatCurrency(value: number, currency: string) {
 	return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(value);
 }
 
-function formatDate(value: string) {
-	return new Intl.DateTimeFormat("en", {
-		month: "short",
-		day: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-		hourCycle: "h23",
-	})
-		.format(new Date(value))
-		.replace(",", "");
-}
-
 function getStatusMeta(status: BookingStatusValue) {
 	switch (status) {
 		case "CONFIRMED":
@@ -68,7 +56,10 @@ function getStatusMeta(status: BookingStatusValue) {
 export function BookingStatusCard({ booking, pending = false, pendingId = null, onCancel }: BookingStatusCardProps) {
 	const statusMeta = getStatusMeta(booking.status);
 	const isCancelling = pending && pendingId === booking.id;
-	const sessionName = booking.session ? getSessionName({ startAt: booking.session.startAt, durationLabel: booking.session.duration, variant: "full" }) : null;
+	const sessionDateLabel = booking.session ? getSessionDateLabel(booking.session.startAt) : null;
+	const sessionTimeRange = booking.session
+		? getSessionTimeRange({ startAt: booking.session.startAt, durationLabel: booking.session.duration, fallbackDurationLabel: null })
+		: null;
 
 	// Countdown / time-left
 	const [now, setNow] = useState<Date>(() => new Date());
@@ -115,53 +106,71 @@ export function BookingStatusCard({ booking, pending = false, pendingId = null, 
 	const closeInfo = () => setOpenInfo(false);
 
 	return (
-		<div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<div className="flex items-center gap-2 text-sm font-medium text-foreground">
-					{statusMeta.icon}
-					{statusMeta.label}
-				</div>
-				<div className="flex items-center gap-2">
-					<span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusMeta.badgeClass}`}>
-						{booking.guests} guest{booking.guests === 1 ? "" : "s"}
-					</span>
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className="h-7 w-7 text-muted-foreground hover:text-foreground"
-						onClick={() => setOpenInfo(true)}
-						aria-label="View reservation details"
-					>
-						<Info className="size-4" />
-					</Button>
-				</div>
-			</div>
-			<div className="mt-3 space-y-2 text-sm text-muted-foreground">
-				{/* Removed requested date per requirements */}
-				{booking.session ? (
-					<p>
-						Session {sessionName}
-						{booking.session.locationLabel ? ` · ${booking.session.locationLabel}` : ""}
-					</p>
-				) : null}
-				<div className="flex items-center justify-between">
-					<p className="font-medium text-foreground">{formatCurrency(booking.totalPrice, booking.currency)}</p>
-					{timeLeftLabel && booking.session ? <span className="text-xs text-muted-foreground">{timeLeftLabel}</span> : null}
-				</div>
-			</div>
-			{booking.status === "PENDING" && onCancel ? (
-				<Button variant="outline" size="sm" type="button" disabled={isCancelling} onClick={() => onCancel(booking.id)} className="mt-3">
-					{isCancelling ? (
-						<span className="inline-flex items-center gap-2">
-							<Loader2 className="size-4 animate-spin" /> Cancelling…
-						</span>
-					) : (
-						"Cancel reservation"
-					)}
-				</Button>
-			) : null}
+		// <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-muted/30 shadow-sm">
+		<div>
+			<div className="drop-shadow-sm">
+				<div
+					className="flex flex-col relative p-4 rounded-lg shadow bg-white dark:bg-neutral-800"
+					style={{
+						WebkitMaskImage: "radial-gradient(circle at 12px 92px, transparent 12px, red 12.5px)",
+						WebkitMaskPosition: "-12px",
+					}}
+				>
+					<div className="flex gap-3 justify-between items-center pb-2">
+						<div className="text-left">
+							{booking.session ? (
+								<div>
+									<h3 className="text-lg font-semibold text-foreground">{sessionDateLabel}</h3>
+									<h4 className="text-sm text-muted-foreground">{sessionTimeRange}</h4>
+									{booking.session.locationLabel ? ` · ${booking.session.locationLabel}` : ""}
+								</div>
+							) : null}
+						</div>
+						<div className="text-right">{timeLeftLabel && booking.session ? <span className="text-xs text-muted-foreground">{timeLeftLabel}</span> : null}</div>
+					</div>
+					<div className="mt-4 mb-2 border border-dashed border-neutral-200 dark:border-neutral-700"></div>
+					<div className="pt-4">
+						<div className="flex flex-wrap items-center justify-between gap-3">
+							<div className="flex items-center gap-2 text-sm font-medium text-foreground">
+								{statusMeta.icon}
+								{statusMeta.label}
+							</div>
+						</div>
+						<div className="mt-3 space-y-2 text-sm text-muted-foreground">
+							<div className="flex items-center justify-between">
+								<p className="font-medium text-foreground">{formatCurrency(booking.totalPrice, booking.currency)}</p>
+								<div className="flex items-center gap-2">
+									<span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusMeta.badgeClass}`}>
+										{booking.guests} guest{booking.guests === 1 ? "" : "s"}
+									</span>
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon"
+										className="h-7 w-7 text-muted-foreground hover:text-foreground"
+										onClick={() => setOpenInfo(true)}
+										aria-label="View reservation details"
+									>
+										<Info className="size-4" />
+									</Button>
+								</div>
+							</div>
 
+							{booking.status === "PENDING" && onCancel ? (
+								<Button variant="outline" size="sm" type="button" disabled={isCancelling} onClick={() => onCancel(booking.id)} className="mt-2">
+									{isCancelling ? (
+										<span className="inline-flex items-center gap-2">
+											<Loader2 className="size-4 animate-spin" /> Cancelling…
+										</span>
+									) : (
+										"Cancel reservation"
+									)}
+								</Button>
+							) : null}
+						</div>
+					</div>
+				</div>
+			</div>
 			{/* Info Modal */}
 			{openInfo ? (
 				<div className="fixed inset-0 z-[205] flex items-center justify-center bg-black/70 px-4 py-6" role="dialog" aria-modal="true" onClick={closeInfo}>
@@ -186,7 +195,8 @@ export function BookingStatusCard({ booking, pending = false, pendingId = null, 
 								<div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
 									<p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Experience</p>
 									<div className="mt-1 text-foreground">
-										{sessionName ? <p className="font-medium">{sessionName}</p> : null}
+										{sessionDateLabel ? <p className="font-medium">{sessionDateLabel}</p> : null}
+										{sessionTimeRange ? <p className="text-muted-foreground">{sessionTimeRange}</p> : null}
 										{booking.session?.locationLabel ? <p className="text-muted-foreground">{booking.session.locationLabel}</p> : null}
 									</div>
 								</div>
@@ -222,7 +232,8 @@ export function BookingStatusCard({ booking, pending = false, pendingId = null, 
 									<div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
 										<p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Session</p>
 										<div className="mt-1 space-y-1 text-foreground">
-											<p className="font-medium">{sessionName}</p>
+											{sessionDateLabel ? <p className="font-medium">{sessionDateLabel}</p> : null}
+											{sessionTimeRange ? <p className="text-muted-foreground">{sessionTimeRange}</p> : null}
 											{booking.session.locationLabel ? <p className="text-muted-foreground">{booking.session.locationLabel}</p> : null}
 										</div>
 									</div>

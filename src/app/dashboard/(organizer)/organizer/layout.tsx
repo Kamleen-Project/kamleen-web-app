@@ -5,6 +5,7 @@ import { organizerNavItems } from "@/config/console-nav";
 import { ConsoleLayout } from "@/components/console/layout";
 import { Button } from "@/components/ui/button";
 import { getServerAuthSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export default async function OrganizerLayout({ children }: { children: React.ReactNode }) {
 	const session = await getServerAuthSession();
@@ -15,6 +16,14 @@ export default async function OrganizerLayout({ children }: { children: React.Re
 
 	if (session.user.activeRole !== "ORGANIZER") {
 		redirect("/dashboard");
+	}
+
+	const user = await prisma.user.findUnique({
+		where: { id: session.user.id },
+		select: { emailVerified: true, birthDate: true, termsAcceptedAt: true, onboardingCompletedAt: true },
+	});
+	if (!user?.onboardingCompletedAt || !user.emailVerified || !user.birthDate || !user.termsAcceptedAt) {
+		redirect("/onboarding");
 	}
 
 	return (

@@ -10,7 +10,7 @@ export function OrganizerSidebarNav({ className, items }: { className?: string; 
 	const pathname = usePathname();
 
 	return (
-		<nav className={cn("flex flex-col gap-1", className)}>
+		<nav className={cn("flex flex-col gap-1 overflow-y-auto", className)}>
 			{items.map((item) => {
 				const isActive = pathname === item.href;
 

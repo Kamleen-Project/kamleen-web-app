@@ -45,10 +45,21 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: true })
       }
 
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data,
-      })
+      // Adjust account status at this checkpoint
+      const current = await prisma.user.findUnique({ where: { id: session.user.id }, select: { emailVerified: true, onboardingCompletedAt: true, accountStatus: true } })
+      if (current) {
+        const locked = current.accountStatus === "BANNED" || current.accountStatus === "ARCHIVED"
+        const nextStatus = locked
+          ? current.accountStatus
+          : current.emailVerified
+          ? current.onboardingCompletedAt
+            ? "ACTIVE"
+            : "ONBOARDING"
+          : "PENDING_VERIFICATION"
+        ;(data as { accountStatus?: string }).accountStatus = nextStatus
+      }
+
+      await prisma.user.update({ where: { id: session.user.id }, data })
 
       return NextResponse.json({ ok: true })
     } catch (error) {
@@ -65,7 +76,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "Invalid payload" }, { status: 400 })
   }
 
-  const { name, headline, bio, location, website, phone, image, preferredLanguage, preferredCurrency, preferredTimezone } = body as Record<string, unknown>
+  const { name, headline, bio, location, website, phone, image, preferredLanguage, preferredCurrency, preferredTimezone, birthDate, acceptTerms } = body as Record<string, unknown>
 
   const data: Record<string, string | null | unknown> = {}
 
@@ -76,6 +87,15 @@ export async function PATCH(request: Request) {
   if (typeof website === "string") data.website = normalizeString(website)
   if (typeof phone === "string") data.phone = normalizeString(phone)
   if (typeof image === "string") data.image = normalizeString(image)
+  if (typeof birthDate === "string" && birthDate.trim()) {
+    const date = new Date(birthDate)
+    if (!isNaN(date.getTime())) {
+      ;(data as { birthDate?: Date | null }).birthDate = date
+    }
+  }
+  if (acceptTerms === true || String(acceptTerms).toLowerCase() === "true") {
+    ;(data as { termsAcceptedAt?: Date | null }).termsAcceptedAt = new Date()
+  }
   if (typeof preferredLanguage === "string") {
     const normalized = normalizePreference(preferredLanguage)
     if (normalized !== undefined) data.preferredLanguage = normalized
@@ -118,10 +138,20 @@ export async function PATCH(request: Request) {
     )
   }
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data,
-  })
+  const current = await prisma.user.findUnique({ where: { id: session.user.id }, select: { emailVerified: true, onboardingCompletedAt: true, accountStatus: true } })
+  if (current) {
+    const locked = current.accountStatus === "BANNED" || current.accountStatus === "ARCHIVED"
+    const nextStatus = locked
+      ? current.accountStatus
+      : current.emailVerified
+      ? current.onboardingCompletedAt
+        ? "ACTIVE"
+        : "ONBOARDING"
+      : "PENDING_VERIFICATION"
+    ;(data as { accountStatus?: string }).accountStatus = nextStatus
+  }
+
+  await prisma.user.update({ where: { id: session.user.id }, data })
 
   return NextResponse.json({ ok: true })
 }
@@ -130,6 +160,23 @@ async function buildUpdateFromFormData(formData: FormData, userId: string) {
   const data: Record<string, string | null | unknown> = {}
 
   const stringFields = ["name", "headline", "bio", "location", "website", "phone"] as const
+  const birthDateStr = getOptionalString(formData, "birthDate")
+  if (birthDateStr) {
+    const dt = new Date(birthDateStr)
+    if (!isNaN(dt.getTime())) {
+      ;(data as { birthDate?: Date | null }).birthDate = dt
+    }
+  }
+  const acceptTermsValues = formData.getAll("acceptTerms")
+  if (acceptTermsValues.length > 0) {
+    const anyTrue = acceptTermsValues.some((v) => {
+      const normalized = String(v ?? "").toLowerCase()
+      return normalized === "true" || normalized === "1" || normalized === "on"
+    })
+    if (anyTrue) {
+      ;(data as { termsAcceptedAt?: Date | null }).termsAcceptedAt = new Date()
+    }
+  }
   const preferenceFields = ["preferredLanguage", "preferredCurrency", "preferredTimezone"] as const
   for (const field of stringFields) {
     const value = getOptionalString(formData, field)

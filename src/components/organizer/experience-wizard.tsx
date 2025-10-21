@@ -151,6 +151,11 @@ type ExperienceWizardProps = {
 		onApprove: () => void | Promise<void>;
 		onReject: (note: string) => void | Promise<void>;
 	};
+	// When true, an introductory Organizer step is inserted at the beginning
+	// with extra fields for the applicant and terms acceptance.
+	organizerIntro?: boolean;
+	// Selects which API to submit to on final action.
+	submissionMode?: "create-experience" | "organizer-request";
 };
 
 // currency is derived from the organizer's account on the server
@@ -222,6 +227,10 @@ type WizardState = {
 	};
 	sessions: SessionItem[];
 	audience: "all" | "men" | "women" | "kids";
+	// Organizer intro fields (only used when organizerIntro is enabled)
+	organizerAboutSelf?: string;
+	organizerAboutExperience?: string;
+	organizerTermsAccepted?: boolean;
 };
 
 function createInitialState(initial?: ExperienceWizardInitialData): WizardState {
@@ -336,13 +345,15 @@ export function ExperienceWizard({
 	currency,
 	initialStep,
 	verificationStep,
+	organizerIntro = false,
+	submissionMode = "create-experience",
 }: ExperienceWizardProps) {
 	const router = useRouter();
 	const [state, setState] = useState<WizardState>(() => createInitialState(initialData));
-	const steps = useMemo(
-		() => (verificationStep?.enabled ? [...stepsBase, { title: "Verification", description: "Approve or reject this experience for publishing." }] : stepsBase),
-		[verificationStep?.enabled]
-	);
+	const steps = useMemo(() => {
+		const base = organizerIntro ? [{ title: "Organizer", description: "Tell us about you and agree to host terms." }, ...stepsBase] : stepsBase;
+		return verificationStep?.enabled ? [...base, { title: "Verification", description: "Approve or reject this experience for publishing." }] : base;
+	}, [organizerIntro, verificationStep?.enabled]);
 	const initialStepNormalized = Math.max(0, Math.min(steps.length - 1, initialStep ?? 0));
 	const [currentStep, setCurrentStep] = useState(initialStepNormalized);
 	const [expandedSessions, setExpandedSessions] = useState<Record<string, boolean>>({});
@@ -1226,8 +1237,18 @@ export function ExperienceWizard({
 			return;
 		}
 
-		const url = mode === "create" ? "/api/experiences" : `/api/organizer/experiences/${experienceId}`;
-		const method = mode === "create" ? "POST" : "PATCH";
+		let url = mode === "create" ? "/api/experiences" : `/api/organizer/experiences/${experienceId}`;
+		let method: "POST" | "PATCH" = mode === "create" ? "POST" : "PATCH";
+		if (submissionMode === "organizer-request") {
+			url = "/api/organizer/apply";
+			method = "POST";
+			// include organizer intro fields
+			formData.append("organizerAboutSelf", (state.organizerAboutSelf ?? "").trim());
+			formData.append("organizerAboutExperience", (state.organizerAboutExperience ?? "").trim());
+			formData.append("organizerTermsAccepted", String(Boolean(state.organizerTermsAccepted)));
+			// Always store as draft for review
+			formData.set("status", "DRAFT");
+		}
 
 		startTransition(async () => {
 			setError(null);
@@ -1422,18 +1443,33 @@ export function ExperienceWizard({
 		state.meeting.stateId,
 	]);
 
-	const disabledNext =
-		currentStep === 0
-			? !canProceedStep1
-			: currentStep === 1
-			? !canProceedStep2
-			: currentStep === 2
-			? !canProceedStep3
-			: currentStep === 3
-			? !canProceedStep4
-			: currentStep === 4
-			? !canProceedStep5
-			: false;
+	const organizerIntroValid = useMemo(() => {
+		if (!organizerIntro) return true;
+		const aboutSelf = (state.organizerAboutSelf ?? "").trim();
+		const aboutExp = (state.organizerAboutExperience ?? "").trim();
+		const terms = Boolean(state.organizerTermsAccepted);
+		return aboutSelf.length >= 30 && aboutExp.length >= 30 && terms;
+	}, [organizerIntro, state.organizerAboutSelf, state.organizerAboutExperience, state.organizerTermsAccepted]);
+
+	const logicalIndex = organizerIntro ? Math.max(0, currentStep - 1) : currentStep;
+
+	const disabledNext = (() => {
+		if (organizerIntro && currentStep === 0) return !organizerIntroValid;
+		switch (logicalIndex) {
+			case 0:
+				return !canProceedStep1;
+			case 1:
+				return !canProceedStep2;
+			case 2:
+				return !canProceedStep3;
+			case 3:
+				return !canProceedStep4;
+			case 4:
+				return !canProceedStep5;
+			default:
+				return false;
+		}
+	})();
 
 	const renderStepContent = () => {
 		if (verificationStep?.enabled && currentStep === steps.length - 1) {
@@ -1497,7 +1533,59 @@ export function ExperienceWizard({
 				</div>
 			);
 		}
-		switch (currentStep) {
+		if (organizerIntro && currentStep === 0) {
+			return (
+				<div className="space-y-6">
+					<Card className="border-border/60 bg-card/80 shadow-sm">
+						<CardHeader>
+							<h3 className="text-base font-semibold text-foreground">Organizer</h3>
+							<p className="text-sm text-muted-foreground">Share a little about yourself and your hosting plans.</p>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<TextareaField
+								label={
+									<>
+										Tell us about yourself <span className="text-destructive">*</span>
+									</>
+								}
+								rows={4}
+								value={state.organizerAboutSelf ?? ""}
+								onChange={(e) => setState((prev) => ({ ...prev, organizerAboutSelf: e.target.value }))}
+								placeholder="Background, hosting style, relevant experience"
+								required
+							/>
+							<TextareaField
+								label={
+									<>
+										Tell us about your experience <span className="text-destructive">*</span>
+									</>
+								}
+								rows={4}
+								value={state.organizerAboutExperience ?? ""}
+								onChange={(e) => setState((prev) => ({ ...prev, organizerAboutExperience: e.target.value }))}
+								placeholder="What will guests do? Why is it special? Safety and logistics"
+								required
+							/>
+							<div className="flex items-center gap-2">
+								<input
+									id="organizer-terms"
+									type="checkbox"
+									checked={Boolean(state.organizerTermsAccepted)}
+									onChange={(e) => setState((prev) => ({ ...prev, organizerTermsAccepted: e.target.checked }))}
+									className="h-4 w-4"
+								/>
+								<label htmlFor="organizer-terms" className="text-sm text-foreground">
+									I agree to the organizer terms & conditions
+								</label>
+							</div>
+							{!organizerIntroValid ? <p className="text-xs text-muted-foreground">Add at least 30 characters to each field and accept the terms.</p> : null}
+						</CardContent>
+					</Card>
+				</div>
+			);
+		}
+
+		switch (logicalIndex) {
 			case 0:
 				return (
 					<div className="space-y-6">
@@ -2371,7 +2459,7 @@ export function ExperienceWizard({
 									{pending ? "Saving..." : "Save draft"}
 								</Button>
 								<Button onClick={nextStep} disabled={disabledNext}>
-									Next
+									{organizerIntro && currentStep === 0 ? "Add your Experience" : "Next"}
 								</Button>
 							</>
 						) : (
@@ -2380,7 +2468,13 @@ export function ExperienceWizard({
 									{pending ? "Saving..." : "Save draft"}
 								</Button>
 								<Button onClick={handleSubmit} disabled={pending || disabledNext}>
-									{pending ? "Saving..." : mode === "create" ? "Publish experience" : "Save changes"}
+									{pending
+										? "Saving..."
+										: submissionMode === "organizer-request"
+										? "Submit request"
+										: mode === "create"
+										? "Publish experience"
+										: "Save changes"}
 								</Button>
 							</>
 						)}

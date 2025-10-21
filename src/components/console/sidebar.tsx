@@ -32,7 +32,7 @@ export function ConsoleSidebar({ title, subtitle, headerHref, children, footer, 
 					</div>
 				)}
 			</div>
-			<nav className={cn("flex flex-col gap-1 px-4 py-6")}>{children}</nav>
+			<nav className={cn("flex flex-col gap-1 px-4 py-6 overflow-y-auto")}>{children}</nav>
 			{footer ? <div className="mt-auto px-6 pb-6">{footer}</div> : null}
 		</aside>
 	);

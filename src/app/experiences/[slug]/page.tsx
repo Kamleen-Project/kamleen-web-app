@@ -5,7 +5,7 @@ import { CalendarDays, Clock, MapPin, MessageCircle, Star, UserPlus, Users } fro
 
 import { Container } from "@/components/layout/container";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { prisma } from "@/lib/prisma";
 import { ExperienceGallerySection } from "@/components/experiences/experience-gallery-section";
 import { ExperienceItinerary } from "@/components/experiences/experience-itinerary";
@@ -369,14 +369,12 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 									{organizerExperienceCount} experience{organizerExperienceCount === 1 ? "" : "s"} hosted
 								</p>
 								<div className="flex flex-col gap-3 sm:flex-row">
-									<Button size="lg" className="w-full sm:w-auto">
-										<UserPlus className="size-4" />
+									<CtaButton size="md" color="black" className="w-full sm:w-auto" startIcon={<UserPlus className="size-4" />}>
 										Follow organizer
-									</Button>
-									<Button variant="outline" size="lg" className="w-full sm:w-auto">
-										<MessageCircle className="size-4" />
+									</CtaButton>
+									<CtaButton size="md" color="whiteBorder" className="w-full sm:w-auto" startIcon={<MessageCircle className="size-4" />}>
 										Message
-									</Button>
+									</CtaButton>
 								</div>
 							</div>
 						</div>

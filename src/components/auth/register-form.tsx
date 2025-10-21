@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { InputField } from "@/components/ui/input-field";
 
 export function RegisterForm() {
@@ -57,7 +57,7 @@ export function RegisterForm() {
 			return;
 		}
 
-		router.push("/dashboard");
+		router.push("/onboarding");
 		router.refresh();
 	}
 
@@ -76,9 +76,9 @@ export function RegisterForm() {
 				required
 			/>
 			{error ? <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p> : null}
-			<Button type="submit" className="w-full" disabled={isSubmitting}>
+			<CtaButton type="submit" disabled={isSubmitting} className="w-full" color="black" size="lg">
 				{isSubmitting ? "Creating account..." : "Create account"}
-			</Button>
+			</CtaButton>
 		</form>
 	);
 }

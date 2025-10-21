@@ -27,6 +27,16 @@ enum OrganizerStatus {
   REJECTED
 }
 
+// Overall account lifecycle status for a user
+enum AccountStatus {
+  PENDING_VERIFICATION // email not verified yet
+  ONBOARDING // started but not completed onboarding
+  ACTIVE // normal active user
+  INACTIVE // no login for over a year
+  BANNED // banned by admins
+  ARCHIVED // archived by admins
+}
+
 enum ExperienceBookingStatus {
   PENDING
   CONFIRMED
@@ -53,6 +63,10 @@ model User {
   name               String?
   email              String?             @unique
   emailVerified      DateTime?
+  lastLoginAt        DateTime?
+  birthDate          DateTime?
+  termsAcceptedAt    DateTime?
+  onboardingCompletedAt DateTime?
   image              String?
   headline           String?
   bio                String?
@@ -63,6 +77,7 @@ model User {
   role               UserRole            @default(EXPLORER)
   activeRole         UserRole            @default(EXPLORER)
   organizerStatus    OrganizerStatus     @default(NOT_APPLIED)
+  accountStatus      AccountStatus       @default(PENDING_VERIFICATION)
   preferredLanguage  String              @default("en")
   preferredCurrency  String              @default("USD")
   preferredTimezone  String              @default("UTC")
@@ -73,12 +88,14 @@ model User {
   experiences        Experience[]
   explorerReviews    ExperienceReview[]  @relation("ExplorerReviews")
   experienceBookings ExperienceBooking[] @relation("ExplorerBookings")
+  tickets            Ticket[]
   savedExperiences   Experience[]        @relation("SavedExperiences")
   notifications      Notification[]
   notificationPreference NotificationPreference?
 
   @@index([role])
   @@index([activeRole])
+  @@index([accountStatus])
 }
 
 model Experience {
@@ -122,6 +139,7 @@ model Experience {
   itinerarySteps     ExperienceItineraryStep[]
   reviews            ExperienceReview[]
   bookings           ExperienceBooking[]
+  tickets            Ticket[]
   savedBy            User[]                    @relation("SavedExperiences")
 
   @@index([organizerId])
@@ -229,6 +247,7 @@ model ExperienceSession {
   updatedAt      DateTime   @updatedAt
 
   bookings ExperienceBooking[]
+  tickets  Ticket[]
 
   @@index([experienceId])
   @@index([startAt])
@@ -249,10 +268,52 @@ model ExperienceBooking {
   experience Experience        @relation(fields: [experienceId], references: [id], onDelete: Cascade)
   session    ExperienceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   explorer   User              @relation("ExplorerBookings", fields: [explorerId], references: [id], onDelete: Cascade)
+  tickets    Ticket[]
 
   @@index([experienceId])
   @@index([sessionId])
   @@index([explorerId])
+}
+
+model Ticket {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  bookingId    String
+  experienceId String
+  sessionId    String
+  explorerId   String
+  seatNumber   Int
+  status       TicketStatus @default(VALID)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  booking    ExperienceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  experience Experience        @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  session    ExperienceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  explorer   User              @relation(fields: [explorerId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([explorerId, createdAt])
+  @@index([experienceId])
+  @@index([sessionId])
+}
+
+/// Templates to render tickets as HTML converted to PDF
+model TicketTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  html      String
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  CANCELLED
 }
 
 model ExperienceItineraryStep {
@@ -326,8 +387,16 @@ model EmailTemplate {
   html      String
   text      String?
   logoUrl   String?
+  category  EmailTemplateCategory @default(ALL)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum EmailTemplateCategory {
+  ADMIN
+  EXPLORER
+  ORGANIZER
+  ALL
 }
 
 // Notification system

@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 
 import { Container } from "@/components/layout/container";
+import { getServerAuthSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { SectionHeading } from "@/components/layout/section-heading";
-import { ExperienceSearchForm } from "@/components/experiences/experience-search-form";
+import StickySearchSection from "@/components/experiences/sticky-search-section";
 import { ExperienceGrid, ExperienceGridSkeleton } from "@/components/experiences/experience-grid";
 import { prisma } from "@/lib/prisma";
 import { buildExperienceWhere, experienceCardSelect, mapExperienceToCard } from "@/lib/experiences";
@@ -19,6 +21,17 @@ type ExperiencesPageProps = {
 };
 
 export default async function ExperiencesPage({ searchParams }: ExperiencesPageProps) {
+	// If logged in but not onboarded, redirect to onboarding
+	const session = await getServerAuthSession();
+	if (session?.user) {
+		const user = await prisma.user.findUnique({
+			where: { id: session.user.id },
+			select: { emailVerified: true, birthDate: true, termsAcceptedAt: true, onboardingCompletedAt: true },
+		});
+		if (!user?.onboardingCompletedAt || !user?.emailVerified || !user.birthDate || !user.termsAcceptedAt) {
+			redirect("/onboarding");
+		}
+	}
 	const resolvedSearchParams = await searchParams;
 
 	const filters = {
@@ -58,27 +71,26 @@ export default async function ExperiencesPage({ searchParams }: ExperiencesPageP
 	);
 
 	return (
-		<div className="bg-muted/20 py-16">
-			<Container className="space-y-12">
-				<div className="space-y-8">
-					<SectionHeading
-						eyebrow="Explore experiences"
-						title="Curated activities designed for connection"
-						description="Browse immersive gatherings hosted by trusted organizers around the globe. Use the filters to find the perfect session for your crew."
-						align="center"
-					/>
-
-					<div className="relative z-20">
-						<ExperienceSearchForm initialValues={initialValues} />
+		<div className="bg-muted/20">
+			<StickySearchSection initialValues={initialValues} />
+			<div className="py-12">
+				<Container className="space-y-12">
+					<div className="space-y-8">
+						<SectionHeading
+							eyebrow="Explore experiences"
+							title="Curated activities designed for connection"
+							description="Browse immersive gatherings hosted by trusted organizers around the globe. Use the filters to find the perfect session for your crew."
+							align="center"
+						/>
 					</div>
-				</div>
 
-				<Suspense fallback={<ExperienceGridSkeleton />}>
-					{" "}
-					{/* Suspense for future streaming */}
-					<ExperienceGrid initialExperiences={experiences} initialHasMore={hasMore} searchParams={queryObject} />
-				</Suspense>
-			</Container>
+					<Suspense fallback={<ExperienceGridSkeleton />}>
+						{" "}
+						{/* Suspense for future streaming */}
+						<ExperienceGrid initialExperiences={experiences} initialHasMore={hasMore} searchParams={queryObject} />
+					</Suspense>
+				</Container>
+			</div>
 		</div>
 	);
 }

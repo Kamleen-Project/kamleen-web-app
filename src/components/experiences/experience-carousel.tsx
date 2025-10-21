@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { ExperienceCard, type Experience } from "@/components/cards/experience-card";
-import { Button } from "@/components/ui/button";
+import CtaIconButton from "@/components/ui/cta-icon-button";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 4;
@@ -58,12 +58,12 @@ export function ExperienceCarousel({ eyebrow, title, description, experiences, c
 				</div>
 				{totalPages > 1 ? (
 					<div className="flex shrink-0 items-center gap-2">
-						<Button variant="outline" size="icon" onClick={goToPrev} disabled={page === 0} aria-label="Show previous experiences">
+						<CtaIconButton color="white" size="md" onClick={goToPrev} disabled={page === 0} ariaLabel="Show previous experiences">
 							<ChevronLeft className="size-4" />
-						</Button>
-						<Button variant="outline" size="icon" onClick={goToNext} disabled={page === totalPages - 1} aria-label="Show next experiences">
+						</CtaIconButton>
+						<CtaIconButton color="white" size="md" onClick={goToNext} disabled={page === totalPages - 1} ariaLabel="Show next experiences">
 							<ChevronRight className="size-4" />
-						</Button>
+						</CtaIconButton>
 					</div>
 				) : null}
 			</div>

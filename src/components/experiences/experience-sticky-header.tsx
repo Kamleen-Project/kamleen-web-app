@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { Container } from "@/components/layout/container";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { cn } from "@/lib/utils";
 import { Star } from "lucide-react";
 
@@ -47,10 +47,13 @@ export function ExperienceStickyHeader({ title, triggerId, ctaTargetId, averageR
 		}
 
 		const targetButton = document.getElementById(ctaTargetId);
-		if (targetButton instanceof HTMLButtonElement) {
-			targetButton.click();
+		if (targetButton) {
+			(targetButton as HTMLElement).click();
 			return;
 		}
+
+		// Fallback: dispatch a custom event consumed by the reservation modal
+		window.dispatchEvent(new Event("open-experience-reservation"));
 
 		const reserveSection = document.querySelector<HTMLElement>(`[data-reserve-target="${ctaTargetId}"]`);
 		if (reserveSection) {
@@ -70,17 +73,17 @@ export function ExperienceStickyHeader({ title, triggerId, ctaTargetId, averageR
 		<div
 			aria-hidden={!isVisible}
 			className={cn(
-				"sticky top-16 z-30 overflow-hidden border-b border-border/60 bg-white transition-all duration-200 dark:bg-background",
+				"sticky top-16 z-30 overflow-hidden border-b border-border/60 bg-black/95 text-white backdrop-blur transition-all duration-200 supports-[backdrop-filter]:bg-black/80",
 				isVisible ? "pointer-events-auto max-h-24 translate-y-0 opacity-100 shadow-sm" : "pointer-events-none max-h-0 -translate-y-2 opacity-0"
 			)}
 		>
 			<Container className={cn("flex items-center justify-between gap-4", isVisible ? "py-3" : "py-0")}>
 				<div className="min-w-0 flex-1">
-					<h2 className="truncate text-base font-semibold text-foreground sm:text-lg">{title}</h2>
-					<div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+					<h2 className="truncate text-base font-semibold text-white sm:text-lg">{title}</h2>
+					<div className="mt-1 flex items-center gap-2 text-xs text-white/80">
 						<span className="inline-flex items-center gap-1">
-							<Star className={cn("size-4", hasReviews ? "text-amber-500" : "text-muted-foreground/60")} aria-hidden="true" />
-							<span className="font-medium text-foreground">{hasReviews ? averageRating.toFixed(2) : "No reviews yet"}</span>
+							<Star className={cn("size-4", hasReviews ? "text-amber-400" : "text-white/40")} aria-hidden="true" />
+							<span className="font-medium text-white">{hasReviews ? averageRating.toFixed(2) : "No reviews yet"}</span>
 						</span>
 						{hasReviews ? (
 							<span>
@@ -89,9 +92,9 @@ export function ExperienceStickyHeader({ title, triggerId, ctaTargetId, averageR
 						) : null}
 					</div>
 				</div>
-				<Button size="lg" onClick={handleReserveClick}>
+				<CtaButton size="lg" color="white" onClick={handleReserveClick}>
 					Reserve a spot
-				</Button>
+				</CtaButton>
 			</Container>
 		</div>
 	);

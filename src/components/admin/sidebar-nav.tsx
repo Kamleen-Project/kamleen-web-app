@@ -15,7 +15,7 @@ export function SidebarNav({ items, className }: SidebarNavProps) {
 	const pathname = usePathname();
 
 	return (
-		<nav className={cn("flex flex-col gap-1 px-4 pb-6", className)}>
+		<nav className={cn("flex flex-col gap-1 px-4 pb-6 overflow-y-auto", className)}>
 			{items.map((item) => {
 				const isActive = pathname === item.href || (pathname?.startsWith(`${item.href}/`) && item.href !== "/admin");
 				return (

@@ -6,6 +6,7 @@ import { CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
+import CtaIconButton from "@/components/ui/cta-icon-button";
 import { Input } from "@/components/ui/input";
 import { Stepper } from "@/components/ui/stepper";
 import { Calendar, type CalendarDateRange } from "@/components/ui/calendar";
@@ -95,18 +96,11 @@ export function ExperienceSearchForm({ initialValues }: ExperienceSearchFormProp
 	};
 
 	return (
-		<form
-			onSubmit={handleSubmit}
-			className="grid gap-4 rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur sm:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto]"
-		>
+		<form onSubmit={handleSubmit} className="grid gap-4 p-4 text-black sm:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto]">
 			<div className="flex flex-col gap-2 text-left">
-				<label htmlFor="exp-search-q" className="text-sm font-medium text-muted-foreground">
-					Where to?
-				</label>
 				<Input id="exp-search-q" name="q" defaultValue={defaults.q} placeholder="City, host, or experience" className="h-12" />
 			</div>
 			<div className="flex flex-col gap-2 text-left">
-				<span className="text-sm font-medium text-muted-foreground">Dates</span>
 				<input type="hidden" name="start" value={formattedStart} readOnly />
 				<input type="hidden" name="end" value={formattedEnd} readOnly />
 				<Popover open={open} onOpenChange={setOpen}>
@@ -126,9 +120,6 @@ export function ExperienceSearchForm({ initialValues }: ExperienceSearchFormProp
 				</Popover>
 			</div>
 			<div className="flex flex-col gap-2 text-left">
-				<label htmlFor="exp-search-guests" className="text-sm font-medium text-muted-foreground">
-					Spots
-				</label>
 				{/* Hidden field carries the numeric value for form submission */}
 				<input id="exp-search-guests" type="hidden" name="guests" value={guests} readOnly />
 				<div className="flex items-center justify-between">
@@ -136,10 +127,9 @@ export function ExperienceSearchForm({ initialValues }: ExperienceSearchFormProp
 				</div>
 			</div>
 			<div className="flex items-end justify-end">
-				<Button type="submit" size="icon" className="h-12 w-12 rounded-full">
+				<CtaIconButton type="submit" color="black" size="lg" className="h-12 w-12" ariaLabel="Search experiences">
 					<Search className="size-5" />
-					<span className="sr-only">Search experiences</span>
-				</Button>
+				</CtaIconButton>
 			</div>
 		</form>
 	);

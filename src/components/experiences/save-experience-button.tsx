@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import CtaIconButton from "@/components/ui/cta-icon-button";
 import { useNotifications } from "@/components/providers/notification-provider";
 
 type ButtonSize = "sm" | "md" | "lg";
@@ -60,22 +61,20 @@ export function SaveExperienceButton({ experienceId, size = "md", className }: {
 		});
 	};
 
-	const sizeClasses = size === "lg" ? "h-10 w-10" : size === "sm" ? "h-8 w-8" : "h-9 w-9";
 	const iconSizeClass = size === "lg" ? "size-5" : "size-4";
 
 	return (
-		<button
+		<CtaIconButton
 			type="button"
 			onClick={toggleSaved}
-			aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
-			className={cn(
-				"inline-flex items-center justify-center rounded-full border border-border/60 bg-background text-foreground shadow-sm transition-colors hover:bg-accent/40",
-				sizeClasses,
-				className
-			)}
+			ariaLabel={saved ? "Remove from wishlist" : "Add to wishlist"}
+			color="whiteBorder"
+			size={size}
+			className={className}
 			disabled={isPending}
+			isLoading={isPending}
 		>
 			<Heart className={cn(iconSizeClass, "transition-colors", saved ? "fill-red-500 text-red-500" : "text-foreground")} />
-		</button>
+		</CtaIconButton>
 	);
 }

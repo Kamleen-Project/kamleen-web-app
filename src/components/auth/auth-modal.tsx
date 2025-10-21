@@ -31,7 +31,7 @@ export function AuthModal({ open, mode, onOpenChange, onModeChange }: AuthModalP
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent>
 				<div className="flex w-full justify-center">
-					<TogetherLogo className="h-12 w-auto m-4" title="Kamleen" />
+					<TogetherLogo className="h-12 w-auto m-4" title="Kamleen" variant="light" />
 				</div>
 				<DialogHeader>
 					{isLogin ? (

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
+import { SiteFooterConditional } from "@/components/layout/site-footer-conditional";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { NotificationProvider } from "@/components/providers/notification-provider";
 import { getServerAuthSession } from "@/lib/auth";
@@ -39,8 +40,9 @@ export default async function RootLayout({
 				<AuthProvider session={session}>
 					<NotificationProvider>
 						<div className="flex min-h-screen flex-col bg-background text-foreground">
-							<SiteHeader />
+							<SiteHeader session={session} />
 							<main className="flex-1">{children}</main>
+							<SiteFooterConditional />
 						</div>
 					</NotificationProvider>
 				</AuthProvider>

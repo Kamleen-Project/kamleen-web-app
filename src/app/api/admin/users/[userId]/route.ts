@@ -3,10 +3,18 @@ import { NextResponse } from "next/server"
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { saveUploadedFile } from "@/lib/uploads"
-import type { Prisma, UserRole, OrganizerStatus } from "@/generated/prisma"
+import type { Prisma, UserRole, OrganizerStatus, AccountStatus } from "@/generated/prisma"
 
 const USER_ROLES = new Set(["EXPLORER", "ORGANIZER", "ADMIN"])
 const ORGANIZER_STATUSES = new Set(["NOT_APPLIED", "PENDING", "APPROVED", "REJECTED"])
+const ACCOUNT_STATUSES = new Set([
+  "PENDING_VERIFICATION",
+  "ONBOARDING",
+  "ACTIVE",
+  "INACTIVE",
+  "BANNED",
+  "ARCHIVED",
+])
 
 export async function PATCH(
   request: Request,
@@ -67,6 +75,7 @@ export async function PATCH(
     role,
     activeRole,
     organizerStatus,
+    accountStatus,
     preferredLanguage,
     preferredCurrency,
     preferredTimezone,
@@ -111,6 +120,10 @@ export async function PATCH(
     data.organizerStatus = organizerStatus as OrganizerStatus
   }
 
+  if (typeof accountStatus === "string" && ACCOUNT_STATUSES.has(accountStatus)) {
+    data.accountStatus = accountStatus as AccountStatus
+  }
+
   try {
     await prisma.user.update({
       where: { id: userId },
@@ -122,6 +135,30 @@ export async function PATCH(
   }
 
   return NextResponse.json({ ok: true })
+}
+
+export async function DELETE(
+  request: Request,
+  {
+    params,
+  }: {
+    params: Promise<{ userId: string }>
+  }
+) {
+  const session = await getServerAuthSession()
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+  }
+
+  const { userId } = await params
+
+  try {
+    await prisma.user.delete({ where: { id: userId } })
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json({ message: "Failed to delete user" }, { status: 500 })
+  }
 }
 
 async function buildUpdateFromFormData(formData: FormData, userId: string) {
@@ -154,6 +191,11 @@ async function buildUpdateFromFormData(formData: FormData, userId: string) {
   const organizerStatusValue = getOptionalString(formData, "organizerStatus")
   if (organizerStatusValue && ORGANIZER_STATUSES.has(organizerStatusValue)) {
     data.organizerStatus = organizerStatusValue
+  }
+
+  const accountStatusValue = getOptionalString(formData, "accountStatus")
+  if (accountStatusValue && ACCOUNT_STATUSES.has(accountStatusValue)) {
+    data.accountStatus = accountStatusValue
   }
 
   const avatar = formData.get("avatar")

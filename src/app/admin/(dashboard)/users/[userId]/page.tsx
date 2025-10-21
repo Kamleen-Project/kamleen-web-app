@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { AdminUserForm } from "@/components/admin/admin-user-form";
 import { Badge } from "@/components/ui/badge";
+import { formatDistanceToNowStrict } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 
@@ -27,6 +28,8 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 			role: true,
 			activeRole: true,
 			organizerStatus: true,
+			accountStatus: true,
+			lastLoginAt: true,
 			createdAt: true,
 			updatedAt: true,
 		},
@@ -46,10 +49,15 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 					</Link>
 				</Button>
 				<div className="flex flex-col gap-3">
+					<h1 className="text-3xl font-semibold tracking-tight text-foreground">{user.name ?? user.email ?? "Untitled user"}</h1>
+					<p className="max-w-2xl text-sm text-muted-foreground">
+						Keep explorer and organizer records accurate. Use this panel to update contact details, profile content, and role based permissions.
+					</p>
 					<div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
 						<span>User ID: {user.id}</span>
 						<span>Joined {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(user.createdAt)}</span>
 						<span>Updated {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(user.updatedAt)}</span>
+						{user.lastLoginAt ? <span>Last login {formatDistanceToNowStrict(user.lastLoginAt, { addSuffix: true })}</span> : null}
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
 						<Badge variant="soft" className="text-xs uppercase">
@@ -61,11 +69,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 						<Badge variant="outline" className="text-xs uppercase bg-muted/70 text-foreground">
 							{user.organizerStatus.toLowerCase()}
 						</Badge>
+						<Badge variant="outline" className="text-xs uppercase bg-muted/70 text-foreground">
+							{String(user.accountStatus).toLowerCase().replace(/_/g, " ")}
+						</Badge>
 					</div>
-					<h1 className="text-3xl font-semibold tracking-tight text-foreground">{user.name ?? user.email ?? "Untitled user"}</h1>
-					<p className="max-w-2xl text-sm text-muted-foreground">
-						Keep explorer and organizer records accurate. Use this panel to update contact details, profile content, and role based permissions.
-					</p>
 				</div>
 			</div>
 

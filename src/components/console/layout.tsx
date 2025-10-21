@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ConsoleSidebar } from "@/components/console/sidebar";
 import { ConsoleSidebarMenuItem } from "@/components/console/sidebar-menu-item";
+import { ConsoleSidebarMenuGroup } from "@/components/console/sidebar-menu-group";
 import type { ConsoleNavItem } from "@/config/console-nav";
 
 interface ConsoleLayoutProps {
@@ -18,9 +19,13 @@ export function ConsoleLayout({ title, subtitle, headerHref, navItems, footer, c
 		<div className="min-h-screen bg-muted/20">
 			<div className="mx-auto flex min-h-screen w-full max-w-[1400px]">
 				<ConsoleSidebar title={title} subtitle={subtitle} headerHref={headerHref} footer={footer}>
-					{navItems.map((item) => (
-						<ConsoleSidebarMenuItem key={item.href} href={item.href} title={item.label} subtitle={item.description} />
-					))}
+					{navItems.map((item) =>
+						item.children && item.children.length > 0 ? (
+							<ConsoleSidebarMenuGroup key={item.href} item={item} />
+						) : (
+							<ConsoleSidebarMenuItem key={item.href} href={item.href} title={item.label} subtitle={item.description} />
+						)
+					)}
 				</ConsoleSidebar>
 				<main className="flex-1 px-5 py-10 sm:px-8 lg:px-12">
 					<div className="mb-6 flex flex-col gap-2 lg:hidden">

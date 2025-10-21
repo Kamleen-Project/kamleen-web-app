@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -57,9 +58,9 @@ export function ExperienceReviewModal({ experienceId, experienceTitle }: Experie
 
 	return (
 		<>
-			<Button variant="outline" className="gap-2" onClick={() => setOpen(true)}>
+			<CtaButton color="whiteBorder" size="md" startIcon={<Star className="size-4" />} onClick={() => setOpen(true)}>
 				Leave a review
-			</Button>
+			</CtaButton>
 			{open ? (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 					<div className="relative w-full max-w-lg rounded-2xl border border-border/60 bg-background p-6 shadow-xl">
@@ -120,12 +121,12 @@ export function ExperienceReviewModal({ experienceId, experienceTitle }: Experie
 							<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 								<p className="text-xs text-muted-foreground">Reviews help explorers decide what to book next. Keep it kind and constructive.</p>
 								<div className="flex items-center gap-2">
-									<Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+									<CtaButton type="button" color="whiteBorder" onClick={() => setOpen(false)}>
 										Cancel
-									</Button>
-									<Button type="submit" disabled={pending} className={cn(pending && "opacity-80")}>
+									</CtaButton>
+									<CtaButton type="submit" color="black" disabled={pending} className={cn(pending && "opacity-80")}>
 										Submit review
-									</Button>
+									</CtaButton>
 								</div>
 							</div>
 							{message ? <p className="text-sm text-emerald-600">{message}</p> : null}

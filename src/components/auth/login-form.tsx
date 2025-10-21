@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { InputField } from "@/components/ui/input-field";
 
 type LoginFormProps = {
@@ -82,25 +82,25 @@ export function LoginForm({ redirectTo = "/dashboard", mode = "user" }: LoginFor
 			<InputField id="email" name="email" type="email" label="Email" placeholder="you@example.com" autoComplete="email" required />
 			<InputField id="password" name="password" type="password" label="Password" placeholder="••••••••" autoComplete="current-password" required />
 			{error && <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-			<Button type="submit" className="w-full" disabled={isSubmitting}>
+			<CtaButton type="submit" disabled={isSubmitting} className="w-full" color="black" size="lg">
 				{isSubmitting ? "Signing in..." : "Sign in"}
-			</Button>
+			</CtaButton>
 			<div className="pt-2">
 				<div className="mb-2 text-center text-xs text-muted-foreground">Quick logins</div>
 				{mode === "admin" ? (
 					<div className="grid grid-cols-1 gap-2">
-						<Button type="button" variant="outline" onClick={() => quickFill("admin@together.dev", "admin123")}>
+						<CtaButton type="button" color="whiteBorder" onClick={() => quickFill("dev@kamleen.com", "admin123")}>
 							Admin
-						</Button>
+						</CtaButton>
 					</div>
 				) : (
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-						<Button type="button" variant="outline" onClick={() => quickFill("organizer.demo@together.dev", "organizer123")}>
+						<CtaButton type="button" color="whiteBorder" onClick={() => quickFill("organizer@kamleen.com", "organizer123")}>
 							Organizer
-						</Button>
-						<Button type="button" variant="outline" onClick={() => quickFill("ella.martinez@together.dev", "explorer123")}>
+						</CtaButton>
+						<CtaButton type="button" color="whiteBorder" onClick={() => quickFill("explorer@kamleen.com", "explorer123")}>
 							Explorer
-						</Button>
+						</CtaButton>
 					</div>
 				)}
 			</div>

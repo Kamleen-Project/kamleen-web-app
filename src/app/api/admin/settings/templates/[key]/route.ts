@@ -30,6 +30,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ key:
   const html = getString(form, "html")
   const text = getOptionalString(form, "text")
   const logoUrl = getOptionalString(form, "logoUrl")
+  const categoryRaw = getOptionalString(form, "category")
+  const allowedCategories = new Set(["ADMIN", "EXPLORER", "ORGANIZER", "ALL"]) as Set<string>
+  const category = categoryRaw && allowedCategories.has(categoryRaw.toUpperCase()) ? (categoryRaw.toUpperCase() as import("@/generated/prisma").EmailTemplateCategory) : "ALL"
 
   const errors: Record<string, string> = {}
   if (!name) errors.name = "Name is required"
@@ -66,10 +69,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ key:
 
   const htmlWithFont = ensureSansSerif(html!)
 
+  const baseData: Pick<import("@/generated/prisma").Prisma.EmailTemplateCreateInput, "name" | "subject" | "html" | "text" | "logoUrl"> = {
+    name: name!,
+    subject: subject!,
+    html: htmlWithFont,
+    text: text ?? undefined,
+    logoUrl: logoUrl ?? undefined,
+  }
+  const updateData: import("@/generated/prisma").Prisma.EmailTemplateUpdateInput = { ...baseData, category }
+  const createData: import("@/generated/prisma").Prisma.EmailTemplateCreateInput = { key, ...baseData, category }
+
   const saved = await prisma.emailTemplate.upsert({
     where: { key },
-    update: { name: name!, subject: subject!, html: htmlWithFont, text: text ?? undefined, logoUrl: logoUrl ?? undefined },
-    create: { key, name: name!, subject: subject!, html: htmlWithFont, text: text ?? undefined, logoUrl: logoUrl ?? undefined },
+    update: updateData,
+    create: createData,
   })
 
   return NextResponse.json({ template: saved })

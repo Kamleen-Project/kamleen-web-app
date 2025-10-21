@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormControl, FormDescription, FormField, FormInput, FormLabel, FormMessage, FormTextarea } from "@/components/ui/form";
 import { InputField } from "@/components/ui/input-field";
 import { TextareaField } from "@/components/ui/textarea-field";
+import { SelectField } from "@/components/ui/select-field";
+import { Plus } from "lucide-react";
 
 type EmailTemplate = {
 	id: string;
@@ -16,10 +18,12 @@ type EmailTemplate = {
 	html: string;
 	text?: string | null;
 	logoUrl?: string | null;
+	category?: "ADMIN" | "EXPLORER" | "ORGANIZER" | "ALL";
 	updatedAt: string;
 };
 
 const defaultTemplateKeys: { key: string; name: string; description: string }[] = [
+	{ key: "welcome_verify", name: "Welcome + Verify Email", description: "Sent after signup with verify CTA" },
 	{ key: "email_verification", name: "Email verification", description: "Sent to new users to verify their email" },
 	{ key: "booking_request", name: "Booking request", description: "Sent to organizers when a booking is requested" },
 	{ key: "booking_confirmation", name: "Booking confirmation", description: "Sent to explorers when a booking is confirmed" },
@@ -37,6 +41,12 @@ export function EmailTemplatesManager() {
 	const [testOpen, setTestOpen] = useState(false);
 	const [testEmail, setTestEmail] = useState("");
 	const [testStatus, setTestStatus] = useState<string | null>(null);
+	const [sidebarCategory, setSidebarCategory] = useState<"ADMIN" | "EXPLORER" | "ORGANIZER" | "ALL">("ALL");
+	const [createOpen, setCreateOpen] = useState(false);
+	const [createKey, setCreateKey] = useState("");
+	const [createName, setCreateName] = useState("");
+	const [createCategory, setCreateCategory] = useState<"ADMIN" | "EXPLORER" | "ORGANIZER" | "ALL">("ALL");
+	const [createError, setCreateError] = useState<string | null>(null);
 
 	// HTML editor state and view toggle
 	const [htmlEditorMode, setHtmlEditorMode] = useState<"code" | "preview">("preview");
@@ -124,6 +134,73 @@ export function EmailTemplatesManager() {
 		return enhanceForPreview(withFont, { logoUrl: String(variables.logoUrl) });
 	}, [htmlValue, active?.logoUrl]);
 
+	const categoryOptions = useMemo(
+		() => [
+			{ label: "All", value: "ALL" },
+			{ label: "Admin", value: "ADMIN" },
+			{ label: "Explorer", value: "EXPLORER" },
+			{ label: "Organizer", value: "ORGANIZER" },
+		],
+		[]
+	);
+
+	const categoryByKey = useMemo(() => {
+		const map: Record<string, "ADMIN" | "EXPLORER" | "ORGANIZER" | "ALL"> = {};
+		for (const t of templates) {
+			map[t.key] = t.category ?? "ALL";
+		}
+		return map;
+	}, [templates]);
+
+	const customTemplateKeys = useMemo(() => {
+		const defs = new Set(defaultTemplateKeys.map((d) => d.key));
+		return templates.filter((t) => !defs.has(t.key)).map((t) => ({ key: t.key, name: t.name || t.key, description: "Custom template" }));
+	}, [templates]);
+
+	const visibleTemplateKeys = useMemo(() => {
+		const filterByCategory = (key: string) => sidebarCategory === "ALL" || (categoryByKey[key] ?? "ALL") === sidebarCategory;
+		const defaults = defaultTemplateKeys.filter((d) => filterByCategory(d.key));
+		const customs = customTemplateKeys.filter((d) => filterByCategory(d.key)).sort((a, b) => a.key.localeCompare(b.key));
+		return [...defaults, ...customs];
+	}, [sidebarCategory, categoryByKey, customTemplateKeys]);
+
+	function onCreateTemplate() {
+		setCreateError(null);
+		const key = createKey.trim();
+		const name = createName.trim();
+		if (!key || !name) {
+			setCreateError("Key and Name are required.");
+			return;
+		}
+		if (!/^[a-z0-9_]+$/.test(key)) {
+			setCreateError("Key must be lowercase letters, numbers, and underscores only.");
+			return;
+		}
+		const exists = defaultTemplateKeys.some((d) => d.key === key) || templates.some((t) => t.key === key);
+		if (exists) {
+			setCreateError("A template with this key already exists.");
+			return;
+		}
+		const now = new Date().toISOString();
+		const newTemplate: EmailTemplate = {
+			id: `temp_${Date.now()}`,
+			key,
+			name,
+			subject: "",
+			html: "",
+			text: "",
+			logoUrl: "",
+			category: createCategory,
+			updatedAt: now,
+		};
+		setTemplates((prev) => [...prev, newTemplate]);
+		setActiveKey(key);
+		setCreateOpen(false);
+		setCreateKey("");
+		setCreateName("");
+		setCreateCategory("ALL");
+	}
+
 	function onSave(formData: FormData) {
 		setErrors({});
 		startTransition(async () => {
@@ -178,10 +255,23 @@ export function EmailTemplatesManager() {
 			<div className="lg:col-span-2 space-y-2">
 				<Card className="border-border/60 bg-background/80">
 					<CardHeader className="gap-2">
-						<h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Templates</h3>
+						<div className="flex items-center justify-between">
+							<h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Templates</h3>
+							<Button type="button" variant="outline" className="h-8 w-8 p-0" onClick={() => setCreateOpen(true)} title="Add template">
+								<Plus className="h-4 w-4" />
+							</Button>
+						</div>
+						<SelectField
+							name="sidebar_category_filter"
+							label={<span className="text-xs text-muted-foreground">Filter by category</span>}
+							value={sidebarCategory}
+							onChange={(e) => setSidebarCategory(e.target.value as "ADMIN" | "EXPLORER" | "ORGANIZER" | "ALL")}
+							options={categoryOptions}
+							containerClassName="mb-1"
+						/>
 					</CardHeader>
 					<CardContent className="space-y-1">
-						{defaultTemplateKeys.map((t) => {
+						{visibleTemplateKeys.map((t) => {
 							const isActive = t.key === activeKey;
 							return (
 								<button
@@ -191,6 +281,7 @@ export function EmailTemplatesManager() {
 										isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
 									}`}
 								>
+									<div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{categoryByKey[t.key] ?? "ALL"}</div>
 									<div className="font-medium">{t.name}</div>
 									<div className="text-xs text-muted-foreground">{t.description}</div>
 								</button>
@@ -198,117 +289,164 @@ export function EmailTemplatesManager() {
 						})}
 					</CardContent>
 				</Card>
-			</div>
 
-			<div className="lg:col-span-4">
-				<form action={onSave} className="grid gap-6">
-					<input type="hidden" name="key" value={activeKey} />
-
-					<InputField
-						name="name"
-						label="Template name"
-						defaultValue={active?.name ?? defaultTemplateKeys.find((d) => d.key === activeKey)?.name ?? ""}
-						error={errors.name}
-					/>
-
-					<InputField name="subject" label="Subject" defaultValue={active?.subject ?? ""} error={errors.subject} />
-
-					<InputField
-						name="logoUrl"
-						label="Logo URL (optional)"
-						defaultValue={active?.logoUrl ?? ""}
-						placeholder="https://.../logo.png"
-						caption={<span>Used as {"{{ logoUrl }}"} in templates. If empty, default brand is used.</span>}
-					/>
-
-					<FormField error={errors.html}>
-						<div className="flex items-center justify-between">
-							<FormLabel>HTML body</FormLabel>
-							<div className="inline-flex items-center gap-1 rounded-md border border-border/60 p-1 text-xs">
-								<button
-									type="button"
-									onClick={() => setHtmlEditorMode("code")}
-									className={`rounded px-2 py-1 ${htmlEditorMode === "code" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-								>
-									Code
-								</button>
-								<button
-									type="button"
-									onClick={() => setHtmlEditorMode("preview")}
-									className={`rounded px-2 py-1 ${htmlEditorMode === "preview" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-								>
-									Preview
-								</button>
+				{createOpen ? (
+					<div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/50 px-4 py-10">
+						<div className="w-full max-w-md rounded-2xl border border-border/70 bg-background p-6 shadow-2xl">
+							<div className="mb-4">
+								<h3 className="text-lg font-semibold text-foreground">Add template</h3>
+								<p className="text-sm text-muted-foreground">Create a new template with a unique key.</p>
+							</div>
+							<div className="space-y-3">
+								<InputField name="create_key" label="Key" value={createKey} onChange={(e) => setCreateKey(e.target.value)} placeholder="custom_key" />
+								<InputField name="create_name" label="Name" value={createName} onChange={(e) => setCreateName(e.target.value)} placeholder="Custom template" />
+								<SelectField
+									name="create_category"
+									label="Category"
+									value={createCategory}
+									onChange={(e) => setCreateCategory(e.target.value as "ADMIN" | "EXPLORER" | "ORGANIZER" | "ALL")}
+									options={categoryOptions}
+								/>
+								{createError ? <p className="text-sm text-destructive">{createError}</p> : null}
+							</div>
+							<div className="mt-6 flex justify-end gap-2">
+								<Button type="button" variant="ghost" onClick={() => setCreateOpen(false)} disabled={isPending}>
+									Close
+								</Button>
+								<Button type="button" onClick={onCreateTemplate} disabled={isPending}>
+									Add
+								</Button>
 							</div>
 						</div>
-						<FormControl>
-							{htmlEditorMode === "code" ? (
-								<FormTextarea name="html" value={htmlValue} onChange={(e) => setHtmlValue(e.target.value)} className="h-[400px] resize-none overflow-auto" />
-							) : (
-								<div className="rounded-md border border-input bg-background">
-									{/* Keep form data in sync while previewing */}
-									<input type="hidden" name="html" value={htmlValue} />
-									<div className="h-[400px] overflow-auto">
-										<iframe title="HTML preview" srcDoc={previewHtml} className="h-[400px] w-full rounded-[5px]" style={{ border: 0 }} />
-									</div>
-								</div>
-							)}
-							<FormDescription>
-								Supports variables like {"{{ name }}"}. Preview replaces known variables such as {"{{ logoUrl }}"}.
-							</FormDescription>
-							<FormMessage />
-						</FormControl>
-					</FormField>
-
-					<TextareaField name="text" label="Text fallback (optional)" defaultValue={active?.text ?? ""} />
-
-					<div className="flex items-center justify-between gap-3">
-						<div className="flex items-center gap-3">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => {
-									setTestEmail("");
-									setTestStatus(null);
-									setTestOpen(true);
-								}}
-								disabled={isPending}
-							>
-								Send test
-							</Button>
-							{testOpen ? (
-								<div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4 py-10">
-									<div className="w-full max-w-md rounded-2xl border border-border/70 bg-background p-6 shadow-2xl">
-										<div className="mb-4">
-											<h3 className="text-lg font-semibold text-foreground">Send test email</h3>
-											<p className="text-sm text-muted-foreground">Enter a recipient address to receive a test using the current template.</p>
-										</div>
-										<div className="space-y-3">
-											<FormField>
-												<FormLabel>Recipient email</FormLabel>
-												<FormControl>
-													<FormInput type="email" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="you@example.com" />
-												</FormControl>
-											</FormField>
-											{testStatus ? <p className={`text-sm ${testStatus.startsWith("Sent") ? "text-emerald-600" : "text-destructive"}`}>{testStatus}</p> : null}
-										</div>
-										<div className="mt-6 flex justify-end gap-2">
-											<Button type="button" variant="ghost" onClick={() => setTestOpen(false)} disabled={isPending}>
-												Close
-											</Button>
-											<Button type="button" onClick={onSendTest} disabled={isPending}>
-												{isPending ? "Sending..." : "Send"}
-											</Button>
-										</div>
-									</div>
-								</div>
-							) : null}
-						</div>
-						<Button type="submit" disabled={isPending}>
-							{isPending ? "Saving..." : "Save template"}
-						</Button>
 					</div>
-				</form>
+				) : null}
+			</div>
+			<div className="lg:col-span-4 space-y-4">
+				<Card className="border-border/60 bg-background/80">
+					<div className="lg:col-span-4">
+						<form action={onSave} className="grid gap-6">
+							<input type="hidden" name="key" value={activeKey} />
+
+							<InputField
+								name="name"
+								label="Template name"
+								defaultValue={active?.name ?? defaultTemplateKeys.find((d) => d.key === activeKey)?.name ?? ""}
+								error={errors.name}
+							/>
+
+							<SelectField name="category" label="Category" defaultValue={active?.category ?? "ALL"} options={categoryOptions} />
+
+							<InputField name="subject" label="Subject" defaultValue={active?.subject ?? ""} error={errors.subject} />
+
+							<InputField
+								name="logoUrl"
+								label="Logo URL (optional)"
+								defaultValue={active?.logoUrl ?? ""}
+								placeholder="https://.../logo.png"
+								caption={<span>Used as {"{{ logoUrl }}"} in templates. If empty, default brand is used.</span>}
+							/>
+
+							<FormField error={errors.html}>
+								<div className="flex items-center justify-between">
+									<FormLabel>HTML body</FormLabel>
+									<div className="inline-flex items-center gap-1 rounded-md border border-border/60 p-1 text-xs">
+										<button
+											type="button"
+											onClick={() => setHtmlEditorMode("code")}
+											className={`rounded px-2 py-1 ${
+												htmlEditorMode === "code" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
+											}`}
+										>
+											Code
+										</button>
+										<button
+											type="button"
+											onClick={() => setHtmlEditorMode("preview")}
+											className={`rounded px-2 py-1 ${
+												htmlEditorMode === "preview" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"
+											}`}
+										>
+											Preview
+										</button>
+									</div>
+								</div>
+								<FormControl>
+									{htmlEditorMode === "code" ? (
+										<FormTextarea
+											name="html"
+											value={htmlValue}
+											onChange={(e) => setHtmlValue(e.target.value)}
+											className="h-[400px] resize-none overflow-auto"
+										/>
+									) : (
+										<div className="rounded-md border border-input bg-background">
+											{/* Keep form data in sync while previewing */}
+											<input type="hidden" name="html" value={htmlValue} />
+											<div className="h-[400px] overflow-auto">
+												<iframe title="HTML preview" srcDoc={previewHtml} className="h-[400px] w-full rounded-[5px]" style={{ border: 0 }} />
+											</div>
+										</div>
+									)}
+									<FormDescription>
+										Supports variables like {"{{ name }}"}. Preview replaces known variables such as {"{{ logoUrl }}"}.
+									</FormDescription>
+									<FormMessage />
+								</FormControl>
+							</FormField>
+
+							<TextareaField name="text" label="Text fallback (optional)" defaultValue={active?.text ?? ""} />
+
+							<div className="flex items-center justify-between gap-3">
+								<div className="flex items-center gap-3">
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => {
+											setTestEmail("");
+											setTestStatus(null);
+											setTestOpen(true);
+										}}
+										disabled={isPending}
+									>
+										Send test
+									</Button>
+									{testOpen ? (
+										<div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4 py-10">
+											<div className="w-full max-w-md rounded-2xl border border-border/70 bg-background p-6 shadow-2xl">
+												<div className="mb-4">
+													<h3 className="text-lg font-semibold text-foreground">Send test email</h3>
+													<p className="text-sm text-muted-foreground">Enter a recipient address to receive a test using the current template.</p>
+												</div>
+												<div className="space-y-3">
+													<FormField>
+														<FormLabel>Recipient email</FormLabel>
+														<FormControl>
+															<FormInput type="email" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="you@example.com" />
+														</FormControl>
+													</FormField>
+													{testStatus ? (
+														<p className={`text-sm ${testStatus.startsWith("Sent") ? "text-emerald-600" : "text-destructive"}`}>{testStatus}</p>
+													) : null}
+												</div>
+												<div className="mt-6 flex justify-end gap-2">
+													<Button type="button" variant="ghost" onClick={() => setTestOpen(false)} disabled={isPending}>
+														Close
+													</Button>
+													<Button type="button" onClick={onSendTest} disabled={isPending}>
+														{isPending ? "Sending..." : "Send"}
+													</Button>
+												</div>
+											</div>
+										</div>
+									) : null}
+								</div>
+								<Button type="submit" disabled={isPending}>
+									{isPending ? "Saving..." : "Save template"}
+								</Button>
+							</div>
+						</form>
+					</div>
+				</Card>
 			</div>
 		</div>
 	);

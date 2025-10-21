@@ -12,11 +12,12 @@ import { Container } from "@/components/layout/container";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExperienceSearchForm } from "@/components/experiences/experience-search-form";
+import StickySearchSection from "@/components/experiences/sticky-search-section";
 import { ExperienceCarousel } from "@/components/experiences/experience-carousel";
 import { Input } from "@/components/ui/input";
 import { prisma } from "@/lib/prisma";
 import { experienceCardSelect, mapExperienceToCard } from "@/lib/experiences";
+import { defaultFaqs } from "@/data/faqs";
 
 const categories: Category[] = [
 	{
@@ -104,21 +105,6 @@ const testimonials: Testimonial[] = [
 ];
 
 // Removed stats content as stats section is being removed
-
-const faqs = [
-	{
-		question: "How do I book an experience?",
-		answer: "Choose your date, confirm group size, and reserve instantly. Your host will reach out within 24 hours with final details.",
-	},
-	{
-		question: "Can I host my own experience?",
-		answer: "We look for thoughtful storytellers with a unique perspective. Apply to host and our curation team will guide you through the process.",
-	},
-	{
-		question: "What is your cancellation policy?",
-		answer: "Plans change—we get it. Enjoy free cancellations up to 72 hours before your experience begins, unless noted otherwise.",
-	},
-];
 
 type CarouselGroup = {
 	key: string;
@@ -253,17 +239,9 @@ export default async function Home() {
 
 	return (
 		<div className="min-h-screen bg-background text-foreground">
-			<div className="relative overflow-hidden">
+			<StickySearchSection />
+			<div className="relative overflow-hidden mt-12">
 				<div className="pointer-events-none absolute inset-x-0 top-[-20%] z-[-1] h-[600px] bg-gradient-to-b from-primary/10 via-transparent to-transparent blur-3xl" />
-
-				<header className="py-6 sm:py-8">
-					<Container className="flex flex-col items-center gap-4 text-center">
-						<div className="w-full max-w-5xl space-y-3">
-							<ExperienceSearchForm />
-						</div>
-					</Container>
-				</header>
-
 				<main className="space-y-24 pb-24">
 					{carouselGroups.length ? (
 						<section className="scroll-mt-28">
@@ -277,62 +255,6 @@ export default async function Home() {
 						</section>
 					) : null}
 
-					<section id="discover" className="scroll-mt-28">
-						<Container className="space-y-12">
-							<SectionHeading
-								eyebrow="Curated collections"
-								title="Choose the vibe for your next gathering"
-								description="Explore hand-picked categories designed for different moods, group sizes, and travel styles."
-							/>
-							<div className="grid gap-6 md:grid-cols-2">
-								{categories.map((category) => (
-									<CategoryCard key={category.id} category={category} />
-								))}
-							</div>
-						</Container>
-					</section>
-
-					<section className="scroll-mt-28">
-						<Container className="space-y-12">
-							<SectionHeading
-								eyebrow="Featured this week"
-								title="Experiences guests are loving right now"
-								description="Reserve verified experiences created by passionate hosts around the globe."
-							/>
-							<div className="grid gap-6 md:grid-cols-4">
-								{experiences.length ? (
-									experiences.map((experience) => <ExperienceCard key={experience.id} experience={experience} />)
-								) : (
-									<div className="md:col-span-4">
-										<p className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-6 text-sm text-muted-foreground">
-											Stay tuned—new experiences are being curated. Check back soon or switch to the organizer role to create one now.
-										</p>
-									</div>
-								)}
-							</div>
-						</Container>
-					</section>
-
-					<section id="why" className="scroll-mt-28">
-						<Container className="space-y-12">
-							<div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-								<SectionHeading
-									eyebrow="Why Kamleen"
-									title="Designing unforgettable moments is our craft"
-									description="From the first message to the final goodbye, every touchpoint is considered so you can stay present with your people."
-								/>
-								<Button variant="secondary" className="self-start">
-									Learn about our vetting process
-								</Button>
-							</div>
-							<div className="grid gap-6 md:grid-cols-3">
-								{features.map((feature) => (
-									<FeatureCard key={feature.title} icon={feature.icon} title={feature.title} description={feature.description} />
-								))}
-							</div>
-						</Container>
-					</section>
-
 					<section id="hosts" className="scroll-mt-28">
 						<Container className="space-y-12">
 							<SectionHeading
@@ -344,132 +266,6 @@ export default async function Home() {
 								{hosts.map((host) => (
 									<HostCard key={host.id} host={host} />
 								))}
-							</div>
-						</Container>
-					</section>
-
-					<section id="stories" className="scroll-mt-28 bg-muted/40 py-20">
-						<Container className="space-y-12">
-							<SectionHeading
-								eyebrow="Guest reflections"
-								title="Loved by communities, teams, and lifelong learners"
-								description="Hear how Together experiences helped groups reconnect, celebrate, and grow."
-								align="center"
-							/>
-							<div className="grid gap-6 md:grid-cols-2">
-								{testimonials.map((testimonial) => (
-									<TestimonialCard key={testimonial.id} testimonial={testimonial} />
-								))}
-							</div>
-						</Container>
-					</section>
-
-					<section>
-						<Container className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-							<div className="space-y-6">
-								<SectionHeading
-									eyebrow="For planners"
-									title="Design your itinerary in a few clicks"
-									description="Build collections, coordinate with co-hosts, and track RSVPs from a single workspace."
-								/>
-								<ul className="space-y-4 text-sm text-muted-foreground">
-									<li className="flex items-start gap-3">
-										<Camera className="mt-1 size-4 text-primary" />
-										Capture highlights with collaborative photo drops for your group.
-									</li>
-									<li className="flex items-start gap-3">
-										<Flame className="mt-1 size-4 text-primary" />
-										Unlock surprise add-ons—from private chefs to sunset DJ sets—curated for your theme.
-									</li>
-									<li className="flex items-start gap-3">
-										<Wine className="mt-1 size-4 text-primary" />
-										Let hosts handle logistics and ingredients so you can focus on being together.
-									</li>
-								</ul>
-								<div className="flex flex-wrap gap-3">
-									<Button>Start building a collection</Button>
-									<Button variant="ghost" className="text-primary">
-										Talk with a curator
-									</Button>
-								</div>
-							</div>
-							<div className="rounded-2xl border border-border/60 bg-card/70 p-8 shadow-xl backdrop-blur">
-								<h3 className="text-xl font-semibold">Plan with confidence</h3>
-								<p className="mt-3 text-sm text-muted-foreground">
-									We’ll match you with a dedicated curator who understands your group’s personality and budget.
-								</p>
-								<div className="mt-6 space-y-4">
-									<div className="flex items-center gap-3">
-										<Badge variant="soft" className="text-xs">
-											24-hour support
-										</Badge>
-										<p className="text-sm text-muted-foreground">Real humans ready when plans change.</p>
-									</div>
-									<div className="flex items-center gap-3">
-										<Badge variant="soft" className="text-xs">
-											Flexible payments
-										</Badge>
-										<p className="text-sm text-muted-foreground">Split costs, pay later, or invoice teams.</p>
-									</div>
-									<div className="flex items-center gap-3">
-										<Badge variant="soft" className="text-xs">
-											Trusted partners
-										</Badge>
-										<p className="text-sm text-muted-foreground">Insured hosts and vetted venues worldwide.</p>
-									</div>
-								</div>
-							</div>
-						</Container>
-					</section>
-
-					<section className="bg-primary text-primary-foreground">
-						<Container className="flex flex-col gap-10 py-20 text-center">
-							<SectionHeading
-								eyebrow="Join the community"
-								title="Host experiences that spark meaningful connection"
-								description="Share your craft, passion, or neighborhood. We’ll help you design unforgettable gatherings and handle the logistics."
-								align="center"
-							/>
-							<div className="flex flex-col justify-center gap-4 sm:flex-row">
-								<Button variant="secondary" className="h-12 px-6">
-									Apply to become a host
-								</Button>
-								<Button variant="ghost" className="h-12 px-6 text-primary-foreground">
-									Download hosting guide
-								</Button>
-							</div>
-						</Container>
-					</section>
-
-					<section>
-						<Container className="space-y-10">
-							<div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-								<div className="space-y-6">
-									<SectionHeading
-										eyebrow="FAQ"
-										title="Answers before you pack your bags"
-										description="Can’t find what you’re looking for? Message us anytime—we’re travelers too."
-									/>
-									<div className="space-y-6">
-										{faqs.map((faq) => (
-											<div key={faq.question} className="space-y-2">
-												<h3 className="text-lg font-semibold text-foreground">{faq.question}</h3>
-												<p className="text-sm text-muted-foreground">{faq.answer}</p>
-											</div>
-										))}
-									</div>
-								</div>
-								<div className="flex flex-col gap-6 rounded-2xl border border-border/60 bg-card/80 p-8 shadow-md">
-									<div>
-										<h3 className="text-xl font-semibold text-foreground">Stay in the loop</h3>
-										<p className="mt-2 text-sm text-muted-foreground">Receive monthly city guides, host highlights, and early access to limited experiences.</p>
-									</div>
-									<form className="space-y-4">
-										<Input placeholder="Email address" className="h-11 text-base" type="email" required />
-										<Button className="w-full">Subscribe</Button>
-										<p className="text-xs text-muted-foreground">By subscribing, you agree to receive updates from Kamleen. You can unsubscribe anytime.</p>
-									</form>
-								</div>
 							</div>
 						</Container>
 					</section>

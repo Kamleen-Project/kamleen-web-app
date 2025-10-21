@@ -5,6 +5,7 @@ import { Container } from "@/components/layout/container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AddExperienceModal } from "@/components/organizer/add-experience-modal";
+import { BecomeOrganizerModal } from "@/components/organizer/become-organizer-modal";
 import { getServerAuthSession } from "@/lib/auth";
 
 export default async function DashboardPage() {
@@ -17,6 +18,7 @@ export default async function DashboardPage() {
 	const { user } = session;
 	const isAdmin = user.role === "ADMIN";
 	const isOrganizer = user.activeRole === "ORGANIZER";
+	const isExplorer = user.activeRole === "EXPLORER";
 	return (
 		<div className="bg-muted/30 py-16">
 			<Container className="space-y-10">
@@ -57,9 +59,9 @@ export default async function DashboardPage() {
 									</Button>
 									<AddExperienceModal />
 								</>
-							) : (
-								<Button variant="secondary">Become an organizer</Button>
-							)}
+							) : isExplorer ? (
+								<BecomeOrganizerModal variant="secondary" />
+							) : null}
 							<Button variant="ghost" className="text-primary">
 								Learn about hosting
 							</Button>
