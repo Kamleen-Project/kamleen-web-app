@@ -4,6 +4,7 @@ import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { saveUploadedFile } from "@/lib/uploads"
 import type { Prisma, UserRole, OrganizerStatus, AccountStatus } from "@/generated/prisma"
+import { createNotification } from "@/lib/notifications"
 
 const USER_ROLES = new Set(["EXPLORER", "ORGANIZER", "ADMIN"])
 const ORGANIZER_STATUSES = new Set(["NOT_APPLIED", "PENDING", "APPROVED", "REJECTED"])
@@ -124,6 +125,13 @@ export async function PATCH(
     data.accountStatus = accountStatus as AccountStatus
   }
 
+  // Capture previous organizer status to decide whether to notify the user
+  let prevOrganizerStatus: OrganizerStatus | null = null
+  try {
+    const existing = await prisma.user.findUnique({ where: { id: userId }, select: { organizerStatus: true } })
+    prevOrganizerStatus = (existing?.organizerStatus as OrganizerStatus | undefined) ?? null
+  } catch {}
+
   try {
     await prisma.user.update({
       where: { id: userId },
@@ -132,6 +140,37 @@ export async function PATCH(
   } catch (error) {
     console.error(error)
     return NextResponse.json({ message: "Failed to update user" }, { status: 500 })
+  }
+
+  // Send user notification when organizer request is approved or rejected
+  try {
+    const nextStatus = typeof organizerStatus === "string" && ORGANIZER_STATUSES.has(organizerStatus) ? (organizerStatus as OrganizerStatus) : null
+    if (nextStatus && nextStatus !== prevOrganizerStatus) {
+      if (nextStatus === "APPROVED") {
+        await createNotification({
+          userId,
+          title: "Organizer request approved",
+          message: "You can now access the organizer console.",
+          priority: "NORMAL",
+          eventType: "GENERAL",
+          channels: ["TOAST"],
+          href: "/dashboard/organizer",
+        })
+      } else if (nextStatus === "REJECTED") {
+        await createNotification({
+          userId,
+          title: "Organizer request rejected",
+          message: "Your request was not approved. You can update your details and reapply.",
+          priority: "NORMAL",
+          eventType: "GENERAL",
+          channels: ["TOAST"],
+          href: "/become-organizer",
+        })
+      }
+    }
+  } catch (error) {
+    // Do not fail the request if notification fails; just log.
+    console.error("Failed to create notification:", error)
   }
 
   return NextResponse.json({ ok: true })

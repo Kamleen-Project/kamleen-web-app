@@ -6,13 +6,26 @@ import { formatDistanceToNow } from "date-fns";
 import { useCallback, useMemo, useState } from "react";
 
 import { useNotifications } from "@/components/providers/notification-provider";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownPanel, DropdownPanelHeader, DropdownPanelContent } from "@/components/ui/dropdown-panel";
 import CtaIconButton from "@/components/ui/cta-icon-button";
 import { cn } from "@/lib/utils";
 
 function normalizeHref(href?: string | null) {
 	if (!href) return href ?? null;
-	return href.replace("/dashboard/organizer/organizer/", "/dashboard/organizer/");
+	// Fix accidental double segment
+	let out = href.replace("/dashboard/organizer/organizer/", "/dashboard/organizer/");
+	// Back-compat: collapse older role-switch links into direct destination
+	try {
+		if (out.startsWith("/switch-role")) {
+			const url = new URL(out, typeof window !== "undefined" ? window.location.origin : "https://kamleen.com");
+			const to = (url.searchParams.get("to") || "").toLowerCase();
+			const redirect = url.searchParams.get("redirect") || "/dashboard";
+			if (to === "organizer") {
+				out = redirect || "/dashboard/organizer";
+			}
+		}
+	} catch {}
+	return out;
 }
 
 export function NotificationsBell() {
@@ -33,23 +46,28 @@ export function NotificationsBell() {
 	);
 
 	return (
-		<Popover open={open} onOpenChange={handleOpenChange}>
-			<PopoverTrigger asChild>
+		<DropdownPanel
+			open={open}
+			onOpenChange={handleOpenChange}
+			align="end"
+			className="w-96 p-0"
+			trigger={
 				<CtaIconButton color="whiteBorder" size="md" ariaLabel="Notifications" badgeCount={unreadCount}>
 					<Bell className="size-5" />
 				</CtaIconButton>
-			</PopoverTrigger>
-			<PopoverContent className="w-96 p-0" align="end">
+			}
+		>
+			<DropdownPanelHeader title={<span className="text-sm font-semibold">Notifications</span>} />
+			<DropdownPanelContent className="p-0">
 				<div className="max-h-[28rem] overflow-auto">
-					<div className="border-b border-border/60 px-4 py-3 text-sm font-semibold">Notifications</div>
 					{items.length === 0 ? (
-						<div className="px-4 py-10 text-center text-sm text-muted-foreground">You&apos;re all caught up.</div>
+						<div className="flex min-h-[240px] items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">You&apos;re all caught up.</div>
 					) : (
+						// <div className="px-4 py-10 text-center text-sm text-muted-foreground">You&apos;re all caught up.</div>
 						<ul className="divide-y divide-border/60">
 							{items.map((n) => (
 								<li key={n.id} className={cn("px-4 py-3", !n.readAt && "bg-accent/30")}>
 									<div className="flex items-start gap-3">
-										{/* Left dot indicator for unread */}
 										<span
 											className={cn(
 												"mt-1 inline-block h-2 w-2 flex-shrink-0 rounded-full",
@@ -75,7 +93,7 @@ export function NotificationsBell() {
 						</ul>
 					)}
 				</div>
-			</PopoverContent>
-		</Popover>
+			</DropdownPanelContent>
+		</DropdownPanel>
 	);
 }

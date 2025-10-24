@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+// Link removed; using reusable MenuItem components instead
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 
@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { CtaButton } from "@/components/ui/cta-button";
 import { BecomeOrganizerModal } from "@/components/organizer/become-organizer-modal";
+import { DropdownPanel, DropdownPanelHeader, DropdownPanelContent, DropdownPanelFooter } from "@/components/ui/dropdown-panel";
+import { MenuItem } from "@/components/ui/menu-item";
 
 const roleLabels: Record<string, string> = {
 	EXPLORER: "Explorer",
@@ -34,30 +36,6 @@ export function ProfileMenu() {
 	useEffect(() => {
 		setAvatarError(false);
 	}, [session?.user?.image]);
-
-	useEffect(() => {
-		if (!open) return;
-
-		function handleClick(event: MouseEvent) {
-			if (!menuRef.current) return;
-			if (!menuRef.current.contains(event.target as Node)) {
-				setOpen(false);
-			}
-		}
-
-		function handleKeyDown(event: KeyboardEvent) {
-			if (event.key === "Escape") {
-				setOpen(false);
-			}
-		}
-
-		window.addEventListener("click", handleClick);
-		window.addEventListener("keydown", handleKeyDown);
-		return () => {
-			window.removeEventListener("click", handleClick);
-			window.removeEventListener("keydown", handleKeyDown);
-		};
-	}, [open]);
 
 	if (status === "loading") {
 		return (
@@ -105,106 +83,95 @@ export function ProfileMenu() {
 			.slice(0, 2)
 			.toUpperCase() || "TU";
 	const menuId = "profile-menu-dropdown";
-	const isAdmin = session.user.role === "ADMIN";
-	const isOrganizer = session.user.activeRole === "ORGANIZER";
-	const isExplorer = session.user.activeRole === "EXPLORER";
-	const isOrganizerApproved = session.user.organizerStatus === "APPROVED";
+	// Narrow to augmented user type from next-auth.d.ts
+	const user = session.user as typeof session.user & {
+		role: string;
+		activeRole: string;
+		organizerStatus: string;
+	};
+	const isAdmin = user.role === "ADMIN";
+	const isOrganizer = user.activeRole === "ORGANIZER";
+	const isExplorer = user.activeRole === "EXPLORER";
+	const isOrganizerApproved = user.organizerStatus === "APPROVED";
 	const showBecomeOrganizer = !isOrganizerApproved && isExplorer && !isAdmin;
 	const avatarSrc = session.user.image && !avatarError ? session.user.image : null;
-	const consoleHref = isOrganizer ? "/dashboard/organizer" : session.user.activeRole === "EXPLORER" ? "/dashboard/explorer" : "/dashboard";
+	const consoleHref = isOrganizer ? "/dashboard/organizer" : user.activeRole === "EXPLORER" ? "/dashboard/explorer" : "/dashboard";
 	const profileHref = isAdmin ? "/admin/profile" : isOrganizer ? "/dashboard/organizer/profile" : "/dashboard/explorer/profile";
-	const consoleLabel = isOrganizer ? "Organizer console" : session.user.activeRole === "EXPLORER" ? "Explorer console" : "Your console";
+	const consoleLabel = isOrganizer ? "Organizer console" : user.activeRole === "EXPLORER" ? "Explorer console" : "Your console";
 
 	return (
 		<div className="relative" ref={menuRef}>
-			<Button
-				type="button"
-				variant="ghost"
-				className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition hover:bg-background focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none border-none"
-				onClick={() => setOpen((value) => !value)}
-				aria-expanded={open}
-				aria-haspopup="menu"
-				aria-controls={menuId}
-			>
-				<span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary">
-					{avatarSrc ? (
-						<Image
-							src={avatarSrc}
-							alt={session.user.name ?? session.user.email ?? "Profile photo"}
-							fill
-							sizes="32px"
-							className="object-cover"
-							onError={() => setAvatarError(true)}
-						/>
-					) : (
-						initials
-					)}
-				</span>
-			</Button>
-			{open ? (
-				<div
-					id={menuId}
-					role="menu"
-					className="absolute right-0 mt-3 w-64 overflow-hidden rounded-xl border border-border/60 bg-popover text-left text-sm shadow-xl"
-				>
-					<div className="space-y-2 bg-muted/40 p-4">
-						<p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Signed in as</p>
-						<div className="flex flex-col">
-							{session.user.name ? <p className="font-semibold text-foreground">{session.user.name}</p> : null}
-							<p className="text-sm text-muted-foreground">{session.user.email}</p>
-							<Badge variant="soft" className="mt-1 w-fit text-[11px]">
-								{roleLabels[session.user.activeRole] ?? session.user.activeRole}
-							</Badge>
-						</div>
-					</div>
-					<div className="flex flex-col gap-1 px-4 py-3">
-						<Link href={profileHref} role="menuitem" className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted">
-							View profile
-						</Link>
-						<Link href="/dashboard" role="menuitem" className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted">
-							Go to dashboard
-						</Link>
-						{!(isAdmin && consoleLabel === "Your console") ? (
-							<Link href={consoleHref} role="menuitem" className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted">
-								{consoleLabel}
-							</Link>
-						) : null}
-						{showBecomeOrganizer ? (
-							<div className="px-0">
-								<BecomeOrganizerModal
-									triggerLabel="Become an organizer"
-									variant="ghost"
-									className="w-full justify-start rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+			<DropdownPanel
+				open={open}
+				onOpenChange={(next) => {
+					if (!next && typeof document !== "undefined" && document.body.classList.contains("modal-open")) {
+						return;
+					}
+					setOpen(next);
+				}}
+				align="end"
+				trigger={
+					<Button
+						type="button"
+						variant="ghost"
+						className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition hover:bg-background focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none border-none"
+						aria-expanded={open}
+						aria-haspopup="menu"
+						aria-controls={menuId}
+					>
+						<span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary">
+							{avatarSrc ? (
+								<Image
+									src={avatarSrc}
+									alt={session.user.name ?? session.user.email ?? "Profile photo"}
+									fill
+									sizes="32px"
+									className="object-cover"
+									onError={() => setAvatarError(true)}
 								/>
-							</div>
-						) : null}
-						{isOrganizer ? (
-							<Link
-								href="/dashboard/organizer/bookings"
-								role="menuitem"
-								className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
-							>
-								Manage bookings
-							</Link>
-						) : null}
-						{isAdmin ? (
-							<Link href="/admin" role="menuitem" className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted">
-								Admin console
-							</Link>
-						) : null}
+							) : (
+								initials
+							)}
+						</span>
+					</Button>
+				}
+			>
+				<DropdownPanelHeader
+					className="bg-muted/40"
+					title={<span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Signed in as</span>}
+					right={
+						<Badge variant="soft" className="text-[11px]">
+							{roleLabels[user.activeRole] ?? user.activeRole}
+						</Badge>
+					}
+				>
+					<div className="space-y-0.5">
+						{session.user.name ? <p className="font-semibold text-foreground">{session.user.name}</p> : null}
+						<p className="text-sm text-muted-foreground">{session.user.email}</p>
 					</div>
-					<div className="border-t border-border/60 px-4 py-3">
-						<button
-							type="button"
-							role="menuitem"
-							className="w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm font-medium text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-							onClick={() => signOut({ callbackUrl: "/" })}
-						>
-							Log out
-						</button>
-					</div>
-				</div>
-			) : null}
+				</DropdownPanelHeader>
+				<DropdownPanelContent className="flex flex-col gap-1">
+					<MenuItem href={profileHref}>View profile</MenuItem>
+					<MenuItem href="/dashboard">Go to dashboard</MenuItem>
+					{!(isAdmin && consoleLabel === "Your console") ? <MenuItem href={consoleHref}>{consoleLabel}</MenuItem> : null}
+					{showBecomeOrganizer ? (
+						<BecomeOrganizerModal
+							trigger={
+								<MenuItem variant="cta" className="justify-start">
+									Become an organizer
+								</MenuItem>
+							}
+						/>
+					) : null}
+					{isOrganizer ? <MenuItem href="/dashboard/organizer/bookings">Manage bookings</MenuItem> : null}
+					{isAdmin ? <MenuItem href="/admin">Admin console</MenuItem> : null}
+				</DropdownPanelContent>
+				<DropdownPanelFooter>
+					<MenuItem variant="danger" onClick={() => signOut({ callbackUrl: "/" })}>
+						Log out
+					</MenuItem>
+				</DropdownPanelFooter>
+			</DropdownPanel>
 		</div>
 	);
 }

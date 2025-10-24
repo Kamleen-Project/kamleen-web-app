@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { RefreshCcw, Trash } from "lucide-react";
 
 type AspectMode = "square" | "threeFour" | "fullWidth";
@@ -36,6 +36,8 @@ export function UploadSinglePicture({
 	className = "",
 }: UploadSinglePictureProps) {
 	const inputRef = useRef<HTMLInputElement | null>(null);
+	const generatedId = useId();
+	const inputId = id ?? generatedId;
 
 	function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
 		const file = event.target.files?.[0];
@@ -54,7 +56,7 @@ export function UploadSinglePicture({
 
 	return (
 		<div className={`${containerClasses} ${className}`}>
-			<input ref={inputRef} id={id} name={name} type="file" accept="image/*" className="hidden" onChange={handleInputChange} />
+			<input ref={inputRef} id={inputId} name={name} type="file" accept="image/*" className="hidden" onChange={handleInputChange} />
 			{previewUrl ? (
 				<>
 					<Image src={previewUrl} alt="Selected image" fill unoptimized sizes="200px" className="object-cover" />
@@ -87,7 +89,7 @@ export function UploadSinglePicture({
 				</>
 			) : (
 				<label
-					htmlFor={id}
+					htmlFor={inputId}
 					className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-1 bg-background/50 text-center hover:bg-primary/5"
 				>
 					<span className="text-sm font-medium text-foreground">{uploadLabel}</span>

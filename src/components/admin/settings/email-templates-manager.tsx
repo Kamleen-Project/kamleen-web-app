@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { FormControl, FormDescription, FormField, FormInput, FormLabel, FormMessage, FormTextarea } from "@/components/ui/form";
+import { FormControl, FormDescription, FormField, FormInput, FormLabel, FormMessage } from "@/components/ui/form";
 import { InputField } from "@/components/ui/input-field";
 import { TextareaField } from "@/components/ui/textarea-field";
 import { SelectField } from "@/components/ui/select-field";
 import { Plus } from "lucide-react";
+import { CodeEditor } from "@/components/ui/code-editor";
 
 type EmailTemplate = {
 	id: string;
@@ -372,12 +373,10 @@ export function EmailTemplatesManager() {
 								</div>
 								<FormControl>
 									{htmlEditorMode === "code" ? (
-										<FormTextarea
-											name="html"
-											value={htmlValue}
-											onChange={(e) => setHtmlValue(e.target.value)}
-											className="h-[400px] resize-none overflow-auto"
-										/>
+										<div className="rounded-md border border-input bg-background">
+											<input type="hidden" name="html" value={htmlValue} />
+											<CodeEditor value={htmlValue} onChange={setHtmlValue} language="html" height={400} ariaLabel="Email template HTML editor" />
+										</div>
 									) : (
 										<div className="rounded-md border border-input bg-background">
 											{/* Keep form data in sync while previewing */}

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
+import { X } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormControl, FormDescription, FormField, FormInput, FormLabel, FormSelect, FormTextarea } from "@/components/ui/form";
 import { DurationSelector } from "@/components/ui/duration-selector";
@@ -23,6 +25,7 @@ import { RadioGroupField } from "@/components/ui/radio-group-field";
 import { SelectField } from "@/components/ui/select-field";
 import { TagsInput } from "@/components/ui/tags-input";
 import { PriceInput } from "@/components/ui/price-input";
+import { CheckboxField } from "@/components/ui/checkbox-field";
 
 type Mode = "create" | "edit";
 
@@ -1535,52 +1538,29 @@ export function ExperienceWizard({
 		}
 		if (organizerIntro && currentStep === 0) {
 			return (
-				<div className="space-y-6">
-					<Card className="border-border/60 bg-card/80 shadow-sm">
-						<CardHeader>
-							<h3 className="text-base font-semibold text-foreground">Organizer</h3>
-							<p className="text-sm text-muted-foreground">Share a little about yourself and your hosting plans.</p>
-						</CardHeader>
-						<CardContent className="space-y-4">
-							<TextareaField
-								label={
-									<>
-										Tell us about yourself <span className="text-destructive">*</span>
-									</>
-								}
-								rows={4}
-								value={state.organizerAboutSelf ?? ""}
-								onChange={(e) => setState((prev) => ({ ...prev, organizerAboutSelf: e.target.value }))}
-								placeholder="Background, hosting style, relevant experience"
-								required
-							/>
-							<TextareaField
-								label={
-									<>
-										Tell us about your experience <span className="text-destructive">*</span>
-									</>
-								}
-								rows={4}
-								value={state.organizerAboutExperience ?? ""}
-								onChange={(e) => setState((prev) => ({ ...prev, organizerAboutExperience: e.target.value }))}
-								placeholder="What will guests do? Why is it special? Safety and logistics"
-								required
-							/>
-							<div className="flex items-center gap-2">
-								<input
-									id="organizer-terms"
-									type="checkbox"
-									checked={Boolean(state.organizerTermsAccepted)}
-									onChange={(e) => setState((prev) => ({ ...prev, organizerTermsAccepted: e.target.checked }))}
-									className="h-4 w-4"
-								/>
-								<label htmlFor="organizer-terms" className="text-sm text-foreground">
-									I agree to the organizer terms & conditions
-								</label>
-							</div>
-							{!organizerIntroValid ? <p className="text-xs text-muted-foreground">Add at least 30 characters to each field and accept the terms.</p> : null}
-						</CardContent>
-					</Card>
+				<div className="space-y-8 p-2">
+					<TextareaField
+						label={"Tell us about yourself"}
+						rows={4}
+						value={state.organizerAboutSelf ?? ""}
+						onChange={(e) => setState((prev) => ({ ...prev, organizerAboutSelf: e.target.value }))}
+						placeholder="Background, hosting style, relevant experience"
+						required
+					/>
+					<TextareaField
+						label={"Tell us about your experience"}
+						rows={4}
+						value={state.organizerAboutExperience ?? ""}
+						onChange={(e) => setState((prev) => ({ ...prev, organizerAboutExperience: e.target.value }))}
+						placeholder="What will guests do? Why is it special? Safety and logistics"
+						required
+					/>
+					<CheckboxField
+						id="organizer-terms"
+						checked={Boolean(state.organizerTermsAccepted)}
+						onChange={(e) => setState((prev) => ({ ...prev, organizerTermsAccepted: (e.target as HTMLInputElement).checked }))}
+						label={<span className="text-sm text-foreground">I agree to the organizer terms & conditions</span>}
+					/>
 				</div>
 			);
 		}
@@ -1590,22 +1570,14 @@ export function ExperienceWizard({
 				return (
 					<div className="space-y-6">
 						<InputField
-							label={
-								<>
-									Experience title <span className="text-destructive">*</span>
-								</>
-							}
+							label={"Experience title"}
 							value={state.title}
 							onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleBasicFieldChange("title", event.target.value)}
 							required
 						/>
 
 						<InputField
-							label={
-								<>
-									Short summary <span className="text-destructive">*</span>
-								</>
-							}
+							label={"Short summary"}
 							value={state.summary}
 							onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleBasicFieldChange("summary", event.target.value)}
 							placeholder="What guests can expect"
@@ -1615,11 +1587,7 @@ export function ExperienceWizard({
 
 						<div className="space-y-2">
 							<TextareaField
-								label={
-									<>
-										Detailed description <span className="text-destructive">*</span>
-									</>
-								}
+								label={"Detailed description"}
 								rows={6}
 								value={state.description}
 								onChange={(event) => handleBasicFieldChange("description", event.target.value)}
@@ -1655,11 +1623,7 @@ export function ExperienceWizard({
 						<div className="grid gap-4 sm:grid-cols-2">
 							<div className="space-y-2">
 								<SelectField
-									label={
-										<>
-											Category <span className="text-destructive">*</span>
-										</>
-									}
+									label={"Category"}
 									value={state.categoryId}
 									required
 									onChange={(event) => {
@@ -1697,11 +1661,7 @@ export function ExperienceWizard({
 						<div className="grid gap-4 sm:grid-cols-2">
 							<div className="space-y-2">
 								<PriceInput
-									label={
-										<>
-											Price per spot <span className="text-destructive">*</span>
-										</>
-									}
+									label={"Price per spot"}
 									value={state.price}
 									onValueChange={(next) => handleBasicFieldChange("price", next)}
 									required
@@ -1710,9 +1670,7 @@ export function ExperienceWizard({
 							</div>
 							<div className="space-y-2">
 								<FormField>
-									<FormLabel>
-										Duration <span className="text-destructive">*</span>
-									</FormLabel>
+									<FormLabel>Duration</FormLabel>
 									<DurationSelector
 										value={{ days: state.durationDays, hours: state.durationHours, minutes: state.durationMinutes }}
 										onChange={(next) => setState((prev) => ({ ...prev, durationDays: next.days, durationHours: next.hours, durationMinutes: next.minutes }))}
@@ -1737,9 +1695,7 @@ export function ExperienceWizard({
 					<div className="space-y-6">
 						<Card className="border-border/60 bg-card/80 shadow-sm">
 							<CardHeader className="gap-2">
-								<h3 className="text-base font-semibold text-foreground">
-									Featured image <span className="text-destructive">*</span>
-								</h3>
+								<h3 className="text-base font-semibold text-foreground">Featured image</h3>
 								<p className="text-sm text-muted-foreground">This hero photo is used across cards and top of the experience page.</p>
 							</CardHeader>
 							<CardContent className="flex flex-col gap-4">
@@ -1773,9 +1729,7 @@ export function ExperienceWizard({
 
 						<Card className="border-border/60 bg-card/80 shadow-sm">
 							<CardHeader className="gap-2">
-								<h3 className="text-base font-semibold text-foreground">
-									Gallery <span className="text-destructive">*</span>
-								</h3>
+								<h3 className="text-base font-semibold text-foreground">Gallery</h3>
 								<div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
 									<p className="text-sm text-muted-foreground">Showcase different moments—behind the scenes, preparation, or guest highlights.</p>
 									<span className="text-xs font-medium text-muted-foreground">
@@ -1837,11 +1791,7 @@ export function ExperienceWizard({
 											</div>
 											<div className="space-y-4 flex-1 min-w-0">
 												<InputField
-													label={
-														<>
-															Title <span className="text-destructive">*</span>
-														</>
-													}
+													label={"Title"}
 													value={step.title}
 													onChange={(event) => updateItineraryField(step.id, "title", event.target.value)}
 													required
@@ -1883,11 +1833,7 @@ export function ExperienceWizard({
 				return (
 					<div className="space-y-6">
 						<InputField
-							label={
-								<>
-									Address <span className="text-destructive">*</span>
-								</>
-							}
+							label={"Address"}
 							value={state.meeting.address}
 							onChange={(event) => setState((prev) => ({ ...prev, meeting: { ...prev.meeting, address: event.target.value } }))}
 							placeholder="Street and number"
@@ -1897,11 +1843,7 @@ export function ExperienceWizard({
 						<div className="grid gap-4 sm:grid-cols-3">
 							<div className="space-y-2">
 								<SelectField
-									label={
-										<>
-											Country <span className="text-destructive">*</span>
-										</>
-									}
+									label={"Country"}
 									value={state.meeting.countryId}
 									required
 									onChange={(event) => {
@@ -1930,11 +1872,7 @@ export function ExperienceWizard({
 							</div>
 							<div className="space-y-2">
 								<SelectField
-									label={
-										<>
-											State/Region <span className="text-destructive">*</span>
-										</>
-									}
+									label={"State/Region"}
 									value={state.meeting.stateId}
 									onChange={(event) => {
 										const id = event.target.value;
@@ -1960,11 +1898,7 @@ export function ExperienceWizard({
 							</div>
 							<div className="space-y-2">
 								<SelectField
-									label={
-										<>
-											City <span className="text-destructive">*</span>
-										</>
-									}
+									label={"City"}
 									value={state.meeting.cityId}
 									onChange={(event) => {
 										const id = event.target.value;
@@ -2082,9 +2016,7 @@ export function ExperienceWizard({
 											<div className="grid gap-4 sm:grid-cols-3">
 												<div className="space-y-3">
 													<FormField>
-														<FormLabel>
-															Start date <span className="text-destructive">*</span>
-														</FormLabel>
+														<FormLabel>Start date</FormLabel>
 														<Popover>
 															<PopoverTrigger asChild>
 																<Button type="button" variant="outline" className="h-11 justify-start gap-2 text-left font-normal">
@@ -2109,9 +2041,7 @@ export function ExperienceWizard({
 												</div>
 												<div className="space-y-3">
 													<FormField>
-														<FormLabel>
-															Start time <span className="text-destructive">*</span>
-														</FormLabel>
+														<FormLabel>Start time</FormLabel>
 														<FormControl>
 															<div className="flex items-center gap-2">
 																<select
@@ -2155,9 +2085,7 @@ export function ExperienceWizard({
 												</div>
 												<div className="space-y-3">
 													<FormField>
-														<FormLabel>
-															Capacity <span className="text-destructive">*</span>
-														</FormLabel>
+														<FormLabel>Capacity</FormLabel>
 														<FormControl>
 															<Stepper
 																value={session.capacity}
@@ -2406,16 +2334,15 @@ export function ExperienceWizard({
 			<header className="border-b border-border/60 px-6 py-4">
 				<div className="flex items-center justify-between">
 					<div>
-						<p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-							Step {currentStep + 1} of {totalSteps}
-						</p>
 						<h2 className="text-lg font-semibold text-foreground">{steps[currentStep].title}</h2>
 						<p className="text-sm text-muted-foreground">{steps[currentStep].description}</p>
 					</div>
 					{onClose ? (
-						<Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:text-foreground">
-							Close
-						</Button>
+						<CtaButton asChild size="sm" color="white" className="ml-2">
+							<button type="button" onClick={onClose} aria-label="Close wizard">
+								<X className="h-4 w-4" />
+							</button>
+						</CtaButton>
 					) : null}
 				</div>
 				<nav aria-label="Wizard progress" className="mt-6 hidden lg:block">
@@ -2449,25 +2376,25 @@ export function ExperienceWizard({
 			<div className="flex-1 overflow-y-auto px-6 py-6">{renderStepContent()}</div>
 			<footer className="border-t border-border/60 bg-muted/40 px-6 py-4">
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-					<Button variant="ghost" onClick={prevStep} disabled={currentStep === 0}>
+					<CtaButton color="white" onClick={prevStep} disabled={currentStep === 0}>
 						Back
-					</Button>
+					</CtaButton>
 					<div className="flex items-center gap-2">
 						{currentStep < totalSteps - 1 ? (
 							<>
-								<Button variant="outline" onClick={handleSaveDraft} disabled={pending}>
+								<CtaButton color="whiteBorder" onClick={handleSaveDraft} disabled={pending}>
 									{pending ? "Saving..." : "Save draft"}
-								</Button>
-								<Button onClick={nextStep} disabled={disabledNext}>
+								</CtaButton>
+								<CtaButton onClick={nextStep} disabled={disabledNext}>
 									{organizerIntro && currentStep === 0 ? "Add your Experience" : "Next"}
-								</Button>
+								</CtaButton>
 							</>
 						) : (
 							<>
-								<Button variant="outline" onClick={handleSaveDraft} disabled={pending}>
+								<CtaButton color="whiteBorder" onClick={handleSaveDraft} disabled={pending}>
 									{pending ? "Saving..." : "Save draft"}
-								</Button>
-								<Button onClick={handleSubmit} disabled={pending || disabledNext}>
+								</CtaButton>
+								<CtaButton onClick={handleSubmit} disabled={pending || disabledNext}>
 									{pending
 										? "Saving..."
 										: submissionMode === "organizer-request"
@@ -2475,7 +2402,7 @@ export function ExperienceWizard({
 										: mode === "create"
 										? "Publish experience"
 										: "Save changes"}
-								</Button>
+								</CtaButton>
 							</>
 						)}
 					</div>

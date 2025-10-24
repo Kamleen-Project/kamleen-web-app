@@ -13,10 +13,21 @@ type InputFieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export function InputField({ label, caption, error, className, containerClassName, ...props }: InputFieldProps) {
+	const showRequiredStar = Boolean(props?.required) && Boolean(label);
+	const labelContent = label ? (
+		<span className="inline-flex items-center gap-1">
+			{label}
+			{showRequiredStar ? (
+				<span className="text-destructive" aria-hidden="true">
+					*
+				</span>
+			) : null}
+		</span>
+	) : null;
 	return (
 		<div className={cn("space-y-2", containerClassName)}>
 			<FormField error={typeof error === "string" ? error : undefined} description={typeof caption === "string" ? caption : undefined}>
-				{label ? <FormLabel>{label}</FormLabel> : null}
+				{labelContent ? <FormLabel>{labelContent}</FormLabel> : null}
 				<FormControl>
 					<Input className={className} {...props} />
 				</FormControl>

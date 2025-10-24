@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 // No arrow icon for the group header to keep a clean alignment
 
 import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
+import * as Icons from "lucide-react";
 import type { ConsoleNavItem } from "@/config/console-nav";
 import { ConsoleSidebarMenuItem } from "@/components/console/sidebar-menu-item";
 
@@ -12,6 +14,7 @@ export function ConsoleSidebarMenuGroup({ item }: { item: ConsoleNavItem }) {
 	const pathname = usePathname();
 	const isInGroup = useMemo(() => pathname.startsWith(item.href), [pathname, item.href]);
 	const [open, setOpen] = useState<boolean>(isInGroup);
+	const Icon: LucideIcon | undefined = typeof item.icon === "string" ? (Icons as unknown as Record<string, LucideIcon>)[item.icon] : undefined;
 
 	return (
 		<div className="rounded-xl">
@@ -23,6 +26,7 @@ export function ConsoleSidebarMenuGroup({ item }: { item: ConsoleNavItem }) {
 					isInGroup ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
 				)}
 			>
+				{Icon ? <Icon className="mr-3 h-4 w-4 shrink-0" /> : null}
 				<div className="min-w-0">
 					<div className="truncate text-sm font-semibold">{item.label}</div>
 					{item.description ? <div className="truncate text-xs text-muted-foreground group-hover:text-muted-foreground">{item.description}</div> : null}

@@ -13,8 +13,13 @@ export default async function ExplorerLayout({ children }: { children: React.Rea
 		redirect("/login");
 	}
 
-	if (session.user.activeRole !== "EXPLORER") {
-		redirect("/dashboard");
+	// Only allow explorers (and block organizer console users)
+	if (session.user.role === "ADMIN") {
+		redirect("/admin");
+	}
+
+	if (session.user.activeRole === "ORGANIZER") {
+		redirect("/dashboard/organizer");
 	}
 
 	return (

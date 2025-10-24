@@ -65,6 +65,7 @@ model User {
   emailVerified      DateTime?
   lastLoginAt        DateTime?
   birthDate          DateTime?
+  gender             Gender?
   termsAcceptedAt    DateTime?
   onboardingCompletedAt DateTime?
   image              String?
@@ -96,6 +97,12 @@ model User {
   @@index([role])
   @@index([activeRole])
   @@index([accountStatus])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  RATHER_NOT_SAY
 }
 
 model Experience {

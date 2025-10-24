@@ -28,6 +28,8 @@ export default async function AdminProfilePage() {
 			website: true,
 			phone: true,
 			image: true,
+			gender: true,
+			birthDate: true,
 			preferredLanguage: true,
 			preferredCurrency: true,
 			preferredTimezone: true,

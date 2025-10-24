@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { CtaIconButton } from "@/components/ui/cta-icon-button";
+import { Check, X } from "lucide-react";
 
 export function OrganizerRequestActions({ userId, userRole }: { userId: string; userRole: string }) {
 	const router = useRouter();
@@ -43,12 +44,12 @@ export function OrganizerRequestActions({ userId, userRole }: { userId: string; 
 	return (
 		<div className="flex flex-col items-stretch gap-2">
 			<div className="flex gap-2">
-				<Button size="sm" onClick={() => updateRequest("APPROVED")} disabled={pending}>
-					Approve
-				</Button>
-				<Button size="sm" variant="outline" onClick={() => updateRequest("REJECTED")} disabled={pending}>
-					Reject
-				</Button>
+				<CtaIconButton size="md" color="black" onClick={() => updateRequest("APPROVED")} isLoading={pending} ariaLabel="Approve organizer request">
+					<Check />
+				</CtaIconButton>
+				<CtaIconButton size="md" color="red" onClick={() => updateRequest("REJECTED")} isLoading={pending} ariaLabel="Reject organizer request">
+					<X />
+				</CtaIconButton>
 			</div>
 			{error ? <p className="text-xs text-destructive">{error}</p> : null}
 			{!error && message ? <p className="text-xs text-muted-foreground">{message}</p> : null}

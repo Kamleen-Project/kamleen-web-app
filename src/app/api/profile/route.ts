@@ -59,6 +59,19 @@ export async function PATCH(request: Request) {
         ;(data as { accountStatus?: string }).accountStatus = nextStatus
       }
 
+      // Enforce required fields during onboarding: gender and birthDate when accepting terms
+      const acceptingTerms = (data as { termsAcceptedAt?: Date | null }).termsAcceptedAt instanceof Date
+      if (acceptingTerms) {
+        const gender = (data as { gender?: string | null }).gender
+        const birthDate = (data as { birthDate?: Date | null }).birthDate
+        if (!gender || !isAllowedGender(String(gender))) {
+          throw new Error("Gender is required during onboarding")
+        }
+        if (!(birthDate instanceof Date) || isNaN((birthDate as Date).getTime())) {
+          throw new Error("Birth date is required during onboarding")
+        }
+      }
+
       await prisma.user.update({ where: { id: session.user.id }, data })
 
       return NextResponse.json({ ok: true })
@@ -107,6 +120,14 @@ export async function PATCH(request: Request) {
   if (typeof preferredTimezone === "string") {
     const normalized = normalizePreference(preferredTimezone)
     if (normalized !== undefined) data.preferredTimezone = normalized
+  }
+
+  // Optional gender in JSON body
+  if (typeof (body as Record<string, unknown>).gender === "string") {
+    const normalized = String((body as Record<string, unknown>).gender).toUpperCase().trim()
+    if (isAllowedGender(normalized)) {
+      ;(data as { gender?: string | null }).gender = normalized
+    }
   }
 
   // Optional notification preferences in JSON body
@@ -195,6 +216,17 @@ async function buildUpdateFromFormData(formData: FormData, userId: string) {
     }
   }
 
+  // Optional gender via form-data (radio group)
+  const genderRaw = getOptionalString(formData, "gender")
+  if (genderRaw !== undefined) {
+    const normalized = (genderRaw ?? "").toUpperCase()
+    if (isAllowedGender(normalized)) {
+      ;(data as { gender?: string | null }).gender = normalized
+    } else if (genderRaw === null) {
+      ;(data as { gender?: string | null }).gender = null
+    }
+  }
+
   // Optional notification preferences via form-data (checkboxes)
   const prefKeys = [
     "toastEnabled",
@@ -263,4 +295,8 @@ function getOptionalPreferenceString(formData: FormData, key: string) {
   }
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : undefined
+}
+
+function isAllowedGender(value: string) {
+  return value === "MALE" || value === "FEMALE" || value === "RATHER_NOT_SAY"
 }

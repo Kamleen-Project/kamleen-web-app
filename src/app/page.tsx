@@ -254,21 +254,6 @@ export default async function Home() {
 							</Container>
 						</section>
 					) : null}
-
-					<section id="hosts" className="scroll-mt-28">
-						<Container className="space-y-12">
-							<SectionHeading
-								eyebrow="Meet the hosts"
-								title="Stories from the people who make Kamleen special"
-								description="Hosts open their studios, kitchens, and neighborhoods so you can experience the magic of their everyday."
-							/>
-							<div className="grid gap-6 md:grid-cols-2">
-								{hosts.map((host) => (
-									<HostCard key={host.id} host={host} />
-								))}
-							</div>
-						</Container>
-					</section>
 				</main>
 			</div>
 		</div>

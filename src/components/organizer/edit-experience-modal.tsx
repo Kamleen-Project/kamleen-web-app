@@ -7,6 +7,8 @@ import { Button, type buttonVariants } from "@/components/ui/button";
 import type { VariantProps } from "class-variance-authority";
 import { ExperienceWizard, type ExperienceWizardInitialData } from "./experience-wizard";
 import BalloonLoading from "@/components/ui/balloon-loading";
+import { CtaIconButton } from "@/components/ui/cta-icon-button";
+import { Pencil } from "lucide-react";
 
 type CategoryOption = { id: string; name: string };
 type LocationCountry = {
@@ -152,9 +154,21 @@ export function EditExperienceModal({
 
 	return (
 		<>
-			<Button size={size} variant={variant} onClick={() => setOpen(true)} className={className}>
-				{children ?? label}
-			</Button>
+			{size === "icon" ? (
+				<CtaIconButton
+					size="md"
+					color={variant === "outline" ? "whiteBorder" : "black"}
+					onClick={() => setOpen(true)}
+					className={className}
+					ariaLabel={typeof label === "string" ? label : "Edit"}
+				>
+					{children ?? <Pencil />}
+				</CtaIconButton>
+			) : (
+				<Button size={size} variant={variant} onClick={() => setOpen(true)} className={className}>
+					{children ?? label}
+				</Button>
+			)}
 			{modalContent}
 		</>
 	);

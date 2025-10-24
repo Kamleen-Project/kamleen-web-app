@@ -108,7 +108,7 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
 
 	return (
 		<div className={cn("flex h-full w-full min-h-[340px] flex-col", className)}>
-			<Link href={`/experiences/${experience.slug}`} className="relative block aspect-[4/3] w-full overflow-hidden rounded-lg">
+			<Link href={`/experiences/${experience.slug}`} className="group relative block aspect-[4/3] w-full overflow-hidden rounded-lg">
 				<FallbackCover
 					src={experience.image ?? "/images/image-placeholder.png"}
 					alt={experience.title}
@@ -174,5 +174,14 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
 
 function FallbackCover({ src, alt, sizes }: { src: string; alt: string; sizes: string }) {
 	const [imageSrc, setImageSrc] = useState<string>(src);
-	return <Image src={imageSrc} alt={alt} fill sizes={sizes} className="object-cover" onError={() => setImageSrc("/images/image-placeholder.png")} />;
+	return (
+		<Image
+			src={imageSrc}
+			alt={alt}
+			fill
+			sizes={sizes}
+			className="object-cover transition-transform duration-300 ease-out group-hover:scale-110"
+			onError={() => setImageSrc("/images/image-placeholder.png")}
+		/>
+	);
 }

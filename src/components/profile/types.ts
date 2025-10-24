@@ -18,6 +18,8 @@ export type UserProfileData = {
   website: string | null
   phone: string | null
   image: string | null
+  gender?: "MALE" | "FEMALE" | "RATHER_NOT_SAY" | null
+  birthDate?: string | Date | null
   preferredLanguage: string
   preferredCurrency: string
   preferredTimezone: string

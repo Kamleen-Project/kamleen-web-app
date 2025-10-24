@@ -16,13 +16,25 @@ type RadioGroupFieldProps = {
 	options: RadioOption[];
 	className?: string;
 	containerClassName?: string;
+	required?: boolean;
 };
 
-export function RadioGroupField({ label, caption, error, name, value, onChange, options, className, containerClassName }: RadioGroupFieldProps) {
+export function RadioGroupField({ label, caption, error, name, value, onChange, options, className, containerClassName, required }: RadioGroupFieldProps) {
+	const showRequiredStar = Boolean(required) && Boolean(label);
+	const labelContent = label ? (
+		<span className="inline-flex items-center gap-1">
+			{label}
+			{showRequiredStar ? (
+				<span className="text-destructive" aria-hidden="true">
+					*
+				</span>
+			) : null}
+		</span>
+	) : null;
 	return (
 		<div className={cn("space-y-2", containerClassName)}>
 			<FormField error={typeof error === "string" ? error : undefined} description={typeof caption === "string" ? caption : undefined}>
-				{label ? <FormLabel>{label}</FormLabel> : null}
+				{labelContent ? <FormLabel>{labelContent}</FormLabel> : null}
 				<FormControl>
 					<div role="radiogroup" className={cn("flex flex-wrap gap-3", className)}>
 						{options.map((opt) => (
@@ -40,6 +52,7 @@ export function RadioGroupField({ label, caption, error, name, value, onChange, 
 									checked={value === opt.value}
 									onChange={(e) => onChange(e.target.value)}
 									className="accent-primary"
+									required={Boolean(required)}
 								/>
 								{opt.label}
 							</label>

@@ -23,7 +23,7 @@ export function ConsoleLayout({ title, subtitle, headerHref, navItems, footer, c
 						item.children && item.children.length > 0 ? (
 							<ConsoleSidebarMenuGroup key={item.href} item={item} />
 						) : (
-							<ConsoleSidebarMenuItem key={item.href} href={item.href} title={item.label} subtitle={item.description} />
+							<ConsoleSidebarMenuItem key={item.href} href={item.href} title={item.label} subtitle={item.description} icon={item.icon} />
 						)
 					)}
 				</ConsoleSidebar>

@@ -38,22 +38,14 @@ export function MapLatLng({ lat, lng, onLatChange, onLngChange, onMapChange, hei
 				</div>
 				<div className="space-y-2">
 					<InputField
-						label={
-							<>
-								{labels?.lat ?? "Latitude"} {required ? <span className="text-destructive">*</span> : null}
-							</>
-						}
+						label={labels?.lat ?? "Latitude"}
 						value={lat}
 						onChange={(e) => onLatChange(e.target.value)}
 						placeholder="e.g., 37.7749"
 						required={required}
 					/>
 					<InputField
-						label={
-							<>
-								{labels?.lng ?? "Longitude"} {required ? <span className="text-destructive">*</span> : null}
-							</>
-						}
+						label={labels?.lng ?? "Longitude"}
 						value={lng}
 						onChange={(e) => onLngChange(e.target.value)}
 						placeholder="e.g., -122.4194"

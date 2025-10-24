@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { useNotifications } from "@/components/providers/notification-provider";
 
-export function ResendVerificationButton({ email }: { email: string }) {
+type ResendVerificationButtonProps = Omit<React.ComponentProps<typeof CtaButton>, "onClick" | "type" | "disabled" | "children"> & {
+	email: string;
+};
+
+export function ResendVerificationButton({ email, ...props }: ResendVerificationButtonProps) {
 	const { notify } = useNotifications();
 	const [pending, setPending] = useState(false);
 
@@ -30,8 +34,8 @@ export function ResendVerificationButton({ email }: { email: string }) {
 	}
 
 	return (
-		<Button type="button" size="sm" onClick={handleClick} disabled={pending}>
+		<CtaButton type="button" size="md" onClick={handleClick} disabled={pending} {...props}>
 			{pending ? "Sending..." : "Resend verification email"}
-		</Button>
+		</CtaButton>
 	);
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { useNotifications } from "@/components/providers/notification-provider";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { cn } from "@/lib/utils";
 
 type SwitchableRole = "EXPLORER" | "ORGANIZER";
@@ -63,7 +63,10 @@ export function RoleSwitcher({ className }: { className?: string }) {
 			}
 
 			notify({ intent: "success", message: ROLE_COPY[nextRole].success });
-			router.refresh();
+			const redirectTarget = nextRole === "ORGANIZER" ? "/dashboard/organizer" : "/dashboard/explorer";
+			setTimeout(() => {
+				router.replace(redirectTarget);
+			}, 50);
 		} catch (error) {
 			notify({ intent: "error", message: error instanceof Error ? error.message : "Unable to switch roles." });
 		} finally {
@@ -77,16 +80,17 @@ export function RoleSwitcher({ className }: { className?: string }) {
 	const isSwitching = pendingRole === targetRole;
 
 	return (
-		<Button
+		<CtaButton
 			type="button"
 			size="sm"
-			variant="secondary"
+			color="white"
 			className={cn("min-w-[10.5rem]", className)}
 			disabled={isBusy}
 			onClick={() => handleSwitch(targetRole)}
+			isLoading={isSwitching}
 			title={targetRole === "ORGANIZER" && !canUseOrganizer ? "Organizer access is pending approval" : undefined}
 		>
-			{isSwitching ? "Switching..." : targetCopy.label}
-		</Button>
+			{targetCopy.label}
+		</CtaButton>
 	);
 }

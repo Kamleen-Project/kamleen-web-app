@@ -3,7 +3,8 @@ import { formatDistanceToNowStrict } from "date-fns";
 
 import { ConsolePage } from "@/components/console/page";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { CtaIconButton } from "@/components/ui/cta-icon-button";
+import { Eye, Pencil } from "lucide-react";
 import { EditExperienceModal } from "@/components/organizer/edit-experience-modal";
 import { OrganizerRequestActions } from "@/components/admin/organizer-request-actions";
 import { prisma } from "@/lib/prisma";
@@ -100,18 +101,15 @@ export default async function AdminOrganizersPage() {
 												<div className="flex flex-col gap-3">
 													<div className="flex flex-wrap gap-2">
 														{draft ? (
-															<EditExperienceModal
-																experienceId={draft.id}
-																enableVerification
-																variant="outline"
-																size="sm"
-															>
-																Review draft
+															<EditExperienceModal experienceId={draft.id} enableVerification variant="outline" size="icon" aria-label="Review draft">
+																<Pencil className="size-4" />
 															</EditExperienceModal>
 														) : null}
-														<Button asChild variant="outline" size="sm">
-															<Link href={`/admin/users/${applicant.id}`}>View user</Link>
-														</Button>
+														<CtaIconButton asChild size="md" color="whiteBorder" ariaLabel="View user">
+															<Link href={`/admin/users/${applicant.id}`}>
+																<Eye />
+															</Link>
+														</CtaIconButton>
 													</div>
 													<OrganizerRequestActions userId={applicant.id} userRole={applicant.role} />
 												</div>

@@ -9,6 +9,9 @@ import { UploadSinglePicture } from "@/components/ui/upload-single-picture";
 import { InputField } from "@/components/ui/input-field";
 import { TextareaField } from "@/components/ui/textarea-field";
 import { SelectField } from "@/components/ui/select-field";
+import { RadioGroupField } from "@/components/ui/radio-group-field";
+import { BirthdateField } from "@/components/ui/birthdate-field";
+import { CheckboxField } from "@/components/ui/checkbox-field";
 
 import type { UserProfileData } from "./types";
 
@@ -22,6 +25,12 @@ type ProfileDetailsSectionsProps = {
 	emailReadOnly?: boolean;
 	emailDescription?: string;
 	accountExtras?: ReactNode;
+
+	// New profile basics
+	gender?: string;
+	onGenderChange?: (value: string) => void;
+	birthDate?: Date | undefined;
+	onBirthDateChange?: (d: Date | undefined) => void;
 };
 
 export function ProfileDetailsSections({
@@ -34,6 +43,10 @@ export function ProfileDetailsSections({
 	emailReadOnly = false,
 	emailDescription,
 	accountExtras,
+	gender,
+	onGenderChange,
+	birthDate,
+	onBirthDateChange,
 }: ProfileDetailsSectionsProps) {
 	const avatarInputId = useId();
 
@@ -60,6 +73,20 @@ export function ProfileDetailsSections({
 								autoComplete="name"
 								caption="Description used across the platform."
 							/>
+							<div className="grid gap-6 sm:grid-cols-2">
+								<RadioGroupField
+									label={<>Gender</>}
+									name="gender"
+									value={typeof gender === "string" ? gender : ""}
+									onChange={(v) => onGenderChange?.(v)}
+									options={[
+										{ label: <>Male</>, value: "MALE" },
+										{ label: <>Female</>, value: "FEMALE" },
+										{ label: <>Rather not say</>, value: "RATHER_NOT_SAY" },
+									]}
+								/>
+								<BirthdateField label={<>Birth date</>} name="birthDate" value={birthDate} onChange={(d) => onBirthDateChange?.(d)} />
+							</div>
 						</div>
 					</div>
 
@@ -154,60 +181,65 @@ export function ProfileDetailsSections({
 
 			{/* Explorer notification preferences */}
 			<ConsoleSection title="Notifications" subtitle="Choose how you’d like to be notified about your reservations.">
-				<div className="space-y-3 rounded-xl border border-border/60 p-4">
+				<div className="space-y-3">
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-						<label className="flex items-center gap-2 text-sm">
+						<div className="text-sm">
 							<input type="hidden" name="toastEnabled" value="false" />
-							<input type="checkbox" name="toastEnabled" defaultChecked={user.notificationPreference?.toastEnabled ?? true} value="true" />
-							<span>In-app toasts</span>
-						</label>
-						<label className="flex items-center gap-2 text-sm">
+							<CheckboxField name="toastEnabled" defaultChecked={user.notificationPreference?.toastEnabled ?? true} value="true" label={<>In-app toasts</>} />
+						</div>
+						<div className="text-sm">
 							<input type="hidden" name="emailEnabled" value="false" />
-							<input type="checkbox" name="emailEnabled" defaultChecked={user.notificationPreference?.emailEnabled ?? true} value="true" />
-							<span>Email</span>
-						</label>
-						<label className="flex items-center gap-2 text-sm">
+							<CheckboxField name="emailEnabled" defaultChecked={user.notificationPreference?.emailEnabled ?? true} value="true" label={<>Email</>} />
+						</div>
+						<div className="text-sm">
 							<input type="hidden" name="pushEnabled" value="false" />
-							<input type="checkbox" name="pushEnabled" defaultChecked={user.notificationPreference?.pushEnabled ?? false} value="true" />
-							<span>Push</span>
-						</label>
+							<CheckboxField name="pushEnabled" defaultChecked={user.notificationPreference?.pushEnabled ?? false} value="true" label={<>Push</>} />
+						</div>
 					</div>
 					<div className="pt-2 text-xs text-muted-foreground">Events</div>
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-						<label className="flex items-center gap-2 text-sm">
+						<div className="text-sm">
 							<input type="hidden" name="onBookingCreated" value="false" />
-							<input type="checkbox" name="onBookingCreated" defaultChecked={user.notificationPreference?.onBookingCreated ?? true} value="true" />
-							<span>On reservation requested</span>
-						</label>
-						<label className="flex items-center gap-2 text-sm">
+							<CheckboxField
+								name="onBookingCreated"
+								defaultChecked={user.notificationPreference?.onBookingCreated ?? true}
+								value="true"
+								label={<>On reservation requested</>}
+							/>
+						</div>
+						<div className="text-sm">
 							<input type="hidden" name="onBookingConfirmed" value="false" />
-							<input type="checkbox" name="onBookingConfirmed" defaultChecked={user.notificationPreference?.onBookingConfirmed ?? true} value="true" />
-							<span>On reservation confirmed</span>
-						</label>
-						<label className="flex items-center gap-2 text-sm">
+							<CheckboxField
+								name="onBookingConfirmed"
+								defaultChecked={user.notificationPreference?.onBookingConfirmed ?? true}
+								value="true"
+								label={<>On reservation confirmed</>}
+							/>
+						</div>
+						<div className="text-sm">
 							<input type="hidden" name="onBookingCancelled" value="false" />
-							<input type="checkbox" name="onBookingCancelled" defaultChecked={user.notificationPreference?.onBookingCancelled ?? true} value="true" />
-							<span>On reservation cancelled</span>
-						</label>
+							<CheckboxField
+								name="onBookingCancelled"
+								defaultChecked={user.notificationPreference?.onBookingCancelled ?? true}
+								value="true"
+								label={<>On reservation cancelled</>}
+							/>
+						</div>
 					</div>
 				</div>
 			</ConsoleSection>
 
 			<ConsoleSection title="Account">
 				<div className="grid gap-3">
-					<FormField>
-						<FormLabel>Email</FormLabel>
-						<FormControl>
-							<FormInput
-								name="email"
-								defaultValue={user.email ?? ""}
-								readOnly={emailReadOnly}
-								className={emailReadOnly ? "bg-muted/50" : undefined}
-								type="email"
-							/>
-						</FormControl>
-						{emailDescription ? <FormDescription>{emailDescription}</FormDescription> : null}
-					</FormField>
+					<InputField
+						label="Email"
+						name="email"
+						defaultValue={user.email ?? ""}
+						readOnly={emailReadOnly}
+						className={emailReadOnly ? "bg-muted/50" : undefined}
+						type="email"
+						caption={emailDescription}
+					/>
 					{accountExtras}
 				</div>
 			</ConsoleSection>

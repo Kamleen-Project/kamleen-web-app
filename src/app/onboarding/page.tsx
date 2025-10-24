@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { ResendVerificationButton } from "@/components/auth/resend-verification-button";
 import { OnboardingProfileForm } from "@/components/auth/onboarding-profile-form";
 
@@ -41,9 +43,9 @@ export default async function OnboardingPage() {
 
 	return (
 		<div className="min-h-[80vh] flex items-center justify-center py-16">
-			<div className="w-full max-w-3xl">
+			<div className="w-full max-w-4xl">
 				<header className="mb-6 border-b border-border/60 px-6 py-4">
-					<div className="flex items-center justify-between">
+					{/* <div className="flex items-center justify-between">
 						<div>
 							<p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
 								Step {currentStepIndex + 1} of {steps.length}
@@ -51,8 +53,8 @@ export default async function OnboardingPage() {
 							<h2 className="text-lg font-semibold text-foreground">{steps[currentStepIndex].title}</h2>
 							<p className="text-sm text-muted-foreground">{steps[currentStepIndex].description}</p>
 						</div>
-					</div>
-					<nav aria-label="Onboarding progress" className="mt-6 hidden lg:block">
+					</div> */}
+					<nav aria-label="Onboarding progress" className="hidden lg:block">
 						<ol className="flex items-center gap-3">
 							{progressSteps.map((step) => {
 								const isLast = step.index === progressSteps.length - 1;
@@ -81,8 +83,9 @@ export default async function OnboardingPage() {
 					</nav>
 				</header>
 
-				<Card className="mx-6">
-					<CardContent className="space-y-8 pt-6">
+				{/* <Card className="mx-6"> */}
+				<div className="mx-6">
+					<div className="space-y-8 pt-6 min-h-80">
 						{currentStepIndex === 0 ? (
 							<section>
 								<h2 className="text-lg font-medium">Confirm your email</h2>
@@ -90,12 +93,7 @@ export default async function OnboardingPage() {
 									<p className="text-sm text-muted-foreground">
 										We sent a verification email to <strong>{user.email}</strong>. Click the link inside to confirm.
 									</p>
-									<ResendVerificationButton email={user.email ?? ""} />
-									<div>
-										<Button asChild variant="outline" size="sm">
-											<Link href="/onboarding">I&apos;ve verified</Link>
-										</Button>
-									</div>
+									<ResendVerificationButton className="mt-6" email={user.email ?? ""} />
 								</div>
 							</section>
 						) : null}
@@ -122,15 +120,18 @@ export default async function OnboardingPage() {
 						) : null}
 
 						{currentStepIndex === 2 ? (
-							<section>
-								<h2 className="text-lg font-medium">You’re all set!</h2>
-								<p className="text-sm text-muted-foreground">
+							<section className="flex flex-col items-center justify-center py-10 text-center">
+								<div className="mb-4 rounded-full bg-emerald-50 p-3 text-emerald-600 ring-1 ring-emerald-200">
+									<CheckCircle2 className="size-8" />
+								</div>
+								<h2 className="text-2xl font-semibold tracking-tight">You’re all set!</h2>
+								<p className="mt-2 max-w-md text-sm text-muted-foreground">
 									Your account is ready. You can now create your full profile to unlock more features, or skip for now.
 								</p>
 							</section>
 						) : null}
-					</CardContent>
-					<CardFooter className="flex items-center justify-between">
+					</div>
+					<div className="flex items-center justify-between">
 						{currentStepIndex === 2 ? (
 							<Link className="text-sm text-muted-foreground underline" href="/api/onboarding/complete?next=/">
 								Skip and go home
@@ -139,21 +140,22 @@ export default async function OnboardingPage() {
 							<span />
 						)}
 						{currentStepIndex === 2 ? (
-							<Button asChild>
+							<CtaButton asChild>
 								<Link href="/api/onboarding/complete?next=/dashboard/explorer/profile">Create my profile</Link>
-							</Button>
+							</CtaButton>
 						) : (
-							<Button
+							<CtaButton
 								form={currentStepIndex === 1 ? "onboarding-profile" : undefined}
 								type={currentStepIndex === 1 ? "submit" : "button"}
-								variant="outline"
+								color="black"
 								disabled={currentStepIndex === 0}
 							>
 								Next
-							</Button>
+							</CtaButton>
 						)}
-					</CardFooter>
-				</Card>
+					</div>
+				</div>
+				{/* </Card> */}
 			</div>
 		</div>
 	);

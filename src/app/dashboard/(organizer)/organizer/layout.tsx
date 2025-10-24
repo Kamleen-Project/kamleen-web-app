@@ -14,15 +14,19 @@ export default async function OrganizerLayout({ children }: { children: React.Re
 		redirect("/login");
 	}
 
-	if (session.user.activeRole !== "ORGANIZER") {
-		redirect("/dashboard");
-	}
-
 	const user = await prisma.user.findUnique({
 		where: { id: session.user.id },
-		select: { emailVerified: true, birthDate: true, termsAcceptedAt: true, onboardingCompletedAt: true },
+		select: { emailVerified: true, birthDate: true, termsAcceptedAt: true, onboardingCompletedAt: true, organizerStatus: true, activeRole: true },
 	});
-	if (!user?.onboardingCompletedAt || !user.emailVerified || !user.birthDate || !user.termsAcceptedAt) {
+
+	// Enforce organizer-only access for organizer console
+	if (!user || user.organizerStatus !== "APPROVED") {
+		redirect("/dashboard");
+	}
+	if (user.activeRole !== "ORGANIZER") {
+		redirect("/dashboard/explorer");
+	}
+	if (!user.onboardingCompletedAt || !user.emailVerified || !user.birthDate || !user.termsAcceptedAt) {
 		redirect("/onboarding");
 	}
 

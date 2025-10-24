@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Ticket as TicketIcon } from "lucide-react";
 
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownPanel, DropdownPanelHeader, DropdownPanelContent } from "@/components/ui/dropdown-panel";
 import CtaIconButton from "@/components/ui/cta-icon-button";
+import BalloonLoading from "@/components/ui/balloon-loading";
 
 type TicketItem = {
 	id: string;
@@ -63,19 +64,26 @@ export function TicketsMenu() {
 	}, [fetchCount]);
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger asChild>
+		<DropdownPanel
+			open={open}
+			onOpenChange={setOpen}
+			align="end"
+			className="w-96 p-0"
+			trigger={
 				<CtaIconButton color="whiteBorder" size="md" ariaLabel="Tickets" badgeCount={activeCount} badgeClassName="bg-emerald-600">
 					<TicketIcon className="size-5" />
 				</CtaIconButton>
-			</PopoverTrigger>
-			<PopoverContent className="w-96 p-0" align="end">
-				<div className="max-h-96 overflow-auto p-2">
-					<div className="px-2 py-2 text-sm font-semibold">Your tickets</div>
+			}
+		>
+			<DropdownPanelHeader title={<span className="text-sm font-semibold">Your tickets</span>} />
+			<DropdownPanelContent className="p-0">
+				<div className="max-h-96 min-h-[240px] overflow-auto p-2">
 					{loading ? (
-						<div className="px-4 py-8 text-center text-sm text-muted-foreground">Loading…</div>
+						<div className="flex min-h-[240px] items-center justify-center py-8">
+							<BalloonLoading size="sm" color="gray" label="Loading tickets" />
+						</div>
 					) : items.length === 0 ? (
-						<div className="px-4 py-8 text-center text-sm text-muted-foreground">No tickets yet</div>
+						<div className="flex min-h-[240px] items-center justify-center px-4 py-8 text-center text-sm text-muted-foreground">No tickets yet</div>
 					) : (
 						<ul className="divide-y divide-border/60">
 							{items.map((t) => (
@@ -107,7 +115,7 @@ export function TicketsMenu() {
 					)}
 					<div className="px-2 py-2 text-xs text-muted-foreground">Showing latest {items.length} tickets</div>
 				</div>
-			</PopoverContent>
-		</Popover>
+			</DropdownPanelContent>
+		</DropdownPanel>
 	);
 }

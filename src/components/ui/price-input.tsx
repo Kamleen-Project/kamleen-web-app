@@ -33,6 +33,17 @@ export function PriceInput({
 	containerClassName,
 	...props
 }: PriceInputProps) {
+	const showRequiredStar = Boolean(props?.required) && Boolean(label);
+	const labelContent = label ? (
+		<span className="inline-flex items-center gap-1">
+			{label}
+			{showRequiredStar ? (
+				<span className="text-destructive" aria-hidden="true">
+					*
+				</span>
+			) : null}
+		</span>
+	) : null;
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		const blocked = ["e", "E", "+", "-", ".", ","];
 		if (blocked.includes(e.key)) {
@@ -56,7 +67,7 @@ export function PriceInput({
 	return (
 		<div className={cn("space-y-2", containerClassName)}>
 			<FormField error={typeof error === "string" ? error : undefined} description={typeof caption === "string" ? caption : undefined}>
-				{label ? <FormLabel>{label}</FormLabel> : null}
+				{labelContent ? <FormLabel>{labelContent}</FormLabel> : null}
 				<FormControl>
 					<div className="relative">
 						<Input

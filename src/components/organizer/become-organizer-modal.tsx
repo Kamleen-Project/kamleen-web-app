@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { cloneElement, isValidElement, useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import type { Session } from "next-auth";
+import type { OrganizerStatus } from "@/generated/prisma";
 import { useSession } from "next-auth/react";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
+import { X } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 import BalloonLoading from "@/components/ui/balloon-loading";
 
@@ -26,11 +30,15 @@ export function BecomeOrganizerModal({
 	className,
 	variant = "default",
 	size = "default",
+	trigger,
+	autoOpen,
 }: {
 	triggerLabel?: string;
 	className?: string;
 	variant?: VariantProps<typeof buttonVariants>["variant"];
 	size?: VariantProps<typeof buttonVariants>["size"];
+	trigger?: React.ReactElement<{ disabled?: boolean; onClick?: () => void }>;
+	autoOpen?: boolean;
 }) {
 	const router = useRouter();
 	const { data: session, status, update } = useSession();
@@ -42,7 +50,8 @@ export function BecomeOrganizerModal({
 	const [error, setError] = useState<string | null>(null);
 	const [currency, setCurrency] = useState<string | null>(null);
 
-	const organizerStatus = session?.user.organizerStatus ?? "NOT_APPLIED";
+	const organizerStatus: OrganizerStatus | "NOT_APPLIED" =
+		((session?.user as Session["user"])?.organizerStatus as OrganizerStatus | undefined) ?? "NOT_APPLIED";
 	const isPendingRequest = organizerStatus === "PENDING";
 	const isApprovedOrganizer = organizerStatus === "APPROVED";
 	const isLoadingSession = status === "loading";
@@ -57,6 +66,12 @@ export function BecomeOrganizerModal({
 	}, []);
 
 	useEffect(() => {
+		if (autoOpen && mounted) {
+			setOpen(true);
+		}
+	}, [autoOpen, mounted]);
+
+	useEffect(() => {
 		function handleKeyDown(event: KeyboardEvent) {
 			if (event.key === "Escape") {
 				setOpen(false);
@@ -66,11 +81,13 @@ export function BecomeOrganizerModal({
 		if (open) {
 			document.addEventListener("keydown", handleKeyDown);
 			document.body.classList.add("overflow-hidden");
+			document.body.classList.add("modal-open");
 		}
 
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
 			document.body.classList.remove("overflow-hidden");
+			document.body.classList.remove("modal-open");
 		};
 	}, [open]);
 
@@ -127,15 +144,20 @@ export function BecomeOrganizerModal({
 			: createPortal(
 					<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-10" role="dialog" aria-modal="true">
 						<div className="relative h-full max-h-[90vh] w-full max-w-7xl overflow-hidden rounded-2xl border border-border/70 bg-background shadow-2xl">
+							{/* <CtaButton asChild size="sm" color="white" className="absolute right-3 top-3">
+								<button type="button" aria-label="Close modal" onClick={handleClose}>
+									<X className="h-4 w-4" />
+								</button>
+							</CtaButton> */}
 							{isPendingRequest ? (
 								<div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
 									<h2 className="text-2xl font-semibold text-foreground">Request under review</h2>
 									<p className="max-w-xl text-sm text-muted-foreground">
 										Thanks for submitting your organizer application. Our team is reviewing it now and we will notify you as soon as it is approved.
 									</p>
-									<Button onClick={handleClose} className="mt-2">
+									<CtaButton onClick={handleClose} className="mt-2">
 										Close
-									</Button>
+									</CtaButton>
 								</div>
 							) : isApprovedOrganizer ? (
 								<div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
@@ -143,7 +165,7 @@ export function BecomeOrganizerModal({
 									<p className="max-w-xl text-sm text-muted-foreground">
 										Start building new experiences from your organizer console. Need help? Head to the dashboard to get started.
 									</p>
-									<Button
+									<CtaButton
 										onClick={() => {
 											handleClose();
 											router.push("/dashboard/organizer");
@@ -151,7 +173,7 @@ export function BecomeOrganizerModal({
 										className="mt-2"
 									>
 										Go to organizer console
-									</Button>
+									</CtaButton>
 								</div>
 							) : error ? (
 								<div className="flex h-full items-center justify-center p-8">
@@ -178,11 +200,30 @@ export function BecomeOrganizerModal({
 					document.body
 			  );
 
+	if (trigger && isValidElement(trigger)) {
+		const triggerEl = cloneElement(trigger, {
+			onClick: () => setOpen(true),
+			disabled: isLoadingSession || Boolean(trigger.props.disabled),
+		});
+		return (
+			<>
+				{triggerEl}
+				{modalContent}
+			</>
+		);
+	}
+
 	return (
 		<>
-			<Button className={className} variant={variant} size={size} onClick={() => setOpen(true)} disabled={isLoadingSession}>
+			<CtaButton
+				className={className}
+				onClick={() => setOpen(true)}
+				disabled={isLoadingSession}
+				// map common sizes from shadcn to CTA sizes
+				size={size === "sm" ? "sm" : size === "lg" ? "lg" : "md"}
+			>
 				{triggerText}
-			</Button>
+			</CtaButton>
 			{modalContent}
 		</>
 	);

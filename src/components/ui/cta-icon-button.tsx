@@ -4,9 +4,10 @@ import * as React from "react";
 import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
 
 type CtaIconButtonProps = {
-	color?: "black" | "white" | "whiteBorder";
+	color?: "black" | "white" | "whiteBorder" | "red";
 	size?: "sm" | "md" | "lg";
 	className?: string;
 	onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -18,6 +19,7 @@ type CtaIconButtonProps = {
 	badgeCount?: number;
 	badgeClassName?: string;
 	isLoading?: boolean;
+	asChild?: boolean;
 };
 
 const sizeMap = {
@@ -36,10 +38,44 @@ const colorClass = {
 	black: "bg-black text-white hover:bg-black/80 border border-transparent",
 	white: "bg-white text-black hover:bg-zinc-100 border border-transparent",
 	whiteBorder: "bg-white text-black hover:bg-zinc-100 border border-input",
+	red: "bg-rose-600 text-white hover:bg-rose-600/90 border border-transparent",
 };
 
 export const CtaIconButton = React.forwardRef<HTMLButtonElement, CtaIconButtonProps>(function CtaIconButton(props, ref): React.ReactElement {
-	const { color = "black", size = "md", className, onClick, children, type = "button", disabled, id, ariaLabel, badgeCount, badgeClassName, isLoading } = props;
+	const {
+		color = "black",
+		size = "md",
+		className,
+		onClick,
+		children,
+		type = "button",
+		disabled,
+		id,
+		ariaLabel,
+		badgeCount,
+		badgeClassName,
+		isLoading,
+		asChild,
+	} = props;
+
+	if (asChild) {
+		// Render styles onto child (e.g., Next.js Link) without extra DOM wrappers
+		return (
+			<Slot
+				id={id}
+				className={cn(
+					colorClass[color],
+					"relative inline-flex items-center justify-center rounded-full p-0 focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed",
+					dimensionMap[size],
+					className
+				)}
+				aria-label={ariaLabel}
+			>
+				{children}
+			</Slot>
+		);
+	}
+
 	return (
 		<button
 			ref={ref}

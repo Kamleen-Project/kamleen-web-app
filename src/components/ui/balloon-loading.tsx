@@ -3,15 +3,22 @@
 import * as React from "react";
 
 type BalloonLoadingProps = {
-	/** Tailwind width/height utility like w-32; defaults to w-32 */
+	/** Size variant; md is the existing default */
+	size?: "sm" | "md" | "lg";
+	/** Backward-compat: Tailwind width/height utility; overrides size variant if provided */
 	sizeClassName?: string;
+	/** Color variant; primary is current look, gray is neutral */
+	color?: "primary" | "gray";
 	/** Optional descriptive label for screen readers */
 	label?: string;
 	/** Additional container classes */
 	className?: string;
 };
 
-export default function BalloonLoading({ sizeClassName = "w-32", label = "Loading", className = "" }: BalloonLoadingProps) {
+export default function BalloonLoading({ size = "md", sizeClassName, color = "primary", label = "Loading", className = "" }: BalloonLoadingProps) {
+	const variantSizeClass = size === "sm" ? "w-14" : size === "lg" ? "w-32" : "w-24"; // md default
+
+	const appliedSizeClass = sizeClassName ?? variantSizeClass;
 	return (
 		<div className={`flex items-center justify-center ${className}`} role="status" aria-live="polite" aria-label={label}>
 			<span className="sr-only">{label}</span>
@@ -22,7 +29,7 @@ export default function BalloonLoading({ sizeClassName = "w-32", label = "Loadin
 					xmlnsXlink="http://www.w3.org/1999/xlink"
 					version="1.1"
 					viewBox="0 0 400 550"
-					className={`balloon ${sizeClassName} h-auto mx-auto`}
+					className={`balloon ${appliedSizeClass} h-auto mx-auto`}
 					aria-hidden="true"
 				>
 					<defs>
@@ -33,19 +40,35 @@ export default function BalloonLoading({ sizeClassName = "w-32", label = "Loadin
 								.st2 {fill: #fff;}
 							`}
 						</style>
-						<radialGradient
-							id="radial-gradient"
-							cx="135.4"
-							cy="377.8"
-							fx="135.4"
-							fy="377.8"
-							r="342"
-							gradientTransform="translate(39 -24.4) rotate(7.7)"
-							gradientUnits="userSpaceOnUse"
-						>
-							<stop offset="0" stopColor="#ff512f" />
-							<stop offset="1" stopColor="#dd2476" />
-						</radialGradient>
+						{color === "gray" ? (
+							<radialGradient
+								id="radial-gradient"
+								cx="135.4"
+								cy="377.8"
+								fx="135.4"
+								fy="377.8"
+								r="342"
+								gradientTransform="translate(39 -24.4) rotate(7.7)"
+								gradientUnits="userSpaceOnUse"
+							>
+								<stop offset="0" stopColor="#9ca3af" />
+								<stop offset="1" stopColor="#6b7280" />
+							</radialGradient>
+						) : (
+							<radialGradient
+								id="radial-gradient"
+								cx="135.4"
+								cy="377.8"
+								fx="135.4"
+								fy="377.8"
+								r="342"
+								gradientTransform="translate(39 -24.4) rotate(7.7)"
+								gradientUnits="userSpaceOnUse"
+							>
+								<stop offset="0" stopColor="#ff512f" />
+								<stop offset="1" stopColor="#dd2476" />
+							</radialGradient>
+						)}
 					</defs>
 					<g id="Icon">
 						<g id="Hot_air_ballon">
@@ -77,7 +100,6 @@ export default function BalloonLoading({ sizeClassName = "w-32", label = "Loadin
 					position: relative;
 				}
 				.balloon {
-					filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
 				}
 				@keyframes float {
 					0%,
@@ -92,29 +114,6 @@ export default function BalloonLoading({ sizeClassName = "w-32", label = "Loadin
 					}
 					75% {
 						transform: translateY(-20px) translateX(2px) rotate(10deg);
-					}
-				}
-				.balloon-container::before {
-					content: "";
-					position: absolute;
-					top: 50%;
-					left: 50%;
-					transform: translate(-50%, -50%);
-					width: 140px;
-					height: 140px;
-					background: radial-gradient(circle, rgba(255, 81, 47, 0.2) 0%, transparent 70%);
-					border-radius: 50%;
-					z-index: -1;
-					animation: glow 2s ease-in-out infinite alternate;
-				}
-				@keyframes glow {
-					from {
-						opacity: 0.5;
-						transform: translate(-50%, -50%) scale(0.9);
-					}
-					to {
-						opacity: 0.8;
-						transform: translate(-50%, -50%) scale(1.1);
 					}
 				}
 				.rotating-star {

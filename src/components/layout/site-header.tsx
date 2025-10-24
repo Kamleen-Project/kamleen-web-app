@@ -35,7 +35,7 @@ export function SiteHeader({ session }: { session: Session | null }) {
 				<div className="flex items-center gap-3">
 					{showRoleSwitcher ? <RoleSwitcher className="hidden sm:flex" /> : null}
 					{isExplorer ? <TicketsMenu /> : null}
-					<NotificationsBell />
+					{session?.user ? <NotificationsBell /> : null}
 					<ProfileMenu />
 				</div>
 			</Container>
