@@ -3,6 +3,7 @@
 import { MapPin } from "lucide-react";
 import { useMemo } from "react";
 import { getSessionName, type SessionNameVariant } from "@/lib/session-name";
+import { parseDurationToMinutes } from "@/lib/duration";
 
 type Session = {
 	id: string;
@@ -35,23 +36,6 @@ export type SessionReservationCardProps = {
 	variant?: SessionReservationCardVariant;
 	onSelect?: (sessionId: string) => void;
 };
-
-function parseDurationToMinutes(label: string | null | undefined): number {
-	if (!label) return 0;
-	const lower = label.toLowerCase();
-	let minutes = 0;
-	const dayMatch = lower.match(/(\d+)\s*day/);
-	const hourMatch = lower.match(/(\d+)\s*hour/);
-	const minMatch = lower.match(/(\d+)\s*min/);
-	if (dayMatch) minutes += (Number.parseInt(dayMatch[1], 10) || 0) * 24 * 60;
-	if (hourMatch) minutes += (Number.parseInt(hourMatch[1], 10) || 0) * 60;
-	if (minMatch) minutes += Number.parseInt(minMatch[1], 10) || 0;
-	if (!dayMatch && !hourMatch && !minMatch) {
-		const numeric = Number.parseInt(lower, 10);
-		if (!Number.isNaN(numeric)) minutes += numeric;
-	}
-	return Math.max(0, minutes);
-}
 
 function formatCurrency(value: number, currency: string) {
 	return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);

@@ -109,12 +109,23 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (trigger === "update") {
-        const sessionData = session as Partial<{ activeRole: UserRole; organizerStatus: OrganizerStatus }> | undefined
-        if (sessionData?.activeRole) {
-          token.activeRole = sessionData.activeRole
+        const s = session as Partial<{
+          role: UserRole
+          activeRole: UserRole
+          organizerStatus: OrganizerStatus
+          user?: { role?: UserRole; activeRole?: UserRole; organizerStatus?: OrganizerStatus }
+        }> | undefined
+        const nextRole = s?.role ?? s?.user?.role
+        const nextActiveRole = s?.activeRole ?? s?.user?.activeRole
+        const nextOrganizerStatus = s?.organizerStatus ?? s?.user?.organizerStatus
+        if (nextRole) {
+          token.role = nextRole
         }
-        if (sessionData?.organizerStatus) {
-          token.organizerStatus = sessionData.organizerStatus
+        if (nextActiveRole) {
+          token.activeRole = nextActiveRole
+        }
+        if (nextOrganizerStatus) {
+          token.organizerStatus = nextOrganizerStatus
         }
       }
 

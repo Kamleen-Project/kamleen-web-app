@@ -15,6 +15,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ exp
     where: { id: experienceId },
     select: {
       id: true,
+      verificationStatus: true,
       title: true,
       summary: true,
       description: true,
@@ -67,6 +68,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ exp
 
   const initial = {
     id: experience.id,
+    verificationStatus: experience.verificationStatus,
     title: experience.title,
     summary: experience.summary,
     description: experience.description,

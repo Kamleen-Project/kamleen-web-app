@@ -2,16 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import { CalendarIcon, Search } from "lucide-react";
-import { format } from "date-fns";
+import { Search, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import CtaIconButton from "@/components/ui/cta-icon-button";
-import { Input } from "@/components/ui/input";
+import { InputField } from "@/components/ui/input-field";
 import { Stepper } from "@/components/ui/stepper";
-import { Calendar, type CalendarDateRange } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { DateField } from "@/components/ui/date-field";
 
 type ExperienceSearchFormProps = {
 	initialValues?: {
@@ -45,12 +41,12 @@ export function ExperienceSearchForm({ initialValues }: ExperienceSearchFormProp
 		[initialValues?.q, initialValues?.start, initialValues?.end, initialValues?.guests, searchParams]
 	);
 
-	const [open, setOpen] = useState(false);
-	const [dateRange, setDateRange] = useState<CalendarDateRange>(() => ({
+	const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>(() => ({
 		from: parseDate(defaults.start),
 		to: parseDate(defaults.end),
 	}));
 
+	const [q, setQ] = useState<string>(() => String(defaults.q ?? ""));
 	const [guests, setGuests] = useState<string>(() => {
 		const raw = String(defaults.guests ?? "").trim();
 		const initial = raw && Number.parseInt(raw, 10) > 0 ? Number.parseInt(raw, 10) : 1;
@@ -79,46 +75,28 @@ export function ExperienceSearchForm({ initialValues }: ExperienceSearchFormProp
 		[router]
 	);
 
-	const formattedStart = dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : "";
-	const formattedEnd = dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : "";
-	const dateLabel = dateRange.from
-		? dateRange.to
-			? `${format(dateRange.from, "LLL dd, yyyy")} – ${format(dateRange.to, "LLL dd, yyyy")}`
-			: format(dateRange.from, "LLL dd, yyyy")
-		: "Add dates";
+	const handleReset = useCallback(() => {
+		setQ("");
+		setDateRange({});
+		setGuests("1");
+	}, []);
 
-	const handleDateSelect = (range: CalendarDateRange | undefined) => {
-		setDateRange(range ?? {});
-
-		if (range?.from && range?.to) {
-			setOpen(false);
-		}
-	};
+	const hasFilters = q.trim() !== "" || Boolean(dateRange?.from || dateRange?.to) || guests !== "1";
 
 	return (
 		<form onSubmit={handleSubmit} className="grid gap-4 p-4 text-black sm:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto]">
-			<div className="flex flex-col gap-2 text-left">
-				<Input id="exp-search-q" name="q" defaultValue={defaults.q} placeholder="City, host, or experience" className="h-12" />
-			</div>
-			<div className="flex flex-col gap-2 text-left">
-				<input type="hidden" name="start" value={formattedStart} readOnly />
-				<input type="hidden" name="end" value={formattedEnd} readOnly />
-				<Popover open={open} onOpenChange={setOpen}>
-					<PopoverTrigger asChild>
-						<Button
-							type="button"
-							variant="outline"
-							className={cn("h-12 justify-start gap-2 text-left font-normal", !dateRange.from && "text-muted-foreground")}
-						>
-							<CalendarIcon className="size-4" />
-							{dateLabel}
-						</Button>
-					</PopoverTrigger>
-					<PopoverContent className="w-auto p-0" align="start" sideOffset={8}>
-						<Calendar value={dateRange} onChange={handleDateSelect} monthCount={2} />
-					</PopoverContent>
-				</Popover>
-			</div>
+			<InputField id="exp-search-q" name="q" value={q} onChange={(e) => setQ(e.currentTarget.value)} placeholder="City, host, or experience" />
+			<DateField
+				id="exp-search-dates"
+				range
+				nameStart="start"
+				nameEnd="end"
+				valueRange={dateRange}
+				onChangeRange={(range) => setDateRange(range ?? {})}
+				placeholder="Add dates"
+				allowTextInput={false}
+				monthCount={2}
+			/>
 			<div className="flex flex-col gap-2 text-left">
 				{/* Hidden field carries the numeric value for form submission */}
 				<input id="exp-search-guests" type="hidden" name="guests" value={guests} readOnly />
@@ -126,7 +104,12 @@ export function ExperienceSearchForm({ initialValues }: ExperienceSearchFormProp
 					<Stepper value={guests} onChange={(value) => setGuests(value)} min={1} max={100} className="" />
 				</div>
 			</div>
-			<div className="flex items-end justify-end">
+			<div className="flex items-end justify-end gap-2">
+				{hasFilters ? (
+					<CtaIconButton type="button" color="whiteBorder" size="lg" className="h-12 w-12" ariaLabel="Reset search" onClick={handleReset}>
+						<X className="size-5" />
+					</CtaIconButton>
+				) : null}
 				<CtaIconButton type="submit" color="black" size="lg" className="h-12 w-12" ariaLabel="Search experiences">
 					<Search className="size-5" />
 				</CtaIconButton>

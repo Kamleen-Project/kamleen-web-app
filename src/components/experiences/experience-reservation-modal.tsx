@@ -6,16 +6,11 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, CheckCircle2, Loader2, MapPin, Star, X } from "lucide-react";
 import { Stepper } from "@/components/ui/stepper";
 
-import type { VariantProps } from "class-variance-authority";
-
-import { buttonVariants } from "@/components/ui/button";
 import { CtaButton } from "@/components/ui/cta-button";
 import { SessionReservationCard } from "@/components/experiences/session-reservation-card";
+import { parseDurationToMinutes } from "@/lib/duration";
 
 const overlayStyle: CSSProperties = { backdropFilter: "blur(6px)" };
-
-type ButtonVariant = VariantProps<typeof buttonVariants>["variant"];
-type ButtonSize = VariantProps<typeof buttonVariants>["size"];
 
 type ExperienceReservationModalProps = {
 	experience: {
@@ -43,8 +38,8 @@ type ExperienceReservationModalProps = {
 		availableSpots?: number;
 	}>;
 	buttonLabel?: string;
-	buttonVariant?: ButtonVariant;
-	buttonSize?: ButtonSize;
+	buttonVariant?: undefined; // deprecated
+	buttonSize?: "sm" | "md" | "lg";
 	buttonClassName?: string;
 	buttonId?: string;
 };
@@ -62,24 +57,6 @@ function formatTime(value: string) {
 		minute: "2-digit",
 		hourCycle: "h23",
 	}).format(date);
-}
-
-function parseDurationToMinutes(label: string | null | undefined): number {
-	if (!label) return 0;
-	const lower = label.toLowerCase();
-	let minutes = 0;
-	const dayMatch = lower.match(/(\d+)\s*day/);
-	const hourMatch = lower.match(/(\d+)\s*hour/);
-	const minMatch = lower.match(/(\d+)\s*min/);
-	if (dayMatch) minutes += (Number.parseInt(dayMatch[1], 10) || 0) * 24 * 60;
-	if (hourMatch) minutes += (Number.parseInt(hourMatch[1], 10) || 0) * 60;
-	if (minMatch) minutes += Number.parseInt(minMatch[1], 10) || 0;
-	// Fallback for pure number labels like "90"
-	if (!dayMatch && !hourMatch && !minMatch) {
-		const numeric = Number.parseInt(lower, 10);
-		if (!Number.isNaN(numeric)) minutes += numeric;
-	}
-	return Math.max(0, minutes);
 }
 
 function formatTimeRange(startIso: string, durationLabel: string | null | undefined, fallbackDurationLabel: string | null | undefined) {
@@ -165,6 +142,7 @@ export function ExperienceReservationModal({
 	const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 	const [guestCount, setGuestCount] = useState(1);
 	const [apiState, setApiState] = useState<ApiState>({ status: "idle" });
+	const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "cash">("card");
 
 	const sessionLookup = useMemo(() => {
 		return new Map(sessions.map((session) => [session.id, session]));
@@ -271,12 +249,36 @@ export function ExperienceReservationModal({
 			}
 
 			const data = (await response.json()) as { booking?: { id: string } };
-			setApiState({ status: "success", bookingReference: data.booking?.id ?? "" });
-			setStep("complete");
+			const bookingId = data.booking?.id ?? "";
+			if (!bookingId) {
+				setApiState({ status: "error", message: "Booking was created without an id. Please try again." });
+				return;
+			}
+			const origin = window.location.origin;
+			const successUrl = `${origin}/dashboard/explorer/reservations?booking=${encodeURIComponent(bookingId)}&paid=1`;
+			const cancelUrl = `${origin}/dashboard/explorer/reservations?booking=${encodeURIComponent(bookingId)}&cancelled=1`;
+			const checkout = await fetch("/api/payments/checkout", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					bookingId,
+					successUrl,
+					cancelUrl,
+					providerId: paymentMethod === "cash" ? "cash" : paymentMethod === "paypal" ? "paypal" : undefined,
+				}),
+			});
+			if (!checkout.ok) {
+				const d = (await checkout.json().catch(() => null)) as { message?: string } | null;
+				const message = d?.message ?? "We couldn’t start checkout. Please try again.";
+				setApiState({ status: "error", message });
+				return;
+			}
+			const ch = (await checkout.json()) as { url: string };
+			window.location.href = ch.url;
 		} catch {
 			setApiState({ status: "error", message: "Network error. Please retry." });
 		}
-	}, [experience.id, guestCount, selectedSession]);
+	}, [experience.id, guestCount, selectedSession, paymentMethod]);
 
 	// Ensure guest count is always within the available spots for the selected session
 	useEffect(() => {
@@ -440,7 +442,24 @@ export function ExperienceReservationModal({
 													</span>
 													<span className="text-lg font-semibold text-foreground">{formatCurrency(totalPrice, experience.currency)}</span>
 												</div>
-												<p className="text-xs text-muted-foreground">No payment due yet. Your booking will be pending until the organizer confirms.</p>
+												<div className="mt-3 grid gap-2">
+													<p className="text-xs font-medium text-foreground">Payment method</p>
+													<div className="flex flex-col gap-2">
+														<label className="inline-flex items-center gap-2 text-sm">
+															<input type="radio" name="payment-method" checked={paymentMethod === "card"} onChange={() => setPaymentMethod("card")} />
+															<span>Pay with Card</span>
+														</label>
+														<label className="inline-flex items-center gap-2 text-sm">
+															<input type="radio" name="payment-method" checked={paymentMethod === "paypal"} onChange={() => setPaymentMethod("paypal")} />
+															<span>PayPal</span>
+														</label>
+														<label className="inline-flex items-center gap-2 text-sm">
+															<input type="radio" name="payment-method" checked={paymentMethod === "cash"} onChange={() => setPaymentMethod("cash")} />
+															<span>Pay on Cash</span>
+														</label>
+													</div>
+												</div>
+												<p className="text-xs text-muted-foreground">You’ll be redirected to a secure payment page to complete your reservation.</p>
 											</div>
 
 											{apiState.status === "error" ? <p className="text-sm font-medium text-destructive">{apiState.message}</p> : null}

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Suites" tests="6" errors="0" failures="2" skipped="0" time="215.435" timestamp="2025-11-04T21:38:50.768858">
+<testsuite name="Api Experiences" tests="2" errors="0" failures="0" skipped="0" time="25.513" timestamp="2025-11-04T21:38:50.849845">
+<testcase classname="Suites.Api Experiences" name="GET /api/experiences returns list payload" time="22.305">
+</testcase>
+<testcase classname="Suites.Api Experiences" name="GET /api/experiences supports search params" time="0.726">
+</testcase>
+</testsuite>
+<testsuite name="Auth Explorer" tests="1" errors="0" failures="0" skipped="0" time="39.888" timestamp="2025-11-04T21:39:16.375632">
+<testcase classname="Suites.Auth Explorer" name="Explorer can login via credentials and reach dashboard" time="35.701">
+</testcase>
+</testsuite>
+<testsuite name="Auth Register" tests="1" errors="0" failures="1" skipped="0" time="72.942" timestamp="2025-11-04T21:39:56.293663">
+<testcase classname="Suites.Auth Register" name="Explorer can create a new account and see onboarding welcome" time="69.177">
+<failure message="TimeoutError: locator.waitFor: Timeout 30000ms exceeded.&#10;Call log:&#10;  - waiting for locator('xpath=(//*[contains(normalize-space(), &quot;Welcome to Kamleen&quot;)])[1]') to be visible&#10;&#10;Tip: Use &quot;Set Browser Timeout&quot; for increasing the timeout or double check your locator as the targeted element(s) couldn't be found." type="AssertionError"/>
+</testcase>
+</testsuite>
+<testsuite name="Ui Smoke" tests="2" errors="0" failures="1" skipped="0" time="76.925" timestamp="2025-11-04T21:41:09.260378">
+<testcase classname="Suites.Ui Smoke" name="Home page loads and shows search" time="33.932">
+<failure message="Setup failed:&#10;TimeoutError: page.goto: Timeout 30000ms exceeded.&#10;Call log:&#10;  - navigating to &quot;http://host.docker.internal:3000/&quot;, waiting until &quot;load&quot;&#10;&#10;Tip: Use &quot;Set Browser Timeout&quot; for increasing the timeout.&#10;&#10;Also teardown failed:&#10;Error: Tried to take screenshot, but no page was open." type="AssertionError"/>
+</testcase>
+<testcase classname="Suites.Ui Smoke" name="Experiences page loads and shows heading" time="39.957">
+</testcase>
+</testsuite>
+</testsuite>

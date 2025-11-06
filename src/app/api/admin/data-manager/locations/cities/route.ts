@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { saveUploadedFile } from "@/lib/uploads"
 
 type CityPayload = {
   name: string
@@ -125,6 +126,62 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 })
   }
 
+  const contentType = request.headers.get("content-type") ?? ""
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData()
+
+    try {
+      const name = getRequiredString(formData, "name")
+      const subtitle = getOptionalString(formData, "subtitle")
+      const countryId = getRequiredString(formData, "countryId")
+      const latitude = parseLatitudeFromFormData(formData.get("latitude"))
+      const longitude = parseLongitudeFromFormData(formData.get("longitude"))
+      const stateId = getOptionalString(formData, "stateId")
+
+      const country = await prisma.country.findUnique({ where: { id: countryId }, select: { id: true } })
+      if (!country) {
+        return NextResponse.json({ message: "Country not found" }, { status: 404 })
+      }
+
+      if (stateId) {
+        const state = await prisma.state.findUnique({ where: { id: stateId }, select: { id: true, countryId: true } })
+        if (!state || state.countryId !== countryId) {
+          return NextResponse.json({ message: "State not found in selected country" }, { status: 400 })
+        }
+      }
+
+      const pictureFile = formData.get("picture")
+      if (!(pictureFile instanceof File) || pictureFile.size === 0) {
+        throw new Error("City image is required")
+      }
+      const stored = await saveUploadedFile({ file: pictureFile, directory: "cities", maxSizeBytes: 5 * 1024 * 1024 })
+
+      const city = await prisma.city.create({
+        data: {
+          name,
+          subtitle,
+          picture: stored.publicPath,
+          latitude,
+          longitude,
+          countryId,
+          stateId: stateId ?? null,
+        },
+      })
+
+      return NextResponse.json({ ok: true, city })
+    } catch (error) {
+      if (error instanceof Error) {
+        if ("code" in error && (error as { code: string }).code === "P2002") {
+          return NextResponse.json({ message: "A city with this name already exists for the selected country/state" }, { status: 409 })
+        }
+        return NextResponse.json({ message: error.message }, { status: 400 })
+      }
+      console.error("Failed to create city", error)
+      return NextResponse.json({ message: "Failed to create city" }, { status: 500 })
+    }
+  }
+
   const body = await request.json().catch(() => null)
   const payload = parseCityPayload(body)
 
@@ -166,5 +223,38 @@ export async function POST(request: Request) {
     console.error("Failed to create city", error)
     return NextResponse.json({ message: "Failed to create city" }, { status: 500 })
   }
+}
+
+function getRequiredString(formData: FormData, key: string) {
+  const value = formData.get(key)
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`${key} is required`)
+  }
+  return value.trim()
+}
+
+function getOptionalString(formData: FormData, key: string) {
+  const value = formData.get(key)
+  if (typeof value !== "string") {
+    return null
+  }
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function parseLatitudeFromFormData(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.trim()) throw new Error("Latitude is required")
+  const parsed = Number.parseFloat(value)
+  if (!Number.isFinite(parsed)) throw new Error("Invalid latitude")
+  if (parsed < -90 || parsed > 90) throw new Error("Invalid latitude")
+  return parsed
+}
+
+function parseLongitudeFromFormData(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.trim()) throw new Error("Longitude is required")
+  const parsed = Number.parseFloat(value)
+  if (!Number.isFinite(parsed)) throw new Error("Invalid longitude")
+  if (parsed < -180 || parsed > 180) throw new Error("Invalid longitude")
+  return parsed
 }
 

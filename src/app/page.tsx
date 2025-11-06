@@ -5,50 +5,36 @@ import { Camera, ChefHat, Compass, Flame, Heart, Palette, Sparkles, Users, Waves
 import { ExperienceCard, type Experience } from "@/components/cards/experience-card";
 import { FeatureCard } from "@/components/cards/feature-card";
 import { HostCard, type Host } from "@/components/cards/host-card";
-import { CategoryCard, type Category } from "@/components/cards/category-card";
+import Image from "next/image";
 // Removed StatCard import as stats section is being removed
 import { TestimonialCard, type Testimonial } from "@/components/cards/testimonial-card";
 import { Container } from "@/components/layout/container";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import StickySearchSection from "@/components/experiences/sticky-search-section";
 import { ExperienceCarousel } from "@/components/experiences/experience-carousel";
-import { Input } from "@/components/ui/input";
 import { prisma } from "@/lib/prisma";
 import { experienceCardSelect, mapExperienceToCard } from "@/lib/experiences";
 import { defaultFaqs } from "@/data/faqs";
 
-const categories: Category[] = [
-	{
-		id: "culinary",
-		name: "Culinary Journeys",
-		description: "Cook side-by-side with local chefs and taste stories passed down for generations.",
-		icon: <ChefHat className="size-6" />,
-		experiences: 142,
-	},
-	{
-		id: "adventure",
-		name: "Adventure Escapes",
-		description: "Guided hikes, surf lessons, and adrenaline-filled memories in breathtaking settings.",
-		icon: <Waves className="size-6" />,
-		experiences: 96,
-	},
-	{
-		id: "creative",
-		name: "Creative Studios",
-		description: "Pottery, printmaking, photography, and more hands-on workshops led by passionate artists.",
-		icon: <Palette className="size-6" />,
-		experiences: 88,
-	},
-	{
-		id: "wellness",
-		name: "Wellness Retreats",
-		description: "Meditation escapes, sound baths, and slow living rituals to help you reset.",
-		icon: <Heart className="size-6" />,
-		experiences: 75,
-	},
-];
+type CarouselCategory = { id: string; slug: string; name: string; subtitle: string; picture: string; experienceCount: number };
+
+async function loadCategoriesForCarousel(): Promise<CarouselCategory[]> {
+	const categories = (await prisma.experienceCategory.findMany({
+		orderBy: { name: "asc" },
+		include: { _count: { select: { experiences: true } } },
+		take: 12,
+	})) as unknown as Array<{ id: string; slug: string; name: string; subtitle: string; picture: string; _count: { experiences: number } }>;
+
+	return categories.map((c) => ({
+		id: c.id,
+		slug: c.slug,
+		name: c.name,
+		subtitle: c.subtitle,
+		picture: c.picture,
+		experienceCount: c._count.experiences,
+	}));
+}
 
 const features = [
 	{
@@ -225,7 +211,7 @@ async function loadCarouselGroups(): Promise<CarouselGroup[]> {
 }
 
 export default async function Home() {
-	const [featuredRaw, carouselGroups] = await Promise.all([
+	const [featuredRaw, carouselGroups, categories] = await Promise.all([
 		prisma.experience.findMany({
 			select: experienceCardSelect,
 			where: { status: "PUBLISHED" },
@@ -233,6 +219,7 @@ export default async function Home() {
 			take: 12,
 		}),
 		loadCarouselGroups(),
+		loadCategoriesForCarousel(),
 	]);
 
 	const experiences = featuredRaw.map(mapExperienceToCard);
@@ -243,6 +230,32 @@ export default async function Home() {
 			<div className="relative overflow-hidden mt-12">
 				<div className="pointer-events-none absolute inset-x-0 top-[-20%] z-[-1] h-[600px] bg-gradient-to-b from-primary/10 via-transparent to-transparent blur-3xl" />
 				<main className="space-y-24 pb-24">
+					{categories.length ? (
+						<section>
+							<Container className="space-y-8">
+								<SectionHeading eyebrow="Browse" title="Popular categories" description="Explore by interest and find your next experience." align="center" />
+								<div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+									{categories.map((c) => (
+										<Link key={c.id} href={`/categories/${c.slug}`} className="group rounded-xl border border-border/60 bg-card/60 shadow-sm overflow-hidden">
+											<div className="relative aspect-[3/2]">
+												<Image src={c.picture} alt={c.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+												<div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
+											</div>
+											<div className="p-4">
+												<div className="flex items-center justify-between gap-3">
+													<h3 className="text-base font-semibold tracking-tight">{c.name}</h3>
+													<Badge variant="soft" className="text-[11px]">
+														{c.experienceCount}
+													</Badge>
+												</div>
+												{c.subtitle ? <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{c.subtitle}</p> : null}
+											</div>
+										</Link>
+									))}
+								</div>
+							</Container>
+						</section>
+					) : null}
 					{carouselGroups.length ? (
 						<section className="scroll-mt-28">
 							<Container className="space-y-12">

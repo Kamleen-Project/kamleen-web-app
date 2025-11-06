@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { saveUploadedFile } from "@/lib/uploads"
 
 function normalizeString(value: unknown) {
   if (typeof value !== "string") return null
@@ -30,6 +31,87 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ci
 
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+  }
+
+  const contentType = request.headers.get("content-type") ?? ""
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData()
+
+    try {
+      const data: Record<string, unknown> = {}
+
+      const name = getOptionalString(formData, "name")
+      if (name) data.name = name
+
+      const subtitle = getOptionalString(formData, "subtitle")
+      if (subtitle !== null) data.subtitle = subtitle
+
+      const latitude = parseCoordinate(formData.get("latitude"))
+      if (latitude !== undefined) data.latitude = latitude === null ? null : latitude
+
+      const longitude = parseCoordinate(formData.get("longitude"))
+      if (longitude !== undefined) data.longitude = longitude === null ? null : longitude
+
+      const countryId = getOptionalString(formData, "countryId")
+      if (countryId !== null) {
+        if (!countryId) {
+          return NextResponse.json({ message: "countryId must be a non-empty string" }, { status: 400 })
+        }
+        const country = await prisma.country.findUnique({ where: { id: countryId }, select: { id: true } })
+        if (!country) {
+          return NextResponse.json({ message: "Country not found" }, { status: 404 })
+        }
+        data.countryId = countryId
+      }
+
+      const stateId = getOptionalString(formData, "stateId")
+      if (stateId !== null) {
+        if (!stateId) {
+          data.stateId = null
+        } else {
+          const state = await prisma.state.findUnique({ where: { id: stateId }, select: { id: true, countryId: true } })
+          if (!state) {
+            return NextResponse.json({ message: "State not found" }, { status: 404 })
+          }
+          const { cityId } = await params
+          const nextCountryId = (data.countryId as string | undefined) ?? (await prisma.city.findUnique({ where: { id: cityId }, select: { countryId: true } }))?.countryId
+          if (nextCountryId && state.countryId !== nextCountryId) {
+            return NextResponse.json({ message: "State does not belong to the selected country" }, { status: 400 })
+          }
+          data.stateId = stateId
+          if (!data.countryId) {
+            data.countryId = state.countryId
+          }
+        }
+      }
+
+      const pictureFile = formData.get("picture")
+      if (pictureFile instanceof File && pictureFile.size > 0) {
+        const stored = await saveUploadedFile({ file: pictureFile, directory: "cities", maxSizeBytes: 5 * 1024 * 1024 })
+        data.picture = stored.publicPath
+      }
+
+      if (!Object.keys(data).length) {
+        return NextResponse.json({ ok: true })
+      }
+
+      const { cityId } = await params
+      const city = await prisma.city.update({ where: { id: cityId }, data })
+      return NextResponse.json({ ok: true, city })
+    } catch (error) {
+      if (error instanceof Error && "code" in error) {
+        const prismaError = error as { code: string }
+        if (prismaError.code === "P2025") {
+          return NextResponse.json({ message: "City not found" }, { status: 404 })
+        }
+        if (prismaError.code === "P2002") {
+          return NextResponse.json({ message: "A city with this name already exists for the selected country/state" }, { status: 409 })
+        }
+      }
+      console.error("Failed to update city", error)
+      return NextResponse.json({ message: "Failed to update city" }, { status: 500 })
+    }
   }
 
   const body = await request.json().catch(() => null)
@@ -125,6 +207,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ci
     console.error("Failed to update city", error)
     return NextResponse.json({ message: "Failed to update city" }, { status: 500 })
   }
+}
+
+function getOptionalString(formData: FormData, key: string) {
+  const value = formData.get(key)
+  if (typeof value !== "string") {
+    return null
+  }
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ cityId: string }> }) {

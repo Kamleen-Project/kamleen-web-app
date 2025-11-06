@@ -2,13 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CtaButton } from "@/components/ui/cta-button";
+import { CtaIconButton } from "@/components/ui/cta-icon-button";
+// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormControl, FormDescription, FormField, FormInput, FormLabel, FormSelect, FormTextarea } from "@/components/ui/form";
-import { MiniMap } from "@/components/ui/mini-map";
+import { MapLatLng } from "@/components/ui/map-latlng";
 import { ConsoleSubPage } from "@/components/console/subpage";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableHeaderRow, TableRow, TableContainer, TableEmpty, TableLoading } from "@/components/ui/table";
+import { UploadSinglePicture } from "@/components/ui/upload-single-picture";
 
 const MAX_UPLOAD_SIZE_MB = 5;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -438,26 +442,48 @@ export default function DataManagerLocationsPage() {
 		setError(null);
 		try {
 			if (modal.entity === "country") {
-				const payload = {
-					name: modal.draft.name.trim(),
-					subtitle: modal.draft.subtitle.trim(),
-					picture: modal.draft.picture.trim(),
-					latitude: Number.parseFloat(modal.draft.latitude),
-					longitude: Number.parseFloat(modal.draft.longitude),
-				};
-				if (!Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) {
+				const lat = Number.parseFloat(modal.draft.latitude);
+				const lng = Number.parseFloat(modal.draft.longitude);
+				if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
 					throw new Error("Latitude and longitude are required for countries");
 				}
 				const endpoint =
 					modal.mode === "edit" && modal.record
 						? `/api/admin/data-manager/locations/countries/${modal.record.id}`
 						: "/api/admin/data-manager/locations/countries";
-				const response = await fetch(endpoint, {
-					method: modal.mode === "edit" ? "PATCH" : "POST",
-					credentials: "include",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify(payload),
-				});
+
+				let response: Response;
+				if (dropzone.country.file) {
+					const formData = buildCountryFormData(
+						{
+							name: modal.draft.name.trim(),
+							subtitle: modal.draft.subtitle.trim(),
+							picture: modal.draft.picture,
+							latitude: modal.draft.latitude,
+							longitude: modal.draft.longitude,
+						},
+						dropzone.country.file
+					);
+					response = await fetch(endpoint, {
+						method: modal.mode === "edit" ? "PATCH" : "POST",
+						credentials: "include",
+						body: formData,
+					});
+				} else {
+					const payload = {
+						name: modal.draft.name.trim(),
+						subtitle: modal.draft.subtitle.trim(),
+						picture: modal.draft.picture.trim(),
+						latitude: lat,
+						longitude: lng,
+					};
+					response = await fetch(endpoint, {
+						method: modal.mode === "edit" ? "PATCH" : "POST",
+						credentials: "include",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify(payload),
+					});
+				}
 				if (!response.ok) {
 					const data = await response.json().catch(() => ({}));
 					throw new Error(data.message ?? "Unable to save country");
@@ -466,25 +492,46 @@ export default function DataManagerLocationsPage() {
 			}
 
 			if (modal.entity === "state") {
-				const payload = {
-					name: modal.draft.name.trim(),
-					subtitle: modal.draft.subtitle.trim(),
-					picture: modal.draft.picture.trim() || null,
-					latitude: modal.draft.latitude.trim() ? Number.parseFloat(modal.draft.latitude) : null,
-					longitude: modal.draft.longitude.trim() ? Number.parseFloat(modal.draft.longitude) : null,
-					countryId: modal.draft.countryId,
-				};
-				if (!payload.countryId) {
-					throw new Error("Select a country for this state");
-				}
 				const endpoint =
 					modal.mode === "edit" && modal.record ? `/api/admin/data-manager/locations/states/${modal.record.id}` : "/api/admin/data-manager/locations/states";
-				const response = await fetch(endpoint, {
-					method: modal.mode === "edit" ? "PATCH" : "POST",
-					credentials: "include",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify(payload),
-				});
+				let response: Response;
+				if (dropzone.state.file) {
+					const formData = buildStateFormData(
+						{
+							name: modal.draft.name.trim(),
+							subtitle: modal.draft.subtitle.trim(),
+							picture: modal.draft.picture,
+							latitude: modal.draft.latitude,
+							longitude: modal.draft.longitude,
+							countryId: modal.draft.countryId,
+						},
+						dropzone.state.file
+					);
+					if (!modal.draft.countryId) throw new Error("Select a country for this state");
+					response = await fetch(endpoint, {
+						method: modal.mode === "edit" ? "PATCH" : "POST",
+						credentials: "include",
+						body: formData,
+					});
+				} else {
+					const payload = {
+						name: modal.draft.name.trim(),
+						subtitle: modal.draft.subtitle.trim(),
+						picture: modal.draft.picture.trim() || null,
+						latitude: modal.draft.latitude.trim() ? Number.parseFloat(modal.draft.latitude) : null,
+						longitude: modal.draft.longitude.trim() ? Number.parseFloat(modal.draft.longitude) : null,
+						countryId: modal.draft.countryId,
+					};
+					if (!payload.countryId) {
+						throw new Error("Select a country for this state");
+					}
+					response = await fetch(endpoint, {
+						method: modal.mode === "edit" ? "PATCH" : "POST",
+						credentials: "include",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify(payload),
+					});
+				}
 				if (!response.ok) {
 					const data = await response.json().catch(() => ({}));
 					throw new Error(data.message ?? "Unable to save state");
@@ -493,26 +540,48 @@ export default function DataManagerLocationsPage() {
 			}
 
 			if (modal.entity === "city") {
-				const payload = {
-					name: modal.draft.name.trim(),
-					subtitle: modal.draft.subtitle.trim(),
-					picture: modal.draft.picture.trim(),
-					latitude: modal.draft.latitude.trim() ? Number.parseFloat(modal.draft.latitude) : null,
-					longitude: modal.draft.longitude.trim() ? Number.parseFloat(modal.draft.longitude) : null,
-					countryId: modal.draft.countryId,
-					stateId: modal.draft.stateId ? modal.draft.stateId : null,
-				};
-				if (!payload.countryId) {
-					throw new Error("Select a country for this city");
-				}
 				const endpoint =
 					modal.mode === "edit" && modal.record ? `/api/admin/data-manager/locations/cities/${modal.record.id}` : "/api/admin/data-manager/locations/cities";
-				const response = await fetch(endpoint, {
-					method: modal.mode === "edit" ? "PATCH" : "POST",
-					credentials: "include",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify(payload),
-				});
+				let response: Response;
+				if (dropzone.city.file) {
+					const formData = buildCityFormData(
+						{
+							name: modal.draft.name.trim(),
+							subtitle: modal.draft.subtitle.trim(),
+							picture: modal.draft.picture,
+							latitude: modal.draft.latitude,
+							longitude: modal.draft.longitude,
+							countryId: modal.draft.countryId,
+							stateId: modal.draft.stateId ? modal.draft.stateId : "",
+						},
+						dropzone.city.file
+					);
+					if (!modal.draft.countryId) throw new Error("Select a country for this city");
+					response = await fetch(endpoint, {
+						method: modal.mode === "edit" ? "PATCH" : "POST",
+						credentials: "include",
+						body: formData,
+					});
+				} else {
+					const payload = {
+						name: modal.draft.name.trim(),
+						subtitle: modal.draft.subtitle.trim(),
+						picture: modal.draft.picture.trim(),
+						latitude: modal.draft.latitude.trim() ? Number.parseFloat(modal.draft.latitude) : null,
+						longitude: modal.draft.longitude.trim() ? Number.parseFloat(modal.draft.longitude) : null,
+						countryId: modal.draft.countryId,
+						stateId: modal.draft.stateId ? modal.draft.stateId : null,
+					};
+					if (!payload.countryId) {
+						throw new Error("Select a country for this city");
+					}
+					response = await fetch(endpoint, {
+						method: modal.mode === "edit" ? "PATCH" : "POST",
+						credentials: "include",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify(payload),
+					});
+				}
 				if (!response.ok) {
 					const data = await response.json().catch(() => ({}));
 					throw new Error(data.message ?? "Unable to save city");
@@ -695,81 +764,74 @@ export default function DataManagerLocationsPage() {
 		<ConsoleSubPage
 			backHref="/admin/data-manager"
 			backLabel="← Back to data manager"
-			badgeLabel="Locations"
 			title="Location hierarchy"
 			subtitle="Manage countries, states, and cities used throughout organizer onboarding and explorer search."
-			action={<Button onClick={() => openCountryModal("create")}>Add country</Button>}
+			action={
+				<CtaButton onClick={() => openCountryModal("create")} size="md">
+					Add country
+				</CtaButton>
+			}
 		>
 			{error ? <p className="text-sm text-destructive">{error}</p> : null}
 			{feedback ? <p className="text-sm text-emerald-600">{feedback}</p> : null}
 
-			<Card className="border-border/70 bg-card/90">
-				<CardHeader>
-					<CardTitle>Countries</CardTitle>
-					<CardDescription>
-						API source: <code className="rounded bg-muted px-1 py-0.5 text-xs">/api/admin/data-manager/locations</code>
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="overflow-x-auto">
-					{loading ? (
-						<p className="px-2 py-10 text-center text-sm text-muted-foreground">Loading countries…</p>
-					) : countries.length === 0 ? (
-						<div className="rounded-lg border border-dashed border-border/60 p-10 text-center text-sm text-muted-foreground">
-							No countries yet. Create one to begin managing hierarchy.
-						</div>
-					) : (
-						<table className="min-w-full border-separate border-spacing-y-3 text-sm">
-							<thead>
-								<tr className="text-left text-xs uppercase tracking-[0.2em] text-muted-foreground">
-									<th className="px-3 py-2">Name</th>
-									<th className="px-3 py-2">States</th>
-									<th className="px-3 py-2">Cities</th>
-									<th className="px-3 py-2">Experiences</th>
-									<th className="px-3 py-2">Updated</th>
-									<th className="px-3 py-2">Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								{countries.map((country) => (
-									<tr key={country.id} className="rounded-lg border border-border/60 bg-background/90 text-foreground">
-										<td className="px-3 py-3">
-											<button
-												type="button"
-												className="text-left font-medium text-foreground hover:text-primary"
-												onClick={() => setSelectedCountryId(country.id)}
+			<TableContainer>
+				<Table>
+					<TableHeader>
+						<TableHeaderRow>
+							<TableHead>Name</TableHead>
+							<TableHead>States</TableHead>
+							<TableHead>Cities</TableHead>
+							<TableHead>Experiences</TableHead>
+							<TableHead>Updated</TableHead>
+							<TableHead>Actions</TableHead>
+						</TableHeaderRow>
+					</TableHeader>
+					<TableBody>
+						{loading ? (
+							<TableLoading colSpan={6} label="Loading countries…" />
+						) : countries.length === 0 ? (
+							<TableEmpty colSpan={6}>No countries yet. Create one to begin managing hierarchy.</TableEmpty>
+						) : (
+							countries.map((country) => (
+								<TableRow key={country.id}>
+									<TableCell>
+										<button type="button" className="text-left font-medium text-foreground hover:text-primary" onClick={() => setSelectedCountryId(country.id)}>
+											{country.name}
+										</button>
+										<p className="text-xs text-muted-foreground">{country.subtitle ?? "—"}</p>
+									</TableCell>
+									<TableCell>{country.stats.stateCount}</TableCell>
+									<TableCell>{country.stats.cityCount}</TableCell>
+									<TableCell>
+										<span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">{country.stats.experienceCount}</span>
+									</TableCell>
+									<TableCell>{new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(country.updatedAt))}</TableCell>
+									<TableCell>
+										<div className="flex flex-wrap gap-2">
+											<CtaIconButton
+												ariaLabel="Edit country"
+												size="sm"
+												color="whiteBorder"
+												onClick={() => openCountryModal("edit", country)}
+												disabled={pending}
 											>
-												{country.name}
-											</button>
-											<p className="text-xs text-muted-foreground">{country.subtitle ?? "—"}</p>
-										</td>
-										<td className="px-3 py-3 text-muted-foreground">{country.stats.stateCount}</td>
-										<td className="px-3 py-3 text-muted-foreground">{country.stats.cityCount}</td>
-										<td className="px-3 py-3">
-											<span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">{country.stats.experienceCount}</span>
-										</td>
-										<td className="px-3 py-3 text-muted-foreground">
-											{new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(country.updatedAt))}
-										</td>
-										<td className="px-3 py-3">
-											<div className="flex flex-wrap gap-2">
-												<Button variant="outline" size="sm" onClick={() => openCountryModal("edit", country)} disabled={pending}>
-													Edit
-												</Button>
-												<Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteCountry(country)} disabled={pending}>
-													Delete
-												</Button>
-											</div>
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					)}
-				</CardContent>
-			</Card>
+												<Pencil className="size-4" />
+											</CtaIconButton>
+											<CtaIconButton ariaLabel="Delete country" size="sm" color="red" onClick={() => deleteCountry(country)} disabled={pending}>
+												<Trash2 className="size-4" />
+											</CtaIconButton>
+										</div>
+									</TableCell>
+								</TableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
+			</TableContainer>
 
 			{countries.length ? (
-				<div className="flex flex-col gap-2">
+				<div className="flex flex-col gap-2 my-4">
 					<FormField>
 						<FormLabel>Country</FormLabel>
 						<FormControl>
@@ -788,100 +850,126 @@ export default function DataManagerLocationsPage() {
 
 			{selectedCountry ? (
 				<div className="grid gap-8 lg:grid-cols-2">
-					<Card className="border-border/70 bg-card/90">
-						<CardHeader className="flex flex-col gap-2">
-							<CardTitle>States in {selectedCountry.name}</CardTitle>
-							<CardDescription>Manage sub-regions scoped to this country.</CardDescription>
+					<div className="flex flex-col gap-2 my-4">
+						<div className="flex flex-row gap-2 items-start justify-between mb-4">
+							<div className="flex flex-col gap-2">
+								<div className="text-base font-semibold text-foreground">States in {selectedCountry.name}</div>
+								<div className="text-sm text-muted-foreground">Manage sub-regions scoped to this country.</div>
+							</div>
 							<div className="flex gap-2">
-								<Button size="sm" onClick={() => openStateModal("create")} disabled={pending || !selectedCountryId}>
+								<CtaButton size="sm" onClick={() => openStateModal("create")} disabled={pending || !selectedCountryId}>
 									Add state
-								</Button>
+								</CtaButton>
 							</div>
-						</CardHeader>
-						<CardContent className="space-y-3">
-							{selectedCountry.states.length === 0 ? (
-								<p className="rounded-lg border border-dashed border-border/60 p-6 text-sm text-muted-foreground">No states yet for this country.</p>
-							) : (
-								<div className="space-y-3">
-									{selectedCountry.states.map((state) => (
-										<div key={state.id} className="flex flex-col gap-2 rounded-lg border border-border/60 bg-background/90 p-4">
-											<div className="flex items-start justify-between gap-3">
-												<div>
-													<h3 className="text-sm font-semibold text-foreground">{state.name}</h3>
-												</div>
-												<div className="flex gap-2">
-													<Button variant="outline" size="sm" onClick={() => openStateModal("edit", state)} disabled={pending}>
-														Edit
-													</Button>
-													<Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteState(state)} disabled={pending}>
-														Delete
-													</Button>
-												</div>
-											</div>
-										</div>
-									))}
-								</div>
-							)}
-						</CardContent>
-					</Card>
+						</div>
+						<TableContainer>
+							<Table>
+								<TableHeader>
+									<TableHeaderRow>
+										<TableHead>Name</TableHead>
+										<TableHead>Actions</TableHead>
+									</TableHeaderRow>
+								</TableHeader>
+								<TableBody>
+									{selectedCountry.states.length === 0 ? (
+										<TableEmpty colSpan={2}>No states yet for this country.</TableEmpty>
+									) : (
+										selectedCountry.states.map((state) => (
+											<TableRow key={state.id}>
+												<TableCell>
+													<span className="text-sm font-semibold text-foreground">{state.name}</span>
+												</TableCell>
+												<TableCell>
+													<div className="flex gap-2">
+														<CtaIconButton
+															ariaLabel="Edit state"
+															size="sm"
+															color="whiteBorder"
+															onClick={() => openStateModal("edit", state)}
+															disabled={pending}
+														>
+															<Pencil className="size-4" />
+														</CtaIconButton>
+														<CtaIconButton ariaLabel="Delete state" size="sm" color="red" onClick={() => deleteState(state)} disabled={pending}>
+															<Trash2 className="size-4" />
+														</CtaIconButton>
+													</div>
+												</TableCell>
+											</TableRow>
+										))
+									)}
+								</TableBody>
+							</Table>
+						</TableContainer>
+					</div>
 
-					<Card className="border-border/70 bg-card/90">
-						<CardHeader className="flex flex-col gap-2">
-							<CardTitle>Cities in {selectedCountry.name}</CardTitle>
-							<CardDescription>Filter by state or manage cities directly.</CardDescription>
-							<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-								<FormField>
-									<FormLabel>Filter</FormLabel>
-									<FormControl>
-										<FormSelect value={stateFilter} onChange={(event) => setStateFilter(event.target.value)}>
-											<option value="__ALL__">All cities</option>
-											<option value="__UNASSIGNED__">Cities without state</option>
-											{availableStates.map((state) => (
-												<option key={state.id} value={state.id}>
-													{state.name}
-												</option>
-											))}
-										</FormSelect>
-									</FormControl>
-								</FormField>
-								<Button size="sm" onClick={() => openCityModal("create")} disabled={pending || !selectedCountryId}>
-									Add city
-								</Button>
+					<div className="flex flex-col gap-2 my-4">
+						<div className="flex flex-row gap-2 items-start justify-between mb-4">
+							<div className="flex flex-col gap-2">
+								<div className="text-base font-semibold text-foreground">Cities in {selectedCountry.name}</div>
+								<div className="text-sm text-muted-foreground">Filter by state or manage cities directly.</div>
 							</div>
-						</CardHeader>
-						<CardContent className="space-y-3">
-							{cityRows.length === 0 ? (
-								<p className="rounded-lg border border-dashed border-border/60 p-6 text-sm text-muted-foreground">No cities match this filter.</p>
-							) : (
-								<div className="space-y-3">
-									{cityRows.map((city) => (
-										<div key={city.id} className="flex flex-col gap-2 rounded-lg border border-border/60 bg-background/90 p-4">
-											<div className="flex items-start justify-between gap-3">
-												<div>
-													<h3 className="text-sm font-semibold text-foreground">{city.name}</h3>
-													<p className="text-xs text-muted-foreground">{city.state ? `${city.state.name}, ${selectedCountry.name}` : selectedCountry.name}</p>
-												</div>
-												<div className="flex gap-2">
-													<Button variant="outline" size="sm" onClick={() => openCityModal("edit", city)} disabled={pending}>
-														Edit
-													</Button>
-													<Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteCity(city)} disabled={pending}>
-														Delete
-													</Button>
-												</div>
-											</div>
-										</div>
-									))}
-								</div>
-							)}
-						</CardContent>
-					</Card>
+
+							<CtaButton size="sm" onClick={() => openCityModal("create")} disabled={pending || !selectedCountryId}>
+								Add city
+							</CtaButton>
+						</div>
+						<div className="flex mb-4 w-full">
+							<FormField>
+								<FormControl className="flex flex-col w-full">
+									<FormLabel className="mr-2">Filter</FormLabel>
+									<FormSelect value={stateFilter} onChange={(event) => setStateFilter(event.target.value)}>
+										<option value="__ALL__">All cities</option>
+										<option value="__UNASSIGNED__">Cities without state</option>
+										{availableStates.map((state) => (
+											<option key={state.id} value={state.id}>
+												{state.name}
+											</option>
+										))}
+									</FormSelect>
+								</FormControl>
+							</FormField>
+						</div>
+						<TableContainer>
+							<Table>
+								<TableHeader>
+									<TableHeaderRow>
+										<TableHead>Name</TableHead>
+										<TableHead>Actions</TableHead>
+									</TableHeaderRow>
+								</TableHeader>
+								<TableBody>
+									{cityRows.length === 0 ? (
+										<TableEmpty colSpan={2}>No cities match this filter.</TableEmpty>
+									) : (
+										cityRows.map((city) => (
+											<TableRow key={city.id}>
+												<TableCell>
+													<span className="text-sm font-semibold text-foreground">{city.name}</span>
+												</TableCell>
+												<TableCell>
+													<div className="flex gap-2">
+														<CtaIconButton ariaLabel="Edit city" size="sm" color="whiteBorder" onClick={() => openCityModal("edit", city)} disabled={pending}>
+															<Pencil className="size-4" />
+														</CtaIconButton>
+														<CtaIconButton ariaLabel="Delete city" size="sm" color="red" onClick={() => deleteCity(city)} disabled={pending}>
+															<Trash2 className="size-4" />
+														</CtaIconButton>
+													</div>
+												</TableCell>
+											</TableRow>
+										))
+									)}
+								</TableBody>
+							</Table>
+						</TableContainer>
+					</div>
 				</div>
 			) : null}
 
 			{modal ? (
 				<div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/50 px-4 py-10">
-					<div className="w-full max-w-xl rounded-2xl border border-border/70 bg-background p-6 shadow-2xl max-h-[85vh] overflow-hidden">
+					<div className="w-full max-w-3xl rounded-2xl border border-border/70 bg-background p-6 shadow-2xl max-h-[85vh] overflow-hidden">
 						<div className="mb-4 flex items-start justify-between gap-4">
 							<div>
 								<h2 className="text-xl font-semibold text-foreground">
@@ -895,456 +983,245 @@ export default function DataManagerLocationsPage() {
 										: "Cities attach to a country and optionally a state."}
 								</p>
 							</div>
-							<Button variant="ghost" size="sm" onClick={closeModal} disabled={pending}>
+							<CtaButton color="whiteBorder" size="sm" onClick={closeModal} disabled={pending}>
 								Close
-							</Button>
+							</CtaButton>
 						</div>
 
 						<form onSubmit={handleSubmit} className="space-y-5">
-							<div className="max-h-[60vh] overflow-y-auto pr-1">
+							<div className="max-h-[60vh] overflow-y-auto pr-1 space-y-3">
 								{modal.entity === "country" ? (
 									<>
-										<FormField>
-											<FormLabel>Name</FormLabel>
-											<FormControl>
-												<FormInput value={modal.draft.name} onChange={(event) => updateDraft("name", event.target.value)} required disabled={pending} />
-											</FormControl>
-										</FormField>
-										<FormField>
-											<FormLabel>Subtitle</FormLabel>
-											<FormControl>
-												<FormTextarea
-													rows={3}
-													value={modal.draft.subtitle}
-													onChange={(event) => updateDraft("subtitle", event.target.value)}
-													required
-													disabled={pending}
-												/>
-											</FormControl>
-											<FormDescription>Describe the country for internal context.</FormDescription>
-										</FormField>
-										<FormField>
-											<FormLabel>Hero image</FormLabel>
-											<FormControl>
-												<div className="flex flex-col gap-4">
-													<div
-														onDragOver={() => handleDragOver("country")}
-														onDragLeave={() => handleDragLeave("country")}
-														onDrop={handleDrop.bind(null, "country")}
-														className={`relative flex h-48 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-lg border border-dashed px-6 py-8 text-center transition hover:border-primary ${
-															dropzone.country.active ? "border-primary bg-primary/5" : "border-border/60 bg-muted/20"
-														}`}
-														style={
-															dropzone.country.preview
-																? { backgroundImage: `url(${dropzone.country.preview})`, backgroundSize: "cover", backgroundPosition: "center" }
-																: undefined
-														}
-														onClick={() => countryInputRef.current?.click()}
-													>
-														<div className={`absolute inset-0 ${dropzone.country.preview ? "bg-black/30" : "hidden"}`} />
-														{!dropzone.country.preview ? (
-															<div className="relative flex flex-col items-center gap-2 text-sm text-foreground">
-																<p className="font-semibold text-primary drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">Drag & drop an image here</p>
-																<p className="text-xs text-muted-foreground drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-																	or click to select a file (JPG, PNG, WebP, GIF up to {MAX_UPLOAD_SIZE_MB}MB)
-																</p>
-															</div>
-														) : null}
-														<Button
-															type="button"
-															variant="outline"
-															size="sm"
-															onClick={() => countryInputRef.current?.click()}
+										<div className="grid gap-5 md:grid-cols-3">
+											<div className="md:col-span-1">
+												<FormField>
+													<FormLabel>Hero image</FormLabel>
+													<FormControl>
+														<div className="flex flex-col gap-4">
+															<UploadSinglePicture
+																previewUrl={dropzone.country.preview ?? (modal.draft.picture || undefined)}
+																uploadLabel="Upload hero image"
+																aspect="threeFour"
+																onChangeFile={(file) => {
+																	if (!acceptedFile(file)) return;
+																	updatePreview("country", file);
+																}}
+																onRemove={() => clearPreview("country")}
+															/>
+														</div>
+													</FormControl>
+													<FormDescription>Upload or drag an image (up to {MAX_UPLOAD_SIZE_MB}MB).</FormDescription>
+												</FormField>
+											</div>
+											<div className="md:col-span-2 space-y-5">
+												<FormField>
+													<FormLabel>Name</FormLabel>
+													<FormControl>
+														<FormInput
+															className="mb-2"
+															value={modal.draft.name}
+															onChange={(event) => updateDraft("name", event.target.value)}
+															required
 															disabled={pending}
-															className="absolute bottom-3 right-3"
-														>
-															Browse files
-														</Button>
-													</div>
-													<input
-														type="file"
-														accept={ACCEPTED_TYPES.join(",")}
-														className="hidden"
-														ref={(ref) => handleFileInputRef("country", ref)}
-														onChange={handleFileChange.bind(null, "country")}
-														disabled={pending}
-													/>
-													<div className="flex flex-wrap items-center gap-2">
-														<Button
-															type="button"
-															variant={modal.draft.picture && modal.entity === "country" ? "default" : "outline"}
-															size="sm"
-															onClick={() => applyExistingPreview("country")}
-															disabled={pending || modal.mode !== "edit"}
-														>
-															Use existing image
-														</Button>
-														<Button type="button" variant="outline" size="sm" onClick={() => clearPreview("country")} disabled={pending}>
-															Clear selection
-														</Button>
-													</div>
-												</div>
-											</FormControl>
-											<FormDescription>
-												Upload or drag an image (JPG, PNG, WebP, GIF up to {MAX_UPLOAD_SIZE_MB}MB). Keeping an existing image is allowed.
-											</FormDescription>
-										</FormField>
-										<div className="grid gap-4 sm:grid-cols-2">
-											<FormField>
-												<FormLabel>Latitude</FormLabel>
-												<FormControl>
-													<FormInput
-														type="number"
-														step="any"
-														value={modal.draft.latitude}
-														onChange={(event) => updateDraft("latitude", event.target.value)}
-														required
-														disabled={pending}
-													/>
-												</FormControl>
-											</FormField>
-											<FormField>
-												<FormLabel>Longitude</FormLabel>
-												<FormControl>
-													<FormInput
-														type="number"
-														step="any"
-														value={modal.draft.longitude}
-														onChange={(event) => updateDraft("longitude", event.target.value)}
-														required
-														disabled={pending}
-													/>
-												</FormControl>
-											</FormField>
-										</div>
-										<div className="space-y-2">
-											<div className="rounded-lg border border-border/60">
-												<MiniMap
-													latitude={modal.draft.latitude.trim() ? Number.parseFloat(modal.draft.latitude) : null}
-													longitude={modal.draft.longitude.trim() ? Number.parseFloat(modal.draft.longitude) : null}
-													onChange={(lat, lng) => {
-														updateDraft("latitude", String(lat));
-														updateDraft("longitude", String(lng));
-													}}
+														/>
+													</FormControl>
+												</FormField>
+												<FormField>
+													<FormLabel>Subtitle</FormLabel>
+													<FormControl>
+														<FormTextarea
+															rows={3}
+															value={modal.draft.subtitle}
+															onChange={(event) => updateDraft("subtitle", event.target.value)}
+															required
+															disabled={pending}
+														/>
+													</FormControl>
+													<FormDescription>Describe the country for internal context.</FormDescription>
+												</FormField>
+											</div>
+											<div className="md:col-span-3">
+												<MapLatLng
+													lat={modal.draft.latitude}
+													lng={modal.draft.longitude}
+													onLatChange={(value) => updateDraft("latitude", value)}
+													onLngChange={(value) => updateDraft("longitude", value)}
 													height={256}
+													required
+													hint={
+														process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+															? "Click the map to set a pin and update coordinates."
+															: "Add coordinates to preview a map, or set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY for interactive pinning."
+													}
 												/>
 											</div>
-											<p className="text-xs text-muted-foreground">
-												{process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-													? "Click the map to set a pin and update coordinates."
-													: "Add coordinates to preview a map, or set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY for interactive pinning."}
-											</p>
 										</div>
 									</>
 								) : null}
 
 								{modal.entity === "state" ? (
 									<>
-										<FormField>
-											<FormLabel>Parent country</FormLabel>
-											<FormControl>
-												<FormSelect value={modal.draft.countryId} onChange={(event) => updateDraft("countryId", event.target.value)} disabled={pending}>
-													<option value="">Select country</option>
-													{countryOptions.map((option) => (
-														<option key={option.id} value={option.id}>
-															{option.name}
-														</option>
-													))}
-												</FormSelect>
-											</FormControl>
-										</FormField>
-										<FormField>
-											<FormLabel>Name</FormLabel>
-											<FormControl>
-												<FormInput value={modal.draft.name} onChange={(event) => updateDraft("name", event.target.value)} required disabled={pending} />
-											</FormControl>
-										</FormField>
-										<FormField>
-											<FormLabel>Subtitle</FormLabel>
-											<FormControl>
-												<FormTextarea
-													rows={3}
-													value={modal.draft.subtitle}
-													onChange={(event) => updateDraft("subtitle", event.target.value)}
-													disabled={pending}
-												/>
-											</FormControl>
-										</FormField>
-										<FormField>
-											<FormLabel>Image</FormLabel>
-											<FormControl>
-												<div className="flex flex-col gap-4">
-													<div
-														onDragOver={() => handleDragOver("state")}
-														onDragLeave={() => handleDragLeave("state")}
-														onDrop={handleDrop.bind(null, "state")}
-														className={`relative flex h-48 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-lg border border-dashed px-6 py-8 text-center transition hover:border-primary ${
-															dropzone.state.active ? "border-primary bg-primary/5" : "border-border/60 bg-muted/20"
-														}`}
-														style={
-															dropzone.state.preview
-																? { backgroundImage: `url(${dropzone.state.preview})`, backgroundSize: "cover", backgroundPosition: "center" }
-																: undefined
-														}
-														onClick={() => stateInputRef.current?.click()}
-													>
-														<div className={`absolute inset-0 ${dropzone.state.preview ? "bg-black/30" : "hidden"}`} />
-														{!dropzone.state.preview ? (
-															<div className="relative flex flex-col items-center gap-2 text-sm text-foreground">
-																<p className="font-semibold text-primary drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">Drag & drop an image here</p>
-																<p className="text-xs text-muted-foreground drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-																	or click to select a file (JPG, PNG, WebP, GIF up to {MAX_UPLOAD_SIZE_MB}MB)
-																</p>
-															</div>
-														) : null}
-														<Button
-															type="button"
-															variant="outline"
-															size="sm"
-															onClick={() => stateInputRef.current?.click()}
+										<div className="grid gap-5 md:grid-cols-3">
+											<div className="md:col-span-1">
+												<FormField>
+													<FormLabel>Image</FormLabel>
+													<FormControl>
+														<div className="flex flex-col gap-4">
+															<UploadSinglePicture
+																previewUrl={dropzone.state.preview ?? (modal.draft.picture || undefined)}
+																uploadLabel="Upload image"
+																aspect="threeFour"
+																onChangeFile={(file) => {
+																	if (!acceptedFile(file)) return;
+																	updatePreview("state", file);
+																}}
+																onRemove={() => clearPreview("state")}
+															/>
+														</div>
+													</FormControl>
+													<FormDescription>Upload or drag an image (up to {MAX_UPLOAD_SIZE_MB}MB).</FormDescription>
+												</FormField>
+											</div>
+											<div className="md:col-span-2 space-y-5">
+												<FormField>
+													<FormLabel>Parent country</FormLabel>
+													<FormControl>
+														<FormSelect value={modal.draft.countryId} onChange={(event) => updateDraft("countryId", event.target.value)} disabled={pending}>
+															<option value="">Select country</option>
+															{countryOptions.map((option) => (
+																<option key={option.id} value={option.id}>
+																	{option.name}
+																</option>
+															))}
+														</FormSelect>
+													</FormControl>
+												</FormField>
+												<FormField>
+													<FormLabel>Name</FormLabel>
+													<FormControl>
+														<FormInput value={modal.draft.name} onChange={(event) => updateDraft("name", event.target.value)} required disabled={pending} />
+													</FormControl>
+												</FormField>
+												<FormField>
+													<FormLabel>Subtitle</FormLabel>
+													<FormControl>
+														<FormTextarea
+															rows={3}
+															value={modal.draft.subtitle}
+															onChange={(event) => updateDraft("subtitle", event.target.value)}
 															disabled={pending}
-															className="absolute bottom-3 right-3"
-														>
-															Browse files
-														</Button>
-													</div>
-													<input
-														type="file"
-														accept={ACCEPTED_TYPES.join(",")}
-														className="hidden"
-														ref={(ref) => handleFileInputRef("state", ref)}
-														onChange={handleFileChange.bind(null, "state")}
-														disabled={pending}
-													/>
-													<div className="flex flex-wrap items-center gap-2">
-														<Button
-															type="button"
-															variant={modal.entity === "state" && modal.record?.picture ? "default" : "outline"}
-															size="sm"
-															onClick={() => applyExistingPreview("state")}
-															disabled={pending || modal.mode !== "edit"}
-														>
-															Use existing image
-														</Button>
-														<Button type="button" variant="outline" size="sm" onClick={() => clearPreview("state")} disabled={pending}>
-															Clear selection
-														</Button>
-													</div>
-												</div>
-											</FormControl>
-											<FormDescription>
-												Upload or drag an image (JPG, PNG, WebP, GIF up to {MAX_UPLOAD_SIZE_MB}MB). Keeping an existing image is allowed.
-											</FormDescription>
-										</FormField>
-										<div className="grid gap-4 sm:grid-cols-2">
-											<FormField>
-												<FormLabel>Latitude</FormLabel>
-												<FormControl>
-													<FormInput
-														type="number"
-														step="any"
-														value={modal.draft.latitude}
-														onChange={(event) => updateDraft("latitude", event.target.value)}
-														disabled={pending}
-													/>
-												</FormControl>
-											</FormField>
-											<FormField>
-												<FormLabel>Longitude</FormLabel>
-												<FormControl>
-													<FormInput
-														type="number"
-														step="any"
-														value={modal.draft.longitude}
-														onChange={(event) => updateDraft("longitude", event.target.value)}
-														disabled={pending}
-													/>
-												</FormControl>
-											</FormField>
-										</div>
-										<div className="space-y-2">
-											<div className="rounded-lg border border-border/60">
-												<MiniMap
-													latitude={modal.draft.latitude.trim() ? Number.parseFloat(modal.draft.latitude) : null}
-													longitude={modal.draft.longitude.trim() ? Number.parseFloat(modal.draft.longitude) : null}
-													onChange={(lat, lng) => {
-														updateDraft("latitude", String(lat));
-														updateDraft("longitude", String(lng));
-													}}
+														/>
+													</FormControl>
+												</FormField>
+											</div>
+											<div className="md:col-span-3">
+												<MapLatLng
+													lat={modal.draft.latitude}
+													lng={modal.draft.longitude}
+													onLatChange={(value) => updateDraft("latitude", value)}
+													onLngChange={(value) => updateDraft("longitude", value)}
 													height={256}
+													hint="Click the map to set a pin and update coordinates."
 												/>
 											</div>
-											<p className="text-xs text-muted-foreground">Click the map to set a pin and update coordinates.</p>
 										</div>
 									</>
 								) : null}
 
 								{modal.entity === "city" ? (
 									<>
-										<FormField>
-											<FormLabel>Country</FormLabel>
-											<FormControl>
-												<FormSelect value={modal.draft.countryId} onChange={(event) => updateDraft("countryId", event.target.value)} disabled={pending}>
-													<option value="">Select country</option>
-													{countryOptions.map((option) => (
-														<option key={option.id} value={option.id}>
-															{option.name}
-														</option>
-													))}
-												</FormSelect>
-											</FormControl>
-										</FormField>
-										<FormField>
-											<FormLabel>State (optional)</FormLabel>
-											<FormControl>
-												<FormSelect
-													value={modal.draft.stateId}
-													onChange={(event) => updateDraft("stateId", event.target.value)}
-													disabled={pending || !modal.draft.countryId}
-												>
-													<option value="">No state</option>
-													{countries
-														.filter((country) => country.id === modal.draft.countryId)
-														.flatMap((country) => country.states)
-														.map((state) => (
-															<option key={state.id} value={state.id}>
-																{state.name}
-															</option>
-														))}
-												</FormSelect>
-											</FormControl>
-										</FormField>
-										<FormField>
-											<FormLabel>Name</FormLabel>
-											<FormControl>
-												<FormInput value={modal.draft.name} onChange={(event) => updateDraft("name", event.target.value)} required disabled={pending} />
-											</FormControl>
-										</FormField>
-										<FormField>
-											<FormLabel>Subtitle</FormLabel>
-											<FormControl>
-												<FormTextarea
-													rows={3}
-													value={modal.draft.subtitle}
-													onChange={(event) => updateDraft("subtitle", event.target.value)}
-													disabled={pending}
-												/>
-											</FormControl>
-										</FormField>
-										<FormField>
-											<FormLabel>Image</FormLabel>
-											<FormControl>
-												<div className="flex flex-col gap-4">
-													<div
-														onDragOver={() => handleDragOver("city")}
-														onDragLeave={() => handleDragLeave("city")}
-														onDrop={handleDrop.bind(null, "city")}
-														className={`relative flex h-48 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-lg border border-dashed px-6 py-8 text-center transition hover:border-primary ${
-															dropzone.city.active ? "border-primary bg-primary/5" : "border-border/60 bg-muted/20"
-														}`}
-														style={
-															dropzone.city.preview
-																? { backgroundImage: `url(${dropzone.city.preview})`, backgroundSize: "cover", backgroundPosition: "center" }
-																: undefined
-														}
-														onClick={() => cityInputRef.current?.click()}
-													>
-														<div className={`absolute inset-0 ${dropzone.city.preview ? "bg-black/30" : "hidden"}`} />
-														{!dropzone.city.preview ? (
-															<div className="relative flex flex-col items-center gap-2 text-sm text-foreground">
-																<p className="font-semibold text-primary drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]">Drag & drop an image here</p>
-																<p className="text-xs text-muted-foreground drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-																	or click to select a file (JPG, PNG, WebP, GIF up to {MAX_UPLOAD_SIZE_MB}MB)
-																</p>
-															</div>
-														) : null}
-														<Button
-															type="button"
-															variant="outline"
-															size="sm"
-															onClick={() => cityInputRef.current?.click()}
+										<div className="grid gap-5 md:grid-cols-3">
+											<div className="md:col-span-1">
+												<FormField>
+													<FormLabel>Image</FormLabel>
+													<FormControl>
+														<div className="flex flex-col gap-4">
+															<UploadSinglePicture
+																previewUrl={dropzone.city.preview ?? (modal.draft.picture || undefined)}
+																uploadLabel="Upload image"
+																aspect="threeFour"
+																onChangeFile={(file) => {
+																	if (!acceptedFile(file)) return;
+																	updatePreview("city", file);
+																}}
+																onRemove={() => clearPreview("city")}
+															/>
+														</div>
+													</FormControl>
+													<FormDescription>Upload or drag an image (up to {MAX_UPLOAD_SIZE_MB}MB).</FormDescription>
+												</FormField>
+											</div>
+											<div className="md:col-span-2 space-y-5">
+												<FormField>
+													<FormLabel>Country</FormLabel>
+													<FormControl>
+														<FormSelect value={modal.draft.countryId} onChange={(event) => updateDraft("countryId", event.target.value)} disabled={pending}>
+															<option value="">Select country</option>
+															{countryOptions.map((option) => (
+																<option key={option.id} value={option.id}>
+																	{option.name}
+																</option>
+															))}
+														</FormSelect>
+													</FormControl>
+												</FormField>
+												<FormField>
+													<FormLabel>State (optional)</FormLabel>
+													<FormControl>
+														<FormSelect
+															value={modal.draft.stateId}
+															onChange={(event) => updateDraft("stateId", event.target.value)}
+															disabled={pending || !modal.draft.countryId}
+														>
+															<option value="">No state</option>
+															{countries
+																.filter((country) => country.id === modal.draft.countryId)
+																.flatMap((country) => country.states)
+																.map((state) => (
+																	<option key={state.id} value={state.id}>
+																		{state.name}
+																	</option>
+																))}
+														</FormSelect>
+													</FormControl>
+												</FormField>
+												<FormField>
+													<FormLabel>Name</FormLabel>
+													<FormControl>
+														<FormInput value={modal.draft.name} onChange={(event) => updateDraft("name", event.target.value)} required disabled={pending} />
+													</FormControl>
+												</FormField>
+												<FormField>
+													<FormLabel>Subtitle</FormLabel>
+													<FormControl>
+														<FormTextarea
+															rows={3}
+															value={modal.draft.subtitle}
+															onChange={(event) => updateDraft("subtitle", event.target.value)}
 															disabled={pending}
-															className="absolute bottom-3 right-3"
-														>
-															Browse files
-														</Button>
-													</div>
-													<input
-														type="file"
-														accept={ACCEPTED_TYPES.join(",")}
-														className="hidden"
-														ref={(ref) => handleFileInputRef("city", ref)}
-														onChange={handleFileChange.bind(null, "city")}
-														disabled={pending}
-													/>
-													<div className="flex flex-wrap items-center gap-2">
-														<Button
-															type="button"
-															variant={modal.entity === "city" && modal.record?.picture ? "default" : "outline"}
-															size="sm"
-															onClick={() => applyExistingPreview("city")}
-															disabled={pending || modal.mode !== "edit"}
-														>
-															Use existing image
-														</Button>
-														<Button type="button" variant="outline" size="sm" onClick={() => clearPreview("city")} disabled={pending}>
-															Clear selection
-														</Button>
-													</div>
-												</div>
-											</FormControl>
-											<FormDescription>
-												Upload or drag an image (JPG, PNG, WebP, GIF up to {MAX_UPLOAD_SIZE_MB}MB). Keeping an existing image is allowed.
-											</FormDescription>
-										</FormField>
-										<div className="grid gap-4 sm:grid-cols-2">
-											<FormField>
-												<FormLabel>Latitude</FormLabel>
-												<FormControl>
-													<FormInput
-														type="number"
-														step="any"
-														value={modal.draft.latitude}
-														onChange={(event) => updateDraft("latitude", event.target.value)}
-														disabled={pending}
-													/>
-												</FormControl>
-											</FormField>
-											<FormField>
-												<FormLabel>Longitude</FormLabel>
-												<FormControl>
-													<FormInput
-														type="number"
-														step="any"
-														value={modal.draft.longitude}
-														onChange={(event) => updateDraft("longitude", event.target.value)}
-														disabled={pending}
-													/>
-												</FormControl>
-											</FormField>
-										</div>
-										<div className="space-y-2">
-											<div className="rounded-lg border border-border/60">
-												<MiniMap
-													latitude={modal.draft.latitude.trim() ? Number.parseFloat(modal.draft.latitude) : null}
-													longitude={modal.draft.longitude.trim() ? Number.parseFloat(modal.draft.longitude) : null}
-													onChange={(lat, lng) => {
-														updateDraft("latitude", String(lat));
-														updateDraft("longitude", String(lng));
-													}}
+														/>
+													</FormControl>
+												</FormField>
+											</div>
+											<div className="md:col-span-3">
+												<MapLatLng
+													lat={modal.draft.latitude}
+													lng={modal.draft.longitude}
+													onLatChange={(value) => updateDraft("latitude", value)}
+													onLngChange={(value) => updateDraft("longitude", value)}
 													height={256}
+													hint="Click the map to set a pin and update coordinates."
 												/>
 											</div>
-											<p className="text-xs text-muted-foreground">Click the map to set a pin and update coordinates.</p>
 										</div>
 									</>
 								) : null}
 							</div>
 							<div className="flex items-center justify-between gap-2">
-								<Button type="button" variant="ghost" onClick={closeModal} disabled={pending}>
+								<CtaButton type="button" color="whiteBorder" onClick={closeModal} disabled={pending}>
 									Cancel
-								</Button>
-								<Button
+								</CtaButton>
+								<CtaButton
 									type="submit"
 									disabled={
 										pending ||
@@ -1359,7 +1236,7 @@ export default function DataManagerLocationsPage() {
 									}
 								>
 									{pending ? "Saving…" : modal.mode === "edit" ? "Save changes" : "Create"}
-								</Button>
+								</CtaButton>
 							</div>
 						</form>
 					</div>

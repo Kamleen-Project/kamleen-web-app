@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { saveUploadedFile } from "@/lib/uploads"
+import { slugify } from "@/lib/slug"
 
 function normalizeString(value: unknown) {
   if (typeof value !== "string") return null
@@ -59,6 +60,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ca
         data.subtitle = subtitle
       }
 
+      const slugInput = getOptionalString(formData, "slug")
+      if (slugInput) {
+        const normalized = slugify(slugInput)
+        if (!normalized) {
+          return NextResponse.json({ message: "Slug cannot be empty" }, { status: 400 })
+        }
+        data.slug = normalized
+      }
+
       const pictureFile = formData.get("picture")
       if (pictureFile instanceof File && pictureFile.size > 0) {
         const stored = await saveUploadedFile({
@@ -81,9 +91,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ca
 
       return NextResponse.json({ ok: true, category })
     } catch (error) {
-      if (error instanceof Error) {
-        if ("code" in error && (error as { code: string }).code === "P2002") {
-          return NextResponse.json({ message: "A category with this name already exists" }, { status: 409 })
+      if (error instanceof Error && "code" in error) {
+        const code = (error as { code: string }).code
+        if (code === "P2002") {
+          return NextResponse.json({ message: "A category with this name or slug already exists" }, { status: 409 })
+        }
+        if (code === "P2022") {
+          return NextResponse.json({ message: "Database schema out of date. Run migrations to add 'slug' to categories." }, { status: 500 })
         }
         return NextResponse.json({ message: error.message }, { status: 400 })
       }
@@ -101,6 +115,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ca
   const name = normalizeString((body as Record<string, unknown>).name)
   const subtitle = normalizeNullableString((body as Record<string, unknown>).subtitle)
   const picture = normalizeNullableString((body as Record<string, unknown>).picture)
+  const slug = normalizeNullableString((body as Record<string, unknown>).slug)
 
   const data: Record<string, string | null> = {}
 
@@ -116,6 +131,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ca
     data.picture = picture ?? null
   }
 
+  if (slug !== undefined) {
+    if (slug === null) {
+      return NextResponse.json({ message: "Slug cannot be empty" }, { status: 400 })
+    }
+    const normalized = slugify(slug)
+    if (!normalized) {
+      return NextResponse.json({ message: "Slug cannot be empty" }, { status: 400 })
+    }
+    data.slug = normalized
+  }
+
   if (!Object.keys(data).length) {
     return NextResponse.json({ ok: true })
   }
@@ -129,12 +155,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ca
 
     return NextResponse.json({ ok: true, category })
   } catch (error) {
-    if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2025") {
-      return NextResponse.json({ message: "Category not found" }, { status: 404 })
-    }
-
-    if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2002") {
-      return NextResponse.json({ message: "A category with this name already exists" }, { status: 409 })
+    if (error instanceof Error && "code" in error) {
+      const code = (error as { code: string }).code
+      if (code === "P2025") {
+        return NextResponse.json({ message: "Category not found" }, { status: 404 })
+      }
+      if (code === "P2002") {
+        return NextResponse.json({ message: "A category with this name or slug already exists" }, { status: 409 })
+      }
+      if (code === "P2022") {
+        return NextResponse.json({ message: "Database schema out of date. Run migrations to add 'slug' to categories." }, { status: 500 })
+      }
     }
 
     console.error("Failed to update experience category", error)

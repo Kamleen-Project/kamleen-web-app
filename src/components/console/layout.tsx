@@ -34,11 +34,19 @@ export function ConsoleLayout({ title, subtitle, headerHref, navItems, footer, c
 					</div>
 					<div className="mb-8 lg:hidden">
 						<div className="flex flex-wrap gap-2 rounded-xl border border-border/60 bg-card/70 px-4 py-3">
-							{navItems.map((item) => (
-								<Link key={item.href} href={item.href} className="rounded-lg border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
-									{item.label}
-								</Link>
-							))}
+							{navItems.flatMap((item) =>
+								item.children && item.children.length > 0
+									? item.children.map((child) => (
+											<Link key={child.href} href={child.href} className="rounded-lg border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
+												{child.label}
+											</Link>
+									  ))
+									: [
+											<Link key={item.href} href={item.href} className="rounded-lg border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
+												{item.label}
+											</Link>,
+									  ]
+							)}
 						</div>
 					</div>
 					{children}

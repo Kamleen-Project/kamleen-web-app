@@ -17,30 +17,13 @@ import { SessionReservationCard } from "@/components/experiences/session-reserva
 import { ExperienceBookingStatus } from "@/components/experiences/experience-booking-status";
 import { getServerAuthSession } from "@/lib/auth";
 import { OpenReservationButton } from "@/components/experiences/open-reservation-button";
+import { parseDurationToMinutes } from "@/lib/duration";
 
 function formatCurrency(value: number, currency = "USD") {
 	return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
 }
 
 // removed unused formatDateTime helper after updating session title format
-
-function parseDurationToMinutes(label: string | null | undefined): number {
-	if (!label) return 0;
-	const lower = label.toLowerCase();
-	let minutes = 0;
-	const dayMatch = lower.match(/(\d+)\s*day/);
-	const hourMatch = lower.match(/(\d+)\s*hour/);
-	const minMatch = lower.match(/(\d+)\s*min/);
-	if (dayMatch) minutes += (Number.parseInt(dayMatch[1], 10) || 0) * 24 * 60;
-	if (hourMatch) minutes += (Number.parseInt(hourMatch[1], 10) || 0) * 60;
-	if (minMatch) minutes += Number.parseInt(minMatch[1], 10) || 0;
-	// Fallback for pure number labels like "90"
-	if (!dayMatch && !hourMatch && !minMatch) {
-		const numeric = Number.parseInt(lower, 10);
-		if (!Number.isNaN(numeric)) minutes += numeric;
-	}
-	return Math.max(0, minutes);
-}
 
 function formatTimeRangeLocal(start: Date, durationLabel: string | null | undefined, fallbackDurationLabel: string | null | undefined): string {
 	const minutes = parseDurationToMinutes(durationLabel ?? fallbackDurationLabel ?? null);

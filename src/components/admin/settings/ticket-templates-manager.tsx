@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormControl, FormField, FormInput, FormLabel, FormMessage } from "@/components/ui/form";
 import { Plus, CheckCircle2, Trash2 } from "lucide-react";
 import { InputField } from "@/components/ui/input-field";
 import { CodeEditor } from "@/components/ui/code-editor";
+import CtaIconButton from "@/components/ui/cta-icon-button";
+import CtaButton from "@/components/ui/cta-button";
 
 type TicketTemplate = {
 	id: string;
@@ -326,9 +327,9 @@ export function TicketTemplatesManager() {
 				<CardHeader>
 					<div className="flex items-center justify-between">
 						<h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Templates</h3>
-						<Button type="button" variant="outline" className="h-8 w-8 p-0" onClick={() => setCreateOpen(true)} title="Add template">
+						<CtaIconButton color="whiteBorder" size="md" ariaLabel="Add template" onClick={() => setCreateOpen(true)}>
 							<Plus className="h-4 w-4" />
-						</Button>
+						</CtaIconButton>
 					</div>
 				</CardHeader>
 				<CardContent>
@@ -354,29 +355,29 @@ export function TicketTemplatesManager() {
 									{tpl.isActive ? (
 										<CheckCircle2 className="h-4 w-4 text-primary" aria-label="Active" />
 									) : (
-										<Button
-											variant="outline"
-											className="h-8 w-8 p-0"
+										<CtaIconButton
+											color="whiteBorder"
+											size="md"
+											ariaLabel="Set active"
 											onClick={(e) => {
 												e.stopPropagation();
 												activateTemplate(tpl.id);
 											}}
-											title="Set active"
 										>
 											<CheckCircle2 className="h-4 w-4" />
-										</Button>
+										</CtaIconButton>
 									)}
-									<Button
-										variant="outline"
-										className="h-8 w-8 p-0"
+									<CtaIconButton
+										color="whiteBorder"
+										size="md"
+										ariaLabel="Delete template"
 										onClick={(e) => {
 											e.stopPropagation();
 											setDeleteTarget(tpl);
 										}}
-										title="Delete template"
 									>
 										<Trash2 className="h-4 w-4" />
-									</Button>
+									</CtaIconButton>
 								</div>
 							</div>
 						))}
@@ -389,20 +390,12 @@ export function TicketTemplatesManager() {
 					<div className="flex items-center justify-between">
 						<div className="font-medium">Editor</div>
 						<div className="inline-flex items-center gap-1 rounded-md border border-border/60 p-1 text-xs">
-							<button
-								type="button"
-								onClick={() => setHtmlEditorMode("code")}
-								className={`rounded px-2 py-1 ${htmlEditorMode === "code" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-							>
+							<CtaButton color="whiteBorder" size="sm" type="button" onClick={() => setHtmlEditorMode("code")}>
 								Code
-							</button>
-							<button
-								type="button"
-								onClick={() => setHtmlEditorMode("preview")}
-								className={`rounded px-2 py-1 ${htmlEditorMode === "preview" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
-							>
+							</CtaButton>
+							<CtaButton color="whiteBorder" size="sm" type="button" onClick={() => setHtmlEditorMode("preview")}>
 								Preview
-							</button>
+							</CtaButton>
 						</div>
 					</div>
 				</CardHeader>
@@ -430,9 +423,10 @@ export function TicketTemplatesManager() {
 								<FormMessage>{errors.html}</FormMessage>
 							</FormField>
 							<div className="flex justify-end gap-2">
-								<Button
+								<CtaButton
+									color="whiteBorder"
+									size="sm"
 									type="button"
-									variant="outline"
 									onClick={async () => {
 										try {
 											const res = await fetch(`/api/admin/settings/ticket-templates/preview`, {
@@ -455,10 +449,10 @@ export function TicketTemplatesManager() {
 									}}
 								>
 									PDF Generator
-								</Button>
-								<Button type="submit" disabled={isPending}>
+								</CtaButton>
+								<CtaButton color="black" size="sm" type="submit" disabled={isPending}>
 									Save
-								</Button>
+								</CtaButton>
 							</div>
 						</form>
 					) : (
@@ -473,12 +467,12 @@ export function TicketTemplatesManager() {
 						<div className="mb-3 text-base font-medium">Delete ticket template</div>
 						<p className="mb-4 text-sm text-muted-foreground">Are you sure you want to delete &quot;{deleteTarget.name}&quot;? This action cannot be undone.</p>
 						<div className="flex justify-end gap-2">
-							<Button variant="outline" onClick={() => setDeleteTarget(null)}>
+							<CtaButton color="whiteBorder" size="sm" type="button" onClick={() => setDeleteTarget(null)}>
 								Cancel
-							</Button>
-							<Button variant="destructive" onClick={() => deleteTemplate(deleteTarget.id)}>
+							</CtaButton>
+							<CtaButton color="white" size="sm" type="button" onClick={() => deleteTemplate(deleteTarget.id)}>
 								Delete
-							</Button>
+							</CtaButton>
 						</div>
 					</div>
 				</div>
@@ -497,12 +491,12 @@ export function TicketTemplatesManager() {
 							</FormField>
 						</div>
 						<div className="flex justify-end gap-2">
-							<Button variant="outline" onClick={() => setCreateOpen(false)}>
+							<CtaButton color="whiteBorder" size="sm" type="button" onClick={() => setCreateOpen(false)}>
 								Cancel
-							</Button>
-							<Button onClick={createTemplate} disabled={!createName.trim()}>
+							</CtaButton>
+							<CtaButton color="black" size="sm" type="button" onClick={createTemplate} disabled={!createName.trim()}>
 								Create
-							</Button>
+							</CtaButton>
 						</div>
 					</div>
 				</div>

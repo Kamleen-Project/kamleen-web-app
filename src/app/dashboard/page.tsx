@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 
 import { Container } from "@/components/layout/container";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { AddExperienceModal } from "@/components/organizer/add-experience-modal";
 import { BecomeOrganizerModal } from "@/components/organizer/become-organizer-modal";
 import { getServerAuthSession } from "@/lib/auth";
+import { CtaButton } from "@/components/ui/cta-button";
 
 export default async function DashboardPage() {
 	const session = await getServerAuthSession();
@@ -37,10 +37,12 @@ export default async function DashboardPage() {
 						<h2 className="text-xl font-semibold text-foreground">Explorer tools</h2>
 						<p className="text-sm text-muted-foreground">View upcoming activities, manage guest lists, and keep your plans organized in one place.</p>
 						<div className="flex flex-wrap gap-3">
-							<Button variant="secondary">View reservations</Button>
-							<Button variant="ghost" className="text-primary">
+							<CtaButton color="whiteBorder" size="sm">
+								View reservations
+							</CtaButton>
+							<CtaButton color="whiteBorder" size="sm">
 								Saved experiences
-							</Button>
+							</CtaButton>
 						</div>
 					</div>
 
@@ -54,17 +56,17 @@ export default async function DashboardPage() {
 						<div className="flex flex-wrap gap-3">
 							{isOrganizer ? (
 								<>
-									<Button asChild>
+									<CtaButton color="whiteBorder" size="sm" asChild>
 										<Link href="/dashboard/organizer">Open organizer console</Link>
-									</Button>
+									</CtaButton>
 									<AddExperienceModal />
 								</>
 							) : isExplorer ? (
-								<BecomeOrganizerModal variant="secondary" />
+								<BecomeOrganizerModal />
 							) : null}
-							<Button variant="ghost" className="text-primary">
+							<CtaButton color="black" size="sm">
 								Learn about hosting
-							</Button>
+							</CtaButton>
 						</div>
 					</div>
 				</div>
@@ -74,13 +76,16 @@ export default async function DashboardPage() {
 						<h2 className="text-xl font-semibold text-foreground">Admin quick links</h2>
 						<p className="mt-2 text-sm text-muted-foreground">Review organizer applications, monitor platform health, and manage user permissions.</p>
 						<div className="mt-4 flex flex-wrap gap-3 text-sm font-medium">
-							<Link href="/admin" className="text-primary underline">
+							<CtaButton color="black" size="sm" asChild>
+								<Link href="/admin">Go to admin console</Link>
+							</CtaButton>
+							<CtaButton color="black" size="sm">
 								Go to admin console
-							</Link>
+							</CtaButton>
 							<span className="text-muted-foreground">•</span>
-							<Link href="/admin/organizers" className="text-primary underline">
-								Organizer reviews
-							</Link>
+							<CtaButton color="black" size="sm" asChild>
+								<Link href="/admin/organizers">Organizer reviews</Link>
+							</CtaButton>
 						</div>
 					</div>
 				) : null}

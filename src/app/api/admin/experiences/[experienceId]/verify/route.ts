@@ -25,7 +25,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ exp
   if (action === "APPROVE") {
     const updated = await prisma.experience.update({
       where: { id: experienceId },
-      data: { verificationStatus: "VERIFIED", status: "PUBLISHED", verificationNote: null },
+      data: { verificationStatus: "VERIFIED", status: "UNPUBLISHED", verificationNote: null },
       select: { id: true, status: true, verificationStatus: true },
     })
     return NextResponse.json({ ok: true, experience: updated })
@@ -34,7 +34,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ exp
   if (action === "REJECT") {
     const updated = await prisma.experience.update({
       where: { id: experienceId },
-      data: { verificationStatus: "REJECTED", verificationNote: note ?? "" },
+      data: { verificationStatus: "REJECTED", status: "DRAFT", verificationNote: note ?? "" },
       select: { id: true, status: true, verificationStatus: true, verificationNote: true },
     })
     return NextResponse.json({ ok: true, experience: updated })

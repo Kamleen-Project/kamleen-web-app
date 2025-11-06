@@ -43,6 +43,25 @@ enum ExperienceBookingStatus {
   CANCELLED
 }
 
+// Payment lifecycle for a transaction handled by a provider (e.g., Stripe, CMI)
+enum PaymentStatus {
+  REQUIRES_PAYMENT_METHOD
+  REQUIRES_ACTION
+  PROCESSING
+  SUCCEEDED
+  CANCELLED
+  REFUNDED
+}
+
+// Supported payment providers
+enum PaymentProvider {
+  STRIPE
+  CMI
+  PAYZONE
+  CASH
+  PAYPAL
+}
+
 enum ExperienceStatus {
   DRAFT
   PUBLISHED
@@ -159,6 +178,7 @@ model Experience {
 
 model ExperienceCategory {
   id          String       @id @default(cuid())
+  slug        String       @unique
   name        String
   subtitle    String
   picture     String
@@ -269,6 +289,10 @@ model ExperienceBooking {
   status       ExperienceBookingStatus @default(PENDING)
   totalPrice   Int
   notes        String?
+  // Optional payment linkage and state
+  paymentId    String?               @unique
+  paymentStatus PaymentStatus?
+  expiresAt    DateTime?
   createdAt    DateTime                @default(now())
   updatedAt    DateTime                @updatedAt
 
@@ -276,10 +300,13 @@ model ExperienceBooking {
   session    ExperienceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   explorer   User              @relation("ExplorerBookings", fields: [explorerId], references: [id], onDelete: Cascade)
   tickets    Ticket[]
+  payment    Payment?          @relation("PrimaryPaymentForBooking", fields: [paymentId], references: [id])
+  payments   Payment[]         @relation("PaymentsForBooking")
 
   @@index([experienceId])
   @@index([sessionId])
   @@index([explorerId])
+  @@index([expiresAt])
 }
 
 model Ticket {
@@ -467,4 +494,81 @@ model NotificationPreference {
   onVerificationRejected Boolean @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+}
+
+// Records each payment attempt/transaction for a booking
+model Payment {
+  id                String           @id @default(cuid())
+  bookingId         String
+  provider          PaymentProvider
+  providerPaymentId String?
+  amount            Int              // minor units (e.g., cents)
+  currency          String
+  status            PaymentStatus
+  receiptUrl        String?
+  errorCode         String?
+  errorMessage      String?
+  metadata          Json?
+  capturedAt        DateTime?
+  refundedAt        DateTime?
+  refundedAmount    Int?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  booking  ExperienceBooking @relation("PaymentsForBooking", fields: [bookingId], references: [id], onDelete: Cascade)
+  refunds  Refund[]
+  primaryForBooking ExperienceBooking? @relation("PrimaryPaymentForBooking")
+
+  @@index([bookingId])
+  @@index([provider, providerPaymentId])
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+// Refund records for transparency and audit trail
+model Refund {
+  id               String       @id @default(cuid())
+  paymentId        String
+  amount           Int          // minor units
+  reason           String?
+  status           RefundStatus @default(PENDING)
+  providerRefundId String?
+  errorCode        String?
+  errorMessage     String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+}
+
+// Admin-configurable settings for payment providers
+model PaymentSettings {
+  id               String           @id @default(cuid())
+  defaultProvider  PaymentProvider  @default(STRIPE)
+  enabledProviders PaymentProvider[]
+  // Stripe (store non-secret values only; secrets via env)
+  stripePublishableKey String?
+  stripeAccountCountry String?
+  // CMI (avoid storing store key/secret)
+  cmiMerchantId     String?
+  cmiTerminalId     String?
+  cmiCurrency       String?
+  // Payzone (avoid storing secret key)
+  payzoneMerchantId String?
+  payzoneSiteId     String?
+  payzoneCurrency   String?
+  payzoneGatewayUrl String?
+  // PayPal (allow storing credentials in DB if desired)
+  paypalClientId    String?
+  paypalClientSecret String?
+  testMode          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }

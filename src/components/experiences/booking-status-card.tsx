@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Clock3, Info, Loader2, X, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { getSessionDateLabel, getSessionTimeRange } from "@/lib/session-name";
+import CtaIconButton from "../ui/cta-icon-button";
+import CtaButton from "../ui/cta-button";
 
 export type BookingStatusValue = "PENDING" | "CONFIRMED" | "CANCELLED";
 
@@ -143,21 +144,14 @@ export function BookingStatusCard({ booking, pending = false, pendingId = null, 
 									<span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${statusMeta.badgeClass}`}>
 										{booking.guests} guest{booking.guests === 1 ? "" : "s"}
 									</span>
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon"
-										className="h-7 w-7 text-muted-foreground hover:text-foreground"
-										onClick={() => setOpenInfo(true)}
-										aria-label="View reservation details"
-									>
+									<CtaIconButton color="whiteBorder" size="md" ariaLabel="View reservation details" onClick={() => setOpenInfo(true)}>
 										<Info className="size-4" />
-									</Button>
+									</CtaIconButton>
 								</div>
 							</div>
 
 							{booking.status === "PENDING" && onCancel ? (
-								<Button variant="outline" size="sm" type="button" disabled={isCancelling} onClick={() => onCancel(booking.id)} className="mt-2">
+								<CtaButton color="whiteBorder" size="sm" type="button" disabled={isCancelling} onClick={() => onCancel(booking.id)} className="mt-2">
 									{isCancelling ? (
 										<span className="inline-flex items-center gap-2">
 											<Loader2 className="size-4 animate-spin" /> Cancelling…
@@ -165,7 +159,7 @@ export function BookingStatusCard({ booking, pending = false, pendingId = null, 
 									) : (
 										"Cancel reservation"
 									)}
-								</Button>
+								</CtaButton>
 							) : null}
 						</div>
 					</div>
@@ -178,14 +172,9 @@ export function BookingStatusCard({ booking, pending = false, pendingId = null, 
 						onClick={(e) => e.stopPropagation()}
 						className="relative w-full max-w-lg max-h-[85vh] overflow-auto rounded-3xl border border-border/60 bg-background text-foreground shadow-2xl"
 					>
-						<button
-							type="button"
-							onClick={closeInfo}
-							className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground transition hover:text-foreground"
-							aria-label="Close details"
-						>
+						<CtaIconButton color="whiteBorder" size="md" ariaLabel="Close details" onClick={closeInfo}>
 							<X className="size-4" />
-						</button>
+						</CtaIconButton>
 						<div className="p-6 space-y-4">
 							<div className="space-y-1 pr-10">
 								<p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Reservation details</p>

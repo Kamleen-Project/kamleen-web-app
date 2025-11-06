@@ -55,6 +55,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Experience not found." }, { status: 404 })
   }
 
+  // Block any status changes while pending verification
+  if (experience.verificationStatus === "PENDING") {
+    return NextResponse.json({ message: "Experience is pending verification; status cannot be changed." }, { status: 409 })
+  }
+
   // Enforce business rules
   // 1) Publishing requires VERIFIED
   if (nextStatus === "PUBLISHED" && experience.verificationStatus !== "VERIFIED") {

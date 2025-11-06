@@ -6,9 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { experienceCardSelect, mapExperienceToCard } from "@/lib/experiences";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ConsolePage } from "@/components/console/page";
 import { EditExperienceModal } from "@/components/organizer/edit-experience-modal";
+import CtaIconButton from "@/components/ui/cta-icon-button";
 
 export default async function OrganizerArchivedExperiencesPage() {
 	const session = await getServerAuthSession();
@@ -43,12 +43,12 @@ export default async function OrganizerArchivedExperiencesPage() {
 									</div>
 								</div>
 								<div className="flex shrink-0 items-center gap-2">
-									<Button asChild variant="outline" size="icon" aria-label="View live">
+									<CtaIconButton asChild color="whiteBorder" size="md" ariaLabel="View live">
 										<Link href={`/experiences/${experience.slug}`} target="_blank" rel="noopener noreferrer">
 											<Eye />
 										</Link>
-									</Button>
-									<EditExperienceModal experienceId={experience.id} variant="outline" size="icon">
+									</CtaIconButton>
+									<EditExperienceModal experienceId={experience.id} color="whiteBorder" size="icon">
 										<Pencil />
 									</EditExperienceModal>
 								</div>

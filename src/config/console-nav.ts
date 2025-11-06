@@ -103,8 +103,24 @@ export const adminNavItems: ConsoleNavItem[] = [
 		label: "Data manager",
 		// description: "Control categories and locations",
 		icon: "Database",
+		children: [
+			{
+				href: "/admin/data-manager/categories",
+				label: "Experience categories",
+			},
+			{
+				href: "/admin/data-manager/locations",
+				label: "Locations",
+			},
+		],
 	},
 	{
+    href: "/admin/payments",
+    label: "Payments",
+    // description: "Review and moderate platform payments",
+    icon: "CreditCard",
+  },
+  {
 		href: "/admin/profile",
 		label: "Profile",
 		// description: "Your account details",
@@ -125,6 +141,16 @@ export const adminNavItems: ConsoleNavItem[] = [
 	        href: "/admin/settings/ticket-templates",
 	        label: "Ticket Templates",
 	        // description: "Design and branding for PDF tickets",
+	      },
+      {
+        href: "/admin/settings/payments",
+        label: "Payments",
+        // description: "Configure payment providers and defaults",
+      },
+	      {
+	        href: "/admin/settings/components",
+	        label: "Components",
+	        // description: "UI kit showcase and testing",
 	      },
 	    ],
 	},

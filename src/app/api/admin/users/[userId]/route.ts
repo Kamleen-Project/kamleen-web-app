@@ -80,6 +80,7 @@ export async function PATCH(
     preferredLanguage,
     preferredCurrency,
     preferredTimezone,
+    clarification,
   } = body as Record<string, unknown>
 
   const data: Prisma.UserUpdateInput = {}
@@ -150,17 +151,22 @@ export async function PATCH(
         await createNotification({
           userId,
           title: "Organizer request approved",
-          message: "You can now access the organizer console.",
+          message: typeof clarification === "string" && clarification.trim()
+            ? `${clarification.trim()}\n\nYou can now access the organizer console.`
+            : "You can now access the organizer console.",
           priority: "NORMAL",
           eventType: "GENERAL",
           channels: ["TOAST"],
-          href: "/dashboard/organizer",
+          href: "/notifications/organizer-approved",
         })
       } else if (nextStatus === "REJECTED") {
         await createNotification({
           userId,
           title: "Organizer request rejected",
-          message: "Your request was not approved. You can update your details and reapply.",
+          message:
+            typeof clarification === "string" && clarification.trim()
+              ? clarification.trim()
+              : "Your request was not approved. You can update your details and reapply.",
           priority: "NORMAL",
           eventType: "GENERAL",
           channels: ["TOAST"],

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { SpotsBar } from "@/components/ui/spots-bar";
 import { cn } from "@/lib/utils";
 import { OrganizerBookingReservationCard } from "@/components/organizer/organizer-booking-reservation-card";
+import { parseDurationToMinutes } from "@/lib/duration";
 
 export type OrganizerBookingSession = {
 	id: string;
@@ -17,6 +18,8 @@ export type OrganizerBookingSession = {
 	bookings: Array<{
 		id: string;
 		status: "PENDING" | "CONFIRMED" | "CANCELLED";
+		paymentStatus?: "REQUIRES_PAYMENT_METHOD" | "REQUIRES_ACTION" | "PROCESSING" | "SUCCEEDED" | "CANCELLED" | "REFUNDED" | null;
+		paymentMethod?: "STRIPE" | "CMI" | "PAYZONE" | "CASH" | "PAYPAL" | null;
 		guests: number;
 		totalPrice: number;
 		createdAt: string;
@@ -101,16 +104,6 @@ function StatusBadge({ status }: { status: "PENDING" | "CONFIRMED" | "CANCELLED"
 	const statusStyles =
 		status === "CONFIRMED" ? "bg-emerald-100 text-emerald-700" : status === "CANCELLED" ? "bg-destructive/10 text-destructive" : "bg-amber-100 text-amber-700";
 	return <Badge className={cn("text-xs", statusStyles)}>{status}</Badge>;
-}
-
-function parseDurationToMinutes(label: string | null | undefined): number {
-	if (!label) return 0;
-	const lower = label.toLowerCase();
-	const hourMatch = /([0-9]+)\s*h/.exec(lower);
-	const minMatch = /([0-9]+)\s*m/.exec(lower);
-	const hours = hourMatch ? Number.parseInt(hourMatch[1] || "0", 10) : 0;
-	const minutes = minMatch ? Number.parseInt(minMatch[1] || "0", 10) : 0;
-	return hours * 60 + minutes;
 }
 
 function formatSessionTime(startIso: string, durationLabel: string | null, fallbackDurationLabel: string | null) {

@@ -3,9 +3,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConsolePage } from "@/components/console/page";
+import CtaButton from "@/components/ui/cta-button";
 
 export default async function ExplorerOverviewPage() {
 	const session = await getServerAuthSession();
@@ -41,9 +41,9 @@ export default async function ExplorerOverviewPage() {
 									<p className="font-medium text-foreground">{reservation.experience.title}</p>
 									<p>{reservation.experience.location}</p>
 								</div>
-								<Button asChild size="sm" variant="secondary">
+								<CtaButton color="whiteBorder" size="sm" asChild>
 									<Link href={`/experiences/${reservation.experience.slug}`}>View details</Link>
-								</Button>
+								</CtaButton>
 							</div>
 						))
 					) : (
@@ -58,15 +58,15 @@ export default async function ExplorerOverviewPage() {
 					<CardDescription>Jump into saved experiences or discover something new.</CardDescription>
 				</CardHeader>
 				<CardContent className="flex flex-wrap gap-3">
-					<Button asChild>
+					<CtaButton color="whiteBorder" size="sm" asChild>
 						<Link href="/dashboard/explorer/reservations">See all reservations</Link>
-					</Button>
-					<Button asChild variant="outline">
+					</CtaButton>
+					<CtaButton color="whiteBorder" size="sm" asChild>
 						<Link href="/dashboard/explorer/wishlist">Browse wishlist</Link>
-					</Button>
-					<Button asChild variant="ghost" className="text-primary">
+					</CtaButton>
+					<CtaButton color="black" size="sm" asChild>
 						<Link href="/experiences">Find a new experience</Link>
-					</Button>
+					</CtaButton>
 				</CardContent>
 			</Card>
 		</ConsolePage>

@@ -7,36 +7,23 @@ import type { Session } from "next-auth";
 import type { OrganizerStatus } from "@/generated/prisma";
 import { useSession } from "next-auth/react";
 
-import { buttonVariants } from "@/components/ui/button";
 import { CtaButton } from "@/components/ui/cta-button";
 import { X } from "lucide-react";
-import type { VariantProps } from "class-variance-authority";
 import BalloonLoading from "@/components/ui/balloon-loading";
+import { OrganizerIntroForm } from "./organizer-intro-form";
 
-import { ExperienceWizard } from "./experience-wizard";
-
-type CategoryOption = { id: string; name: string };
-type LocationCountry = {
-	id: string;
-	name: string;
-	states: { id: string; name: string; cities: { id: string; name: string; latitude: number; longitude: number }[] }[];
-	cities: { id: string; name: string; latitude: number; longitude: number }[];
-};
-
-type CurrencyResponse = { currency: string };
+// No taxonomy required for organizer intro only
 
 export function BecomeOrganizerModal({
 	triggerLabel = "Become an organizer",
 	className,
-	variant = "default",
-	size = "default",
+	size = "md",
 	trigger,
 	autoOpen,
 }: {
 	triggerLabel?: string;
 	className?: string;
-	variant?: VariantProps<typeof buttonVariants>["variant"];
-	size?: VariantProps<typeof buttonVariants>["size"];
+	size?: "sm" | "md" | "lg";
 	trigger?: React.ReactElement<{ disabled?: boolean; onClick?: () => void }>;
 	autoOpen?: boolean;
 }) {
@@ -44,19 +31,20 @@ export function BecomeOrganizerModal({
 	const { data: session, status, update } = useSession();
 	const [open, setOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
-	const [categories, setCategories] = useState<CategoryOption[] | null>(null);
-	const [countries, setCountries] = useState<LocationCountry[] | null>(null);
+	const [submitted, setSubmitted] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [currency, setCurrency] = useState<string | null>(null);
+	const [resolvedOrganizerStatus, setResolvedOrganizerStatus] = useState<OrganizerStatus | "NOT_APPLIED">(() => {
+		const initial = ((session?.user as Session["user"])?.organizerStatus as OrganizerStatus | undefined) ?? "NOT_APPLIED";
+		return initial;
+	});
 
-	const organizerStatus: OrganizerStatus | "NOT_APPLIED" =
-		((session?.user as Session["user"])?.organizerStatus as OrganizerStatus | undefined) ?? "NOT_APPLIED";
+	const organizerStatus: OrganizerStatus | "NOT_APPLIED" = resolvedOrganizerStatus;
 	const isPendingRequest = organizerStatus === "PENDING";
 	const isApprovedOrganizer = organizerStatus === "APPROVED";
 	const isLoadingSession = status === "loading";
 	const triggerText = useMemo(() => {
-		if (isPendingRequest) return "Organizer request pending";
+		if (isPendingRequest) return "Organizer Request in review";
 		if (isApprovedOrganizer) return "Organizer access granted";
 		return triggerLabel;
 	}, [isApprovedOrganizer, isPendingRequest, triggerLabel]);
@@ -70,6 +58,29 @@ export function BecomeOrganizerModal({
 			setOpen(true);
 		}
 	}, [autoOpen, mounted]);
+
+	useEffect(() => {
+		if (!open) return;
+		let cancelled = false;
+		async function loadStatus() {
+			try {
+				setLoading(true);
+				setError(null);
+				const res = await fetch("/api/me/organizer-status", { cache: "no-store" });
+				if (!res.ok) return;
+				const data = (await res.json().catch(() => null)) as { organizerStatus?: OrganizerStatus | "NOT_APPLIED" } | null;
+				if (!cancelled && data?.organizerStatus) {
+					setResolvedOrganizerStatus(data.organizerStatus);
+				}
+			} finally {
+				if (!cancelled) setLoading(false);
+			}
+		}
+		loadStatus();
+		return () => {
+			cancelled = true;
+		};
+	}, [open]);
 
 	useEffect(() => {
 		function handleKeyDown(event: KeyboardEvent) {
@@ -93,49 +104,19 @@ export function BecomeOrganizerModal({
 
 	const handleClose = useCallback(() => {
 		setOpen(false);
+		setSubmitted(false);
 	}, []);
 
 	const handleSuccess = useCallback(() => {
-		setOpen(false);
-		if (update) {
-			void update({ organizerStatus: "PENDING" });
-		}
-		router.push("/dashboard/explorer");
-	}, [router, update]);
+		setSubmitted(true);
+		setResolvedOrganizerStatus("PENDING");
+		// Do not close or redirect or update session; keep modal open showing success
+	}, []);
 
 	useEffect(() => {
 		if (!open || isPendingRequest || isApprovedOrganizer) return;
-		let aborted = false;
-		async function loadTaxonomy() {
-			setLoading(true);
-			setError(null);
-			try {
-				const [catRes, locRes, curRes] = await Promise.all([
-					fetch("/api/taxonomy/categories", { cache: "no-store" }),
-					fetch("/api/taxonomy/locations", { cache: "no-store" }),
-					fetch("/api/me/currency", { cache: "no-store" }),
-				]);
-				if (!catRes.ok) throw new Error("Failed to load categories");
-				if (!locRes.ok) throw new Error("Failed to load locations");
-				if (!curRes.ok) throw new Error("Failed to load currency");
-				const catData = (await catRes.json()) as { categories: CategoryOption[] };
-				const locData = (await locRes.json()) as { countries: LocationCountry[] };
-				const curData = (await curRes.json()) as CurrencyResponse;
-				if (aborted) return;
-				setCategories(catData.categories);
-				setCountries(locData.countries);
-				setCurrency(curData.currency);
-			} catch (cause) {
-				if (aborted) return;
-				setError(cause instanceof Error ? cause.message : "Failed to load data");
-			} finally {
-				if (!aborted) setLoading(false);
-			}
-		}
-		loadTaxonomy();
-		return () => {
-			aborted = true;
-		};
+		setLoading(false);
+		setError(null);
 	}, [open, isApprovedOrganizer, isPendingRequest]);
 
 	const modalContent =
@@ -149,9 +130,17 @@ export function BecomeOrganizerModal({
 									<X className="h-4 w-4" />
 								</button>
 							</CtaButton> */}
-							{isPendingRequest ? (
+							{submitted ? (
 								<div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
-									<h2 className="text-2xl font-semibold text-foreground">Request under review</h2>
+									<h2 className="text-2xl font-semibold text-foreground">Application submitted</h2>
+									<p className="max-w-xl text-sm text-muted-foreground">Your organizer request was sent successfully. We’ll notify you after review.</p>
+									<CtaButton onClick={handleClose} className="mt-2">
+										Close
+									</CtaButton>
+								</div>
+							) : isPendingRequest ? (
+								<div className="flex h-full flex-col items-center justify-center gap-4 p-10 text-center">
+									<h2 className="text-2xl font-semibold text-foreground">Request in review</h2>
 									<p className="max-w-xl text-sm text-muted-foreground">
 										Thanks for submitting your organizer application. Our team is reviewing it now and we will notify you as soon as it is approved.
 									</p>
@@ -179,21 +168,12 @@ export function BecomeOrganizerModal({
 								<div className="flex h-full items-center justify-center p-8">
 									<p className="text-sm text-destructive">{error}</p>
 								</div>
-							) : loading || !categories || !countries ? (
+							) : loading ? (
 								<div className="flex h-full items-center justify-center p-8">
 									<BalloonLoading sizeClassName="w-20" label="Loading" />
 								</div>
 							) : (
-								<ExperienceWizard
-									mode="create"
-									categories={categories}
-									countries={countries}
-									currency={currency ?? undefined}
-									onClose={handleClose}
-									onSuccess={handleSuccess}
-									organizerIntro
-									submissionMode="organizer-request"
-								/>
+								<OrganizerIntroForm onSuccess={handleSuccess} />
 							)}
 						</div>
 					</div>,

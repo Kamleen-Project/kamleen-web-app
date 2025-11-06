@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 
 export function SiteFooterConditional() {
 	const pathname = usePathname();
-	const hideFooter = pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard");
+	const hideFooter = pathname?.startsWith("/admin") || pathname?.startsWith("/dashboard") || pathname?.startsWith("/onboarding");
 
 	if (hideFooter) return null;
 

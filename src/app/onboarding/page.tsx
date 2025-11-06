@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { CtaButton } from "@/components/ui/cta-button";
 import { ResendVerificationButton } from "@/components/auth/resend-verification-button";
 import { OnboardingProfileForm } from "@/components/auth/onboarding-profile-form";
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
 	const session = await getServerAuthSession();
 	if (!session?.user) {
 		redirect("/login");
@@ -26,6 +26,54 @@ export default async function OnboardingPage() {
 	const onboardingCompleted = !!user.onboardingCompletedAt;
 	if (onboardingCompleted) {
 		redirect("/dashboard");
+	}
+
+	// Optional welcome screen on initial arrival from signup
+	const resolvedSearchParams = (searchParams ? await searchParams : undefined) as Record<string, string | string[] | undefined> | undefined;
+	const startParam = resolvedSearchParams?.start ?? "";
+	const startValue = Array.isArray(startParam) ? startParam[0] : startParam;
+	const showWelcome = typeof startValue === "string" && startValue.toLowerCase() === "welcome";
+
+	if (showWelcome) {
+		return (
+			<div
+				className="relative flex items-center justify-center py-16 bg-background overflow-x-hidden overflow-y-auto"
+				style={{ ["--welcome-pattern-color" as unknown as string]: "#000000", height: "calc(100vh - 64px)" }}
+			>
+				{/* decorative background pattern */}
+				<div
+					className="pointer-events-none absolute w-full h-full"
+					style={{
+						WebkitMaskImage: "url('/images/pattern-svg.svg')",
+						maskImage: "url('/images/pattern-svg.svg')",
+						WebkitMaskRepeat: "repeat",
+						maskRepeat: "repeat",
+						WebkitMaskSize: "100%",
+						maskSize: "100%",
+						backgroundColor: "var(--welcome-pattern-color, #ffffff)",
+						opacity: 0.18,
+					}}
+				/>
+				<div className="absolute h-full w-1/2 right-6">
+					<Image src="/images/LeenInWebsite.png" alt="Welcome illustration" fill priority className="pt-12 object-contain object-center" sizes="100%" />
+				</div>
+				<div className="relative z-10 w-full max-w-6xl mx-6 h-full">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center h-full">
+						<div className="text-left">
+							<h1 className="text-5xl font-bold tracking-tight">Welcome to Kamleen</h1>
+							<p className="mt-5 text-lg text-muted-foreground">
+								Thanks for creating your account. <br /> We’ll walk you through a quick setup.
+							</p>
+							<div className="mt-8 flex items-center justify-start">
+								<CtaButton asChild color="primary" size="lg">
+									<Link href="/onboarding">Get started</Link>
+								</CtaButton>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
 	}
 
 	// Wizard-like header and progress aligned with experience wizard approach
@@ -201,9 +249,9 @@ async function ProfileForm({ disabled }: { disabled: boolean }) {
 					</label>
 				</div>
 				<div>
-					<Button type="submit" disabled={disabled}>
+					<CtaButton type="submit" disabled={disabled}>
 						Save
-					</Button>
+					</CtaButton>
 				</div>
 			</fieldset>
 		</form>

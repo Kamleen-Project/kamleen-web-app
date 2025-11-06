@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Settings, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { EmailConfigForm } from "./email-config-form";
+import CtaButton from "@/components/ui/cta-button";
+import CtaIconButton from "@/components/ui/cta-icon-button";
 
 export function EmailConfigModal() {
 	const [mounted, setMounted] = useState(false);
@@ -48,14 +49,9 @@ export function EmailConfigModal() {
 							onClick={(e) => e.stopPropagation()}
 							className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-3xl border border-border/60 bg-background text-foreground shadow-2xl"
 						>
-							<button
-								type="button"
-								onClick={close}
-								className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground transition hover:text-foreground"
-								aria-label="Close email configuration"
-							>
+							<CtaIconButton color="whiteBorder" size="md" ariaLabel="Close email configuration" onClick={close}>
 								<X className="size-5" />
-							</button>
+							</CtaIconButton>
 
 							<div className="flex h-[70vh] flex-col">
 								<div className="shrink-0 border-b border-border/60 p-6">
@@ -70,9 +66,9 @@ export function EmailConfigModal() {
 								</div>
 								<div className="shrink-0 border-t border-border/60 p-6">
 									<div className="flex justify-end">
-										<Button type="submit" form={formId}>
+										<CtaButton color="black" size="sm" type="submit" form={formId}>
 											Save settings
-										</Button>
+										</CtaButton>
 									</div>
 								</div>
 							</div>
@@ -83,9 +79,9 @@ export function EmailConfigModal() {
 
 	return (
 		<>
-			<Button type="button" variant="ghost" size="icon" className="size-12" onClick={() => setOpen(true)} aria-label="Open email configuration">
+			<CtaIconButton color="whiteBorder" size="md" ariaLabel="Open email configuration" onClick={() => setOpen(true)}>
 				<Settings className="size-5" />
-			</Button>
+			</CtaIconButton>
 			{modal}
 		</>
 	);

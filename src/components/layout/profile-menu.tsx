@@ -6,7 +6,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { CtaButton } from "@/components/ui/cta-button";
@@ -111,10 +110,9 @@ export function ProfileMenu() {
 				}}
 				align="end"
 				trigger={
-					<Button
+					<button
 						type="button"
-						variant="ghost"
-						className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition hover:bg-background focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none border-none"
+						className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition hover:bg-background focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
 						aria-expanded={open}
 						aria-haspopup="menu"
 						aria-controls={menuId}
@@ -133,7 +131,7 @@ export function ProfileMenu() {
 								initials
 							)}
 						</span>
-					</Button>
+					</button>
 				}
 			>
 				<DropdownPanelHeader

@@ -6,28 +6,35 @@ import { Calendar as CalendarIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { FormControl, FormDescription, FormField, FormLabel, FormMessage } from "./form";
-import { Button } from "./button";
+// import { Button } from "./button";
+import { CtaIconButton } from "@/components/ui/cta-icon-button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Calendar } from "./calendar";
-import { Input } from "./input";
+import { Calendar, type CalendarDateRange } from "./calendar";
+// using native input instead of the shared Input component for this field
 
 type DateFieldProps = {
 	label?: React.ReactNode;
 	caption?: React.ReactNode;
 	error?: string;
 	containerClassName?: string;
-	name?: string; // when provided, a hidden yyyy-MM-dd input will be included
+	name?: string; // when provided and range=false, a hidden yyyy-MM-dd input will be included
+	nameStart?: string; // when provided and range=true, include hidden yyyy-MM-dd for start
+	nameEnd?: string; // when provided and range=true, include hidden yyyy-MM-dd for end
 	id?: string;
-	value?: Date | undefined;
-	onChange?: (date: Date | undefined) => void;
+	value?: Date | undefined; // used when range=false
+	valueRange?: CalendarDateRange | undefined; // used when range=true
+	onChange?: (date: Date | undefined) => void; // used when range=false
+	onChangeRange?: (range: CalendarDateRange | undefined) => void; // used when range=true
 	placeholder?: string;
 	disabled?: boolean;
-	monthCount?: number;
+	monthCount?: number; // defaults to 1 for single, 2 for range
 	minDate?: Date;
 	maxDate?: Date;
 	buttonClassName?: string;
 	allowTextInput?: boolean;
 	required?: boolean;
+	range?: boolean;
 };
 
 export function DateField({
@@ -36,37 +43,56 @@ export function DateField({
 	error,
 	containerClassName,
 	name,
+	nameStart,
+	nameEnd,
 	id,
 	value,
+	valueRange,
 	onChange,
+	onChangeRange,
 	placeholder = "Pick a date",
 	disabled,
-	monthCount = 1,
+	monthCount,
 	minDate,
 	maxDate,
 	buttonClassName,
 	allowTextInput = true,
 	required,
+	range = false,
 }: DateFieldProps) {
 	const [open, setOpen] = React.useState(false);
-	const formatted = value ? format(value, "yyyy-MM-dd") : "";
-	const labelText = value ? format(value, "LLL dd, yyyy") : placeholder;
-	const [text, setText] = React.useState<string>(formatted);
+	const singleFormatted = value ? format(value, "yyyy-MM-dd") : "";
+	const rangeFormattedStart = valueRange?.from ? format(valueRange.from, "yyyy-MM-dd") : "";
+	const rangeFormattedEnd = valueRange?.to ? format(valueRange.to, "yyyy-MM-dd") : "";
+
+	const labelText = range
+		? valueRange?.from
+			? valueRange.to
+				? `${format(valueRange.from, "LLL dd, yyyy")} – ${format(valueRange.to, "LLL dd, yyyy")}`
+				: format(valueRange.from, "LLL dd, yyyy")
+			: placeholder
+		: value
+		? format(value, "LLL dd, yyyy")
+		: placeholder;
+
+	const [text, setText] = React.useState<string>(singleFormatted);
 
 	React.useEffect(() => {
-		setText(formatted);
+		if (!range) setText(singleFormatted);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [formatted]);
+	}, [singleFormatted, range]);
 
 	function tryCommitText(next: string) {
 		const trimmed = next.trim();
 		if (!trimmed) {
-			onChange?.(undefined);
+			if (!range) onChange?.(undefined);
 			return;
 		}
-		const parsed = parse(trimmed, "yyyy-MM-dd", new Date());
-		if (!isNaN(parsed.getTime())) {
-			onChange?.(parsed);
+		if (!range) {
+			const parsed = parse(trimmed, "yyyy-MM-dd", new Date());
+			if (!isNaN(parsed.getTime())) {
+				onChange?.(parsed);
+			}
 		}
 	}
 
@@ -87,10 +113,16 @@ export function DateField({
 				) : null}
 				<FormControl>
 					<div>
-						{typeof name === "string" ? <input type="hidden" name={name} value={formatted} readOnly /> : null}
+						{!range && typeof name === "string" ? <input type="hidden" name={name} value={singleFormatted} readOnly /> : null}
+						{range && (nameStart || nameEnd) ? (
+							<>
+								{typeof nameStart === "string" ? <input type="hidden" name={nameStart} value={rangeFormattedStart} readOnly /> : null}
+								{typeof nameEnd === "string" ? <input type="hidden" name={nameEnd} value={rangeFormattedEnd} readOnly /> : null}
+							</>
+						) : null}
 						{allowTextInput ? (
 							<div className="relative">
-								<Input
+								<input
 									id={id}
 									placeholder={placeholder}
 									value={text}
@@ -103,31 +135,37 @@ export function DateField({
 										}
 									}}
 									disabled={disabled}
-									className="pr-10 h-11"
+									className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus-visible:border-ring pr-10"
 									required={Boolean(required)}
 								/>
 
 								<Popover open={open} onOpenChange={setOpen}>
 									<PopoverTrigger asChild>
-										<Button
+										<CtaIconButton
 											type="button"
-											variant="ghost"
-											className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+											size="lg"
+											color="white"
+											className="absolute right-1.5 top-1/2 -translate-y-1/2"
 											disabled={disabled}
-											aria-label="Open date picker"
+											ariaLabel="Open date picker"
 										>
 											<CalendarIcon className="size-4" />
-										</Button>
+										</CtaIconButton>
 									</PopoverTrigger>
-									<PopoverContent className="w-auto p-2" align="start" sideOffset={8}>
+									<PopoverContent className="w-auto p-2" align="end" sideOffset={8}>
 										<Calendar
-											value={{ from: value, to: value }}
-											onChange={(range) => {
-												const next = range?.from;
-												onChange?.(next);
-												if (next) setOpen(false);
+											value={range ? valueRange ?? {} : { from: value, to: value }}
+											onChange={(selected) => {
+												if (range) {
+													onChangeRange?.(selected);
+													if (selected?.from && selected?.to) setOpen(false);
+												} else {
+													const next = selected?.from;
+													onChange?.(next);
+													if (next) setOpen(false);
+												}
 											}}
-											monthCount={monthCount}
+											monthCount={monthCount ?? (range ? 2 : 1)}
 											minDate={minDate}
 											maxDate={maxDate}
 										/>
@@ -137,25 +175,36 @@ export function DateField({
 						) : (
 							<Popover open={open} onOpenChange={setOpen}>
 								<PopoverTrigger asChild>
-									<Button
+									<button
 										type="button"
-										variant="outline"
-										className={cn("h-11 justify-start gap-2 text-left font-normal", !value && "text-muted-foreground", buttonClassName)}
 										disabled={disabled}
+										className={cn(
+											"inline-flex w-full items-center justify-start gap-2 whitespace-nowrap rounded-lg font-medium transition-all cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+											"bg-white text-black hover:bg-zinc-100 border border-input",
+											"text-sm h-11 px-4",
+											"justify-start text-left font-normal",
+											!value && "text-muted-foreground",
+											buttonClassName
+										)}
 									>
 										<CalendarIcon className="size-4" />
 										{labelText}
-									</Button>
+									</button>
 								</PopoverTrigger>
 								<PopoverContent className="w-auto p-2" align="start" sideOffset={8}>
 									<Calendar
-										value={{ from: value, to: value }}
-										onChange={(range) => {
-											const next = range?.from;
-											onChange?.(next);
-											if (next) setOpen(false);
+										value={range ? valueRange ?? {} : { from: value, to: value }}
+										onChange={(selected) => {
+											if (range) {
+												onChangeRange?.(selected);
+												if (selected?.from && selected?.to) setOpen(false);
+											} else {
+												const next = selected?.from;
+												onChange?.(next);
+												if (next) setOpen(false);
+											}
 										}}
-										monthCount={monthCount}
+										monthCount={monthCount ?? (range ? 2 : 1)}
 										minDate={minDate}
 										maxDate={maxDate}
 									/>

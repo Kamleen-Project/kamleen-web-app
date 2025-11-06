@@ -4,16 +4,20 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import CtaIconButton from "../ui/cta-icon-button";
+import { SelectField } from "@/components/ui/select-field";
+import { InputField } from "@/components/ui/input-field";
 
 export function ExperiencesFilters({
 	initialVerification,
 	initialStatus,
 	initialQuery,
+	initialPageSize = 10,
 }: {
 	initialVerification: string;
 	initialStatus: string;
 	initialQuery: string | null;
+	initialPageSize?: number;
 }) {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -22,6 +26,7 @@ export function ExperiencesFilters({
 	const [verification, setVerification] = React.useState(initialVerification);
 	const [status, setStatus] = React.useState(initialStatus);
 	const [q, setQ] = React.useState(initialQuery ?? "");
+	const [pageSize, setPageSize] = React.useState<number>(initialPageSize);
 
 	React.useEffect(() => {
 		setVerification(initialVerification);
@@ -35,6 +40,10 @@ export function ExperiencesFilters({
 		setQ(initialQuery ?? "");
 	}, [initialQuery]);
 
+	React.useEffect(() => {
+		setPageSize(initialPageSize ?? 10);
+	}, [initialPageSize]);
+
 	function applyParams(next: URLSearchParams) {
 		const url = `${pathname}?${next.toString()}`;
 		router.replace(url);
@@ -45,6 +54,7 @@ export function ExperiencesFilters({
 		const next = new URLSearchParams(searchParams?.toString());
 		if (!value || value === "__ALL__") next.delete("verification");
 		else next.set("verification", value);
+		next.delete("page");
 		applyParams(next);
 	}
 
@@ -53,6 +63,17 @@ export function ExperiencesFilters({
 		const next = new URLSearchParams(searchParams?.toString());
 		if (!value || value === "__ALL__") next.delete("status");
 		else next.set("status", value);
+		next.delete("page");
+		applyParams(next);
+	}
+
+	function onChangePageSize(nextSize: number) {
+		const normalized = nextSize <= 10 ? 10 : nextSize <= 20 ? 20 : 50;
+		setPageSize(normalized);
+		const next = new URLSearchParams(searchParams?.toString());
+		if (normalized === 10) next.delete("pageSize");
+		else next.set("pageSize", String(normalized));
+		next.delete("page");
 		applyParams(next);
 	}
 
@@ -83,49 +104,65 @@ export function ExperiencesFilters({
 	return (
 		<div className="flex w-full items-center gap-2">
 			<div className="flex items-center gap-2">
-				<select
+				<SelectField
 					aria-label="Verification filter"
 					value={verification}
 					onChange={(e) => onChangeVerification(e.target.value)}
-					className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm text-foreground shadow-sm focus:outline-none"
-				>
-					<option value="__ALL__">All verifications</option>
-					<option value="NOT_SUBMITTED">Not submitted</option>
-					<option value="PENDING">Pending</option>
-					<option value="VERIFIED">Verified</option>
-					<option value="REJECTED">Rejected</option>
-				</select>
-				<select
+					className="h-9"
+					containerClassName="w-[180px]"
+					options={[
+						{ value: "__ALL__", label: "All verifications" },
+						{ value: "NOT_SUBMITTED", label: "Not submitted" },
+						{ value: "PENDING", label: "Pending" },
+						{ value: "VERIFIED", label: "Verified" },
+						{ value: "REJECTED", label: "Rejected" },
+					]}
+				/>
+				<SelectField
 					aria-label="Publish filter"
 					value={status}
 					onChange={(e) => onChangeStatus(e.target.value)}
-					className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm text-foreground shadow-sm focus:outline-none"
-				>
-					<option value="__ALL__">All publishing</option>
-					<option value="DRAFT">Draft</option>
-					<option value="PUBLISHED">Published</option>
-					<option value="UNPUBLISHED">Unpublished</option>
-					<option value="UNLISTED">Unlisted</option>
-					<option value="ARCHIVED">Archived</option>
-				</select>
+					className="h-9"
+					containerClassName="w-[160px]"
+					options={[
+						{ value: "__ALL__", label: "All publishing" },
+						{ value: "DRAFT", label: "Draft" },
+						{ value: "PUBLISHED", label: "Published" },
+						{ value: "UNPUBLISHED", label: "Unpublished" },
+						{ value: "UNLISTED", label: "Unlisted" },
+						{ value: "ARCHIVED", label: "Archived" },
+					]}
+				/>
 				{verification !== "__ALL__" || status !== "__ALL__" || (q ?? "").trim().length > 0 ? (
-					<Button type="button" variant="outline" size="icon" aria-label="Reset filters" onClick={onReset}>
+					<CtaIconButton color="whiteBorder" size="md" ariaLabel="Reset filters" onClick={onReset}>
 						<X />
-					</Button>
+					</CtaIconButton>
 				) : null}
 			</div>
-			<div className="ml-auto flex items-center gap-2">
+			<div className="ml-auto flex items-center gap-3">
 				<div className="relative">
 					<Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-					<input
+					<InputField
 						type="search"
 						aria-label="Search experiences"
 						placeholder="Search experiences or organizers..."
 						value={q}
 						onChange={(e) => setQ(e.target.value)}
-						className="h-9 w-64 rounded-md border border-border/60 bg-background pl-8 pr-3 text-sm text-foreground shadow-sm focus:outline-none"
+						className="pl-8 h-9 w-64"
 					/>
 				</div>
+				<SelectField
+					aria-label="Results per page"
+					value={String(pageSize)}
+					onChange={(e) => onChangePageSize(Number.parseInt(e.target.value, 10) || pageSize)}
+					className="h-9"
+					containerClassName="w-[120px]"
+					options={[
+						{ value: "10", label: "10" },
+						{ value: "20", label: "20" },
+						{ value: "50", label: "50" },
+					]}
+				/>
 			</div>
 		</div>
 	);

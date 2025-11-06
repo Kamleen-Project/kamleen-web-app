@@ -3,13 +3,15 @@ import { Eye, Pencil, RefreshCcw, User } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 
 import { ConsolePage } from "@/components/console/page";
+import { Table, TableBody, TableCell, TableContainer, TableEmpty, TableHead, TableHeader, TableHeaderRow, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { CtaIconButton } from "@/components/ui/cta-icon-button";
 import { prisma } from "@/lib/prisma";
 import type { Prisma, $Enums } from "@/generated/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { EditExperienceModal } from "@/components/organizer/edit-experience-modal";
 import { ExperiencesFilters } from "@/components/admin/experiences-filters";
+import { ExperiencesPagination } from "../../../../components/admin/experiences-pagination";
 import { ExperiencesActions } from "@/components/admin/experiences-actions";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -25,6 +27,8 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 	const statusQuery = normalizeStringParam(resolved["status"]) ?? "__ALL__";
 
 	const q = normalizeStringParam(resolved["q"])?.trim() || null;
+	const page = normalizeNumberParam(resolved["page"], 1);
+	const pageSize = clampPageSize(normalizeNumberParam(resolved["pageSize"], 10));
 
 	const where: Prisma.ExperienceWhereInput = {
 		...(verificationQuery !== "__ALL__" ? { verificationStatus: verificationQuery as $Enums.ExperienceVerificationStatus } : {}),
@@ -39,9 +43,13 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 			: {}),
 	};
 
+	const total = await prisma.experience.count({ where });
+
 	const experiences = await prisma.experience.findMany({
 		where,
 		orderBy: { updatedAt: "desc" },
+		take: pageSize,
+		skip: (page - 1) * pageSize,
 		select: {
 			id: true,
 			title: true,
@@ -66,89 +74,88 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 			title="Experiences"
 			subtitle="Browse, filter, and verify all experiences in the system."
 			action={
-				<ExperiencesFilters initialVerification={verificationQuery} initialStatus={statusQuery} initialQuery={normalizeStringParam(resolved["q"]) ?? null} />
+				<ExperiencesFilters
+					initialVerification={verificationQuery}
+					initialStatus={statusQuery}
+					initialQuery={normalizeStringParam(resolved["q"]) ?? null}
+					initialPageSize={pageSize}
+				/>
 			}
 		>
-			<div className="overflow-hidden rounded-xl border border-border/60 bg-card/80">
-				<div className="overflow-x-auto">
-					<table className="min-w-[900px] w-full text-sm">
-						<thead>
-							<tr className="border-b border-border/60 bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-								<th className="px-4 py-3 font-medium">Title</th>
-								<th className="px-4 py-3 font-medium">Category</th>
-								<th className="px-4 py-3 font-medium">Verification</th>
-								<th className="px-4 py-3 font-medium">Publish</th>
-								<th className="px-4 py-3 font-medium">Creat./Updated</th>
-								<th className="px-4 py-3 font-medium">Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{experiences.length === 0 ? (
-								<tr>
-									<td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">
-										No experiences found.
-									</td>
-								</tr>
-							) : (
-								experiences.map((exp) => (
-									<tr key={exp.id} className="border-b border-border/50 hover:bg-muted/30">
-										<td className="px-4 py-3">
-											<div className="flex flex-col">
-												<span className="font-medium text-foreground">{exp.title}</span>
-												<span className="mt-1 inline-flex items-center gap-1 text-[12px] text-muted-foreground">
-													<User className="size-3.5" />
-													<span className="truncate max-w-[360px]">
-														{exp.organizer?.name ?? "Unknown"}, {exp.country?.name ?? "—"}
-													</span>
+			<TableContainer>
+				<Table minWidth={900}>
+					<TableHeader>
+						<TableHeaderRow>
+							<TableHead>Title</TableHead>
+							<TableHead>Category</TableHead>
+							<TableHead>Verification</TableHead>
+							<TableHead>Publish</TableHead>
+							<TableHead>Creat./Updated</TableHead>
+							<TableHead>Actions</TableHead>
+						</TableHeaderRow>
+					</TableHeader>
+					<TableBody>
+						{experiences.length === 0 ? (
+							<TableEmpty colSpan={9}>No experiences found.</TableEmpty>
+						) : (
+							experiences.map((exp) => (
+								<TableRow key={exp.id}>
+									<TableCell>
+										<div className="flex flex-col">
+											<span className="font-medium text-foreground">{exp.title}</span>
+											<span className="mt-1 inline-flex items-center gap-1 text-[12px] text-muted-foreground">
+												<User className="size-3.5" />
+												<span className="truncate max-w-[360px]">
+													{exp.organizer?.name ?? "Unknown"}, {exp.country?.name ?? "—"}
 												</span>
-											</div>
-										</td>
-										<td className="px-4 py-3">
-											<span className="text-foreground">{exp.category ?? "—"}</span>
-										</td>
-
-										<td className="px-4 py-3">
-											<VerificationBadge value={exp.verificationStatus} />
-										</td>
-										<td className="px-4 py-3">
-											<StatusBadge value={exp.status} />
-										</td>
-										<td className="px-4 py-3">
-											<div className="flex flex-col leading-tight">
-												<span className="text-[12px] text-muted-foreground">{dateFmt.format(exp.createdAt)}</span>
-												<span className="mt-0.5 inline-flex items-center gap-1 text-[12px]">
-													<RefreshCcw className="size-3.5 text-muted-foreground" />
-													<span className="text-muted-foreground">{formatDistanceToNowStrict(exp.updatedAt, { addSuffix: true })}</span>
-												</span>
-											</div>
-										</td>
-										<td className="px-2 py-2">
-											<div className="flex items-center gap-1.5">
-												<Button asChild variant="outline" size="icon" aria-label="Preview">
-													<Link href={`/experiences/${exp.slug}`} target="_blank" rel="noreferrer">
-														<Eye />
-													</Link>
-												</Button>
-												<EditExperienceModal
-													experienceId={exp.id}
-													variant="outline"
-													size="icon"
-													initialStep={0}
-													enableVerification
-													aria-label="Edit experience"
-												>
-													<Pencil />
-												</EditExperienceModal>
-												<ExperiencesActions experienceId={exp.id} bookingsCount={exp._count.bookings} reviewsCount={exp._count.reviews} />
-											</div>
-										</td>
-									</tr>
-								))
-							)}
-						</tbody>
-					</table>
-				</div>
-			</div>
+											</span>
+										</div>
+									</TableCell>
+									<TableCell>
+										<span className="text-foreground">{exp.category ?? "—"}</span>
+									</TableCell>
+									<TableCell>
+										<VerificationBadge value={exp.verificationStatus} />
+									</TableCell>
+									<TableCell>
+										<StatusBadge value={exp.status} />
+									</TableCell>
+									<TableCell>
+										<div className="flex flex-col leading-tight">
+											<span className="text-[12px] text-muted-foreground">{dateFmt.format(exp.createdAt)}</span>
+											<span className="mt-0.5 inline-flex items-center gap-1 text-[12px]">
+												<RefreshCcw className="size-3.5 text-muted-foreground" />
+												<span className="text-muted-foreground">{formatDistanceToNowStrict(exp.updatedAt, { addSuffix: true })}</span>
+											</span>
+										</div>
+									</TableCell>
+									<TableCell className="px-2 py-2">
+										<div className="flex items-center gap-1.5">
+											<CtaIconButton asChild color="whiteBorder" size="md" ariaLabel="Preview">
+												<Link href={`/experiences/${exp.slug}`} target="_blank" rel="noreferrer">
+													<Eye />
+												</Link>
+											</CtaIconButton>
+											<EditExperienceModal
+												experienceId={exp.id}
+												color="whiteBorder"
+												size="icon"
+												initialStep={0}
+												enableVerification
+												aria-label="Edit experience"
+											>
+												<Pencil />
+											</EditExperienceModal>
+											<ExperiencesActions experienceId={exp.id} bookingsCount={exp._count.bookings} reviewsCount={exp._count.reviews} />
+										</div>
+									</TableCell>
+								</TableRow>
+							))
+						)}
+					</TableBody>
+				</Table>
+				<ExperiencesPagination page={page} pageSize={pageSize} total={total} />
+			</TableContainer>
 		</ConsolePage>
 	);
 }
@@ -157,6 +164,18 @@ function normalizeStringParam(value: string | string[] | undefined): string | nu
 	if (typeof value === "string") return value;
 	if (Array.isArray(value) && value.length > 0) return value[0] ?? null;
 	return null;
+}
+
+function normalizeNumberParam(value: string | string[] | undefined, fallback: number): number {
+	const raw = typeof value === "string" ? value : Array.isArray(value) ? value[0] : undefined;
+	const parsed = Number.parseInt(raw ?? "", 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function clampPageSize(size: number): number {
+	if (size <= 10) return 10;
+	if (size <= 20) return 20;
+	return 50;
 }
 
 function formatPrice(amount: number, currency: string | null | undefined) {

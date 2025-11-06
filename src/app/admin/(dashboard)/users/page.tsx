@@ -4,12 +4,12 @@ import { formatDistanceToNowStrict } from "date-fns";
 
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { UsersActions } from "@/components/admin/users-actions";
 import { ConsolePage } from "@/components/console/page";
-import { AdminTable } from "@/components/admin/admin-table";
+import { Table, TableBody, TableCell, TableContainer, TableEmpty, TableHead, TableHeader, TableHeaderRow, TableRow } from "@/components/ui/table";
 import type { Prisma, $Enums } from "@/generated/prisma";
 import { UsersFilters } from "@/components/admin/users-filters";
+import { CtaIconButton } from "@/components/ui/cta-icon-button";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -52,79 +52,75 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 	return (
 		<ConsolePage
 			title="Account directory"
-			subtitle="Search, audit, and manage everyone using Kamleen. Promote trusted explorers to organizers, or escalate accounts that require manual review."
+			subtitle="Manage everyone using Kamleen."
 			action={
 				<div className="flex w-full items-center gap-2 md:w-auto">
 					<UsersFilters initialRole={roleQuery} initialOrganizer={organizerQuery} initialQuery={normalizeStringParam(resolved["q"]) ?? null} />
-					<Button asChild variant="outline" className="h-9">
-						<Link href="/admin/organizers">Review organizer requests</Link>
-					</Button>
 				</div>
 			}
 		>
-			<AdminTable
-				header={
-					<>
-						<th className="px-4 py-3 font-medium">Name</th>
-						<th className="px-4 py-3 font-medium">Res.</th>
-						<th className="px-4 py-3 font-medium">Exp.</th>
-						<th className="px-4 py-3 font-medium">Role</th>
-						<th className="px-4 py-3 font-medium">Organizer</th>
-						<th className="px-4 py-3 font-medium">Status</th>
-						<th className="px-4 py-3 font-medium">Joined</th>
-						<th className="px-4 py-3 font-medium">Actions</th>
-					</>
-				}
-			>
-				{users.length === 0 ? (
-					<tr>
-						<td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">
-							No users found.
-						</td>
-					</tr>
-				) : (
-					users.map((user) => {
-						const primary = user.name ?? user.email ?? "—";
-						const secondaryEmail = user.email && user.email !== primary ? user.email : null;
-						return (
-							<tr key={user.id} className="border-b border-border/50 hover:bg-muted/30">
-								<td className="px-4 py-3">
-									<div className="flex flex-col">
-										<span className="font-medium text-foreground">{primary}</span>
-										{secondaryEmail ? <span className="mt-1 text-[12px] text-muted-foreground">{secondaryEmail}</span> : null}
-									</div>
-								</td>
-								<td className="px-4 py-3">{user._count.experienceBookings}</td>
-								<td className="px-4 py-3">{user._count.experiences}</td>
-								<td className="px-4 py-3">
-									<Badge variant="outline" className="text-xs uppercase">
-										{user.role.toLowerCase()}
-									</Badge>
-								</td>
-								<td className="px-4 py-3">
-									<OrganizerStatusBadge value={user.organizerStatus} />
-								</td>
-								<td className="px-4 py-3">
-									<AccountStatusBadge value={user.accountStatus} />
-								</td>
-								<td className="px-4 py-3">
-									<span className="text-[12px] text-muted-foreground">{formatDistanceToNowStrict(user.createdAt, { addSuffix: true })}</span>
-								</td>
-								<td className="px-2 py-2">
-									<div className="flex items-center gap-1.5">
-										<Button asChild variant="outline" size="icon" aria-label="Edit user">
-											<Link href={`/admin/users/${user.id}`}>
-												<Pencil />
-											</Link>
-										</Button>
-										<UsersActions userId={user.id} experiencesCount={user._count.experiences} bookingsCount={user._count.experienceBookings} />
-									</div>
-								</td>
-							</tr>
-						);
-					})
-				)}
-			</AdminTable>
+			<TableContainer>
+				<Table minWidth={900}>
+					<TableHeader>
+						<TableHeaderRow>
+							<TableHead>Name</TableHead>
+							<TableHead>Res.</TableHead>
+							<TableHead>Exp.</TableHead>
+							<TableHead>Role</TableHead>
+							<TableHead>Organizer</TableHead>
+							<TableHead>Status</TableHead>
+							<TableHead>Joined</TableHead>
+							<TableHead>Actions</TableHead>
+						</TableHeaderRow>
+					</TableHeader>
+					<TableBody>
+						{users.length === 0 ? (
+							<TableEmpty colSpan={9}>No users found.</TableEmpty>
+						) : (
+							users.map((user) => {
+								const primary = user.name ?? user.email ?? "—";
+								const secondaryEmail = user.email && user.email !== primary ? user.email : null;
+								return (
+									<TableRow key={user.id}>
+										<TableCell>
+											<div className="flex flex-col">
+												<span className="font-medium text-foreground">{primary}</span>
+												{secondaryEmail ? <span className="mt-1 text-[12px] text-muted-foreground">{secondaryEmail}</span> : null}
+											</div>
+										</TableCell>
+										<TableCell>{user._count.experienceBookings}</TableCell>
+										<TableCell>{user._count.experiences}</TableCell>
+										<TableCell>
+											<Badge variant="outline" className="text-xs uppercase">
+												{user.role.toLowerCase()}
+											</Badge>
+										</TableCell>
+										<TableCell>
+											<OrganizerStatusBadge value={user.organizerStatus} />
+										</TableCell>
+										<TableCell>
+											<AccountStatusBadge value={user.accountStatus} />
+										</TableCell>
+										<TableCell>
+											<span className="text-[12px] text-muted-foreground">{formatDistanceToNowStrict(user.createdAt, { addSuffix: true })}</span>
+										</TableCell>
+										<TableCell className="px-2 py-2">
+											<div className="flex items-center gap-1.5">
+												<CtaIconButton asChild color="whiteBorder" size="md" ariaLabel="Edit user">
+													<Link href={`/admin/users/${user.id}`}>
+														<Pencil />
+													</Link>
+												</CtaIconButton>
+												<UsersActions userId={user.id} experiencesCount={user._count.experiences} bookingsCount={user._count.experienceBookings} />
+											</div>
+										</TableCell>
+									</TableRow>
+								);
+							})
+						)}
+					</TableBody>
+				</Table>
+			</TableContainer>
 		</ConsolePage>
 	);
 }

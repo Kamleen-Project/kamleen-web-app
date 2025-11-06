@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Star } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ExperienceReviewModal } from "@/components/experiences/experience-review-modal";
+import CtaButton from "../ui/cta-button";
 
 type ReviewExplorer = {
 	name?: string | null;
@@ -152,9 +152,9 @@ export function ExperienceReviewsSection({ title, averageRating, reviewCount, re
 
 			{hasMore ? (
 				<div className="flex justify-center">
-					<Button variant="outline" size="lg" asChild>
+					<CtaButton color="whiteBorder" size="lg" asChild>
 						<Link href={showMoreHref!}>Show more reviews</Link>
-					</Button>
+					</CtaButton>
 				</div>
 			) : null}
 		</section>

@@ -8,21 +8,8 @@ function unsplash(query) {
   return `https://images.unsplash.com/photo-152-${Math.floor(Math.random() * 999999)}?auto=format&fit=crop&w=1600&q=80&query=${encoded}`
 }
 
-/**
- * Experience Categories — cover the majority of experiences
- */
-const categories = [
-  { name: "Adventure", subtitle: "Hikes, treks and outdoor thrills", picture: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80" },
-  { name: "Culinary", subtitle: "Cooking, tastings and market tours", picture: "https://images.unsplash.com/photo-1498654896293-37aacf113fd9?auto=format&fit=crop&w=1600&q=80" },
-  { name: "Wellness", subtitle: "Mindfulness, movement and restoration", picture: "https://images.unsplash.com/photo-1517346665566-17b9c7d4f37b?auto=format&fit=crop&w=1600&q=80" },
-  { name: "Creative", subtitle: "Hands-on arts, crafts and making", picture: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=80" },
-  { name: "Cultural", subtitle: "Local heritage and storytelling", picture: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1600&q=80" },
-  { name: "Nature", subtitle: "Parks, forests and wildlife", picture: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&q=80" },
-  { name: "Nightlife", subtitle: "Evening scenes and social vibes", picture: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1600&q=80" },
-  { name: "History", subtitle: "Monuments, museums and ruins", picture: "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1600&q=80" },
-  { name: "Music & Dance", subtitle: "Live performances and workshops", picture: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1600&q=80" },
-  { name: "Family", subtitle: "All-ages friendly experiences", picture: "https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1600&q=80" },
-]
+// Categories are managed via the app UI and existing DB records.
+// This script intentionally does not create or modify categories.
 
 /**
  * Countries, their regions (states) and cities
@@ -108,15 +95,7 @@ const countries = [
   },
 ]
 
-async function upsertCategories() {
-  for (const cat of categories) {
-    await prisma.experienceCategory.upsert({
-      where: { name: cat.name },
-      update: { subtitle: cat.subtitle, picture: cat.picture },
-      create: { name: cat.name, subtitle: cat.subtitle, picture: cat.picture },
-    })
-  }
-}
+// No category upserts here by design
 
 async function upsertLocations() {
   for (const country of countries) {
@@ -194,13 +173,12 @@ async function upsertLocations() {
 }
 
 async function main() {
-  await upsertCategories()
   await upsertLocations()
 }
 
 main()
   .then(() => {
-    console.log("Seeded categories, countries, states, and cities successfully.")
+    console.log("Seeded countries, states, and cities successfully.")
   })
   .catch((error) => {
     console.error(error)

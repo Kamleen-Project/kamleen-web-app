@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useId, useRef } from "react";
 import { RefreshCcw, Trash } from "lucide-react";
 
-type AspectMode = "square" | "threeFour" | "fullWidth";
+type AspectMode = "square" | "threeFour" | "fullWidth" | "twentyOneNine" | "twentyOneSix";
 
 export type UploadSinglePictureProps = {
 	// Current image preview URL (object URL or remote URL)
@@ -17,6 +17,12 @@ export type UploadSinglePictureProps = {
 	uploadLabel?: string;
 	// Supported aspect modes: square (1/1), threeFour (3/4 height), fullWidth (free ratio, fills container)
 	aspect?: AspectMode;
+	// Optional background image (defaults to pattern)
+	backgroundImageUrl?: string;
+	// Optional background pattern tint color and opacity (mask based, like onboarding)
+	backgroundPatternColor?: string; // e.g. "#000000"
+	backgroundPatternOpacity?: number; // 0..1
+	backgroundPatternSize?: string; // e.g. "560px" (consistent scale)
 	// Optional unique id base (useful when multiple instances exist on screen)
 	id?: string;
 	// Optional form field name so this input participates in form submission
@@ -31,6 +37,10 @@ export function UploadSinglePicture({
 	onRemove,
 	uploadLabel = "Upload image",
 	aspect = "square",
+	backgroundImageUrl,
+	backgroundPatternColor,
+	backgroundPatternOpacity,
+	backgroundPatternSize,
 	id,
 	name,
 	className = "",
@@ -49,13 +59,28 @@ export function UploadSinglePicture({
 
 	const containerClasses = (() => {
 		// Ensure fixed container sizing driven by aspect
-		if (aspect === "square") return "relative overflow-hidden rounded-xl border border-border/60 w-40 h-40";
-		if (aspect === "threeFour") return "relative overflow-hidden rounded-xl border border-border/60 w-40 h-[200px]"; // 160x200 roughly 4:5 visual, close to 3:4
-		return "relative overflow-hidden rounded-xl border border-border/60 w-full h-48"; // full width save ratio in a fixed height holder
+		if (aspect === "square") return "relative overflow-hidden rounded-lg border border-border/60 w-44 h-44";
+		if (aspect === "threeFour") return "relative overflow-hidden rounded-lg border border-border/60 w-full aspect-[3/4]"; // 160x200 roughly 4:5 visual, close to 3:4
+		if (aspect === "twentyOneNine") return "relative overflow-hidden rounded-lg border border-border/60 w-full aspect-[21/9]";
+		if (aspect === "twentyOneSix") return "relative overflow-hidden rounded-lg border border-border/60 w-full aspect-[21/6]";
+		return "relative overflow-hidden rounded-lg border border-border/60 w-full h-48"; // full width save ratio in a fixed height holder
 	})();
+
+	const bgUrl = backgroundImageUrl ?? "/images/pattern-svg.svg";
+	const backgroundPatternStyle = {
+		WebkitMaskImage: `url('${bgUrl}')`,
+		maskImage: `url('${bgUrl}')`,
+		WebkitMaskRepeat: "repeat",
+		maskRepeat: "repeat",
+		WebkitMaskSize: backgroundPatternSize ?? "800px",
+		maskSize: backgroundPatternSize ?? "800px",
+		backgroundColor: backgroundPatternColor ?? "#000000",
+		opacity: typeof backgroundPatternOpacity === "number" ? backgroundPatternOpacity : 0.24,
+	} as const;
 
 	return (
 		<div className={`${containerClasses} ${className}`}>
+			<div aria-hidden className="absolute inset-0 rounded-lg pointer-events-none" style={backgroundPatternStyle} />
 			<input ref={inputRef} id={inputId} name={name} type="file" accept="image/*" className="hidden" onChange={handleInputChange} />
 			{previewUrl ? (
 				<>

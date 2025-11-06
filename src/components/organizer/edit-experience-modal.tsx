@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { Button, type buttonVariants } from "@/components/ui/button";
-import type { VariantProps } from "class-variance-authority";
+import CtaButton from "@/components/ui/cta-button";
 import { ExperienceWizard, type ExperienceWizardInitialData } from "./experience-wizard";
 import BalloonLoading from "@/components/ui/balloon-loading";
 import { CtaIconButton } from "@/components/ui/cta-icon-button";
@@ -23,21 +22,23 @@ type CurrencyResponse = { currency: string };
 export function EditExperienceModal({
 	experienceId,
 	label = "Edit details",
-	variant = "default",
+	color = "black",
 	size = "sm",
 	children,
 	className,
 	initialStep,
 	enableVerification,
+	sessionsOnly,
 }: {
 	experienceId: string;
 	label?: string;
-	variant?: VariantProps<typeof buttonVariants>["variant"];
-	size?: VariantProps<typeof buttonVariants>["size"];
+	color?: "black" | "white" | "whiteBorder";
+	size?: "sm" | "md" | "lg" | "icon";
 	children?: React.ReactNode;
 	className?: string;
 	initialStep?: number;
 	enableVerification?: boolean;
+	sessionsOnly?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
@@ -145,6 +146,7 @@ export function EditExperienceModal({
 											  }
 											: undefined
 									}
+									sessionsOnly={Boolean(sessionsOnly)}
 								/>
 							)}
 						</div>
@@ -155,19 +157,13 @@ export function EditExperienceModal({
 	return (
 		<>
 			{size === "icon" ? (
-				<CtaIconButton
-					size="md"
-					color={variant === "outline" ? "whiteBorder" : "black"}
-					onClick={() => setOpen(true)}
-					className={className}
-					ariaLabel={typeof label === "string" ? label : "Edit"}
-				>
+				<CtaIconButton size="md" color={color} onClick={() => setOpen(true)} className={className} ariaLabel={typeof label === "string" ? label : "Edit"}>
 					{children ?? <Pencil />}
 				</CtaIconButton>
 			) : (
-				<Button size={size} variant={variant} onClick={() => setOpen(true)} className={className}>
+				<CtaButton size={size as "sm" | "md" | "lg"} color={color} onClick={() => setOpen(true)} className={className}>
 					{children ?? label}
-				</Button>
+				</CtaButton>
 			)}
 			{modalContent}
 		</>

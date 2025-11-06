@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 
 import { organizerNavItems } from "@/config/console-nav";
 import { ConsoleLayout } from "@/components/console/layout";
-import { Button } from "@/components/ui/button";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import CtaButton from "@/components/ui/cta-button";
 
 export default async function OrganizerLayout({ children }: { children: React.ReactNode }) {
 	const session = await getServerAuthSession();
@@ -37,9 +37,9 @@ export default async function OrganizerLayout({ children }: { children: React.Re
 			headerHref="/dashboard/organizer"
 			navItems={organizerNavItems}
 			footer={
-				<Button asChild variant="ghost" className="w-full justify-start text-sm text-muted-foreground">
+				<CtaButton color="black" size="sm" asChild>
 					<Link href="/experiences">View marketplace</Link>
-				</Button>
+				</CtaButton>
 			}
 		>
 			{children}

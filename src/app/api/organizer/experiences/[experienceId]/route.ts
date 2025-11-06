@@ -4,8 +4,25 @@ import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { getUserSettingsData } from "@/lib/user-preferences"
 import { saveUploadedFile } from "@/lib/uploads"
+import { MAX_GALLERY_IMAGES } from "@/config/experiences"
+import {
+  getRequiredString,
+  getOptionalString,
+  parseInteger,
+  parseTags,
+  parseSessions,
+  parseSessionsLenient,
+  parseItinerary,
+  parseItineraryLenient,
+  parseOptionalCoordinate,
+  parseBoolean,
+  getRequiredAudience,
+  type SessionInput,
+  type ItineraryInput,
+} from "@/lib/experience-parse"
+import { resolveItineraryStepsFromMeta } from "@/lib/itinerary-upload"
+import { isAllowedImageFile } from "@/lib/media"
 
-const MAX_GALLERY_UPLOADS = 12
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ experienceId: string }> }) {
   const session = await getServerAuthSession()
@@ -29,6 +46,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
       organizerId: true,
       heroImage: true,
       galleryImages: true,
+      status: true,
+      verificationStatus: true,
     },
   })
 
@@ -48,8 +67,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
   const formData = await request.formData()
 
   try {
-    const statusParam = (getOptionalString(formData, "status") || "PUBLISHED").toUpperCase()
-    const isDraft = statusParam === "DRAFT"
+    const statusParamRaw = getOptionalString(formData, "status")
+    const statusParam = statusParamRaw ? statusParamRaw.toUpperCase() : null
+    const effectiveStatus = (statusParam ?? experience.status) as "DRAFT" | "PUBLISHED" | "UNPUBLISHED" | "UNLISTED" | "ARCHIVED"
+    const isDraft = effectiveStatus === "DRAFT"
+
+    // Block organizer changing status while pending verification
+    if (statusParam && experience.verificationStatus === "PENDING" && !isAdmin) {
+      return NextResponse.json({ message: "Experience is pending verification; status cannot be changed." }, { status: 409 })
+    }
 
     const title = (getOptionalString(formData, "title") || (isDraft ? "Untitled experience" : null)) ?? getRequiredString(formData, "title")
     const summary = (getOptionalString(formData, "summary") || (isDraft ? "Coming soon" : null)) ?? getRequiredString(formData, "summary")
@@ -123,6 +149,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
     let heroImagePath = experience.heroImage
     const heroImage = formData.get("heroImage")
     if (heroImage instanceof File && heroImage.size > 0) {
+      if (!isAllowedImageFile(heroImage)) {
+        throw new Error("Unsupported hero image type")
+      }
       const stored = await saveUploadedFile({
         file: heroImage,
         directory: `experiences/${experience.organizerId}`,
@@ -145,7 +174,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
     const galleryFiles = formData.getAll("galleryImages")
     for (const entry of galleryFiles) {
       if (!(entry instanceof File) || entry.size === 0) continue
-      if (updatedGallery.size >= MAX_GALLERY_UPLOADS) break
+      if (updatedGallery.size >= MAX_GALLERY_IMAGES) break
+      if (!isAllowedImageFile(entry)) {
+        throw new Error("Unsupported gallery image type")
+      }
       const stored = await saveUploadedFile({
         file: entry,
         directory: `experiences/${experience.organizerId}/gallery`,
@@ -154,56 +186,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
       updatedGallery.add(stored.publicPath)
     }
 
-    const itinerarySteps = [] as {
-      order: number
-      title: string
-      subtitle: string | null
-      image: string
-      duration: string | null
-    }[]
+    const itinerarySteps = await resolveItineraryStepsFromMeta(formData, itineraryMeta, experience.organizerId)
 
-    for (const step of itineraryMeta) {
-      const titleValue = step.title.trim()
-      if (!titleValue) {
-        continue
-      }
-
-      let imagePath: string | null = null
-      if (step.imageKey) {
-        const file = formData.get(step.imageKey)
-        if (!(file instanceof File) || file.size === 0) {
-          throw new Error(`Image upload missing for itinerary step "${titleValue}"`)
-        }
-        const stored = await saveUploadedFile({
-          file,
-          directory: `experiences/${experience.organizerId}/itinerary`,
-          maxSizeBytes: 10 * 1024 * 1024,
-        })
-        imagePath = stored.publicPath
-      } else if (step.imageUrl) {
-        imagePath = step.imageUrl
-      }
-
-      if (!imagePath) {
-        imagePath = "/window.svg"
-      }
-
-      itinerarySteps.push({
-        order: step.order,
-        title: titleValue,
-        subtitle: step.subtitle?.trim() || null,
-        image: imagePath,
-        duration: typeof step.duration === "string" && step.duration.trim() ? step.duration.trim() : null,
-      })
-    }
-
-    if (!isDraft) {
-    // allow empty itinerary for drafts
+    // allow empty itinerary for drafts; enforce at least one step otherwise
     if (!isDraft) {
       if (!itinerarySteps.length) {
         throw new Error("At least one itinerary step is required")
       }
-    }
     }
 
     await prisma.$transaction(async (tx) => {
@@ -214,7 +203,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
           summary,
           description,
           location,
-          status: isDraft ? "DRAFT" : "PUBLISHED",
+          ...(statusParam ? { status: effectiveStatus } : {}),
           price,
           currency,
           category: resolvedCategory,
@@ -283,7 +272,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
               duration: s.duration ?? null,
               capacity: s.capacity,
               priceOverride: s.priceOverride ?? null,
-              locationLabel: s.locationLabel ?? null,
               meetingAddress: s.meetingAddress ?? null,
               meetingLatitude: s.meetingLatitude ?? null,
               meetingLongitude: s.meetingLongitude ?? null,
@@ -297,7 +285,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
               duration: s.duration ?? null,
               capacity: s.capacity,
               priceOverride: s.priceOverride ?? null,
-              locationLabel: s.locationLabel ?? null,
               meetingAddress: s.meetingAddress ?? null,
               meetingLatitude: s.meetingLatitude ?? null,
               meetingLongitude: s.meetingLongitude ?? null,
@@ -306,20 +293,50 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
         }
       }
 
-      await tx.experienceItineraryStep.deleteMany({ where: { experienceId: experience.id } })
-      if (itinerarySteps.length) {
-        await tx.experienceItineraryStep.createMany({
-          data: itinerarySteps
-            .sort((a, b) => a.order - b.order)
-            .map((step) => ({
+      // Upsert itinerary steps by id where available; remove those not present
+      const existingSteps = await tx.experienceItineraryStep.findMany({
+        where: { experienceId: experience.id },
+        select: { id: true },
+      })
+      const existingIds = new Set(existingSteps.map((s) => s.id))
+      const incomingItineraryById = new Map<string, (typeof itineraryMeta)[number]>()
+      for (const s of itineraryMeta) {
+        if (typeof (s as { id?: unknown }).id === "string") {
+          incomingItineraryById.set(((s as { id?: string }).id) as string, s)
+        }
+      }
+      const toDeleteIds = [...existingIds].filter((id) => !incomingItineraryById.has(id))
+      if (toDeleteIds.length) {
+        await tx.experienceItineraryStep.deleteMany({ where: { id: { in: toDeleteIds } } })
+      }
+      // Apply updates/creates based on presence of id
+      for (const s of itineraryMeta) {
+        const target = itinerarySteps.find((t) => t.order === s.order && t.title.trim() === (s.title || "").trim())
+        if (!target) continue
+        const maybeId = (s as { id?: string }).id
+        if (maybeId && existingIds.has(maybeId)) {
+          await tx.experienceItineraryStep.update({
+            where: { id: maybeId },
+            data: {
+              order: target.order,
+              title: target.title,
+              subtitle: target.subtitle,
+              image: target.image,
+              duration: target.duration,
+            },
+          })
+        } else {
+          await tx.experienceItineraryStep.create({
+            data: {
               experienceId: experience.id,
-              order: step.order,
-              title: step.title,
-              subtitle: step.subtitle,
-              image: step.image,
-              duration: step.duration,
-            })),
-        })
+              order: target.order,
+              title: target.title,
+              subtitle: target.subtitle,
+              image: target.image,
+              duration: target.duration,
+            },
+          })
+        }
       }
     })
 
@@ -330,225 +347,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
     }
     return NextResponse.json({ message: "Unable to update experience" }, { status: 500 })
   }
-}
-
-function getRequiredString(formData: FormData, key: string) {
-  const value = formData.get(key)
-  if (typeof value !== "string" || !value.trim()) {
-    throw new Error(`${key} is required`)
-  }
-  return value.trim()
-}
-
-function getOptionalString(formData: FormData, key: string) {
-  const value = formData.get(key)
-  if (typeof value !== "string") {
-    return null
-  }
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
-
-function parseInteger(value: string) {
-  const parsed = Number.parseInt(value, 10)
-  if (Number.isNaN(parsed) || parsed < 0) {
-    throw new Error("Price must be a positive number")
-  }
-  return parsed
-}
-
-function parseTags(value: FormDataEntryValue | null) {
-  if (typeof value !== "string" || !value.trim()) {
-    return []
-  }
-  return value
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-}
-
-function parseSessions(value: FormDataEntryValue | null): SessionInput[] {
-  if (typeof value !== "string") {
-    return []
-  }
-
-  try {
-    const parsed = JSON.parse(value) as Array<Record<string, unknown>>
-    return parsed.map((raw) => {
-      const session = raw as {
-        id?: unknown
-        startAt?: unknown
-        capacity?: unknown
-        duration?: unknown
-        priceOverride?: unknown
-        locationLabel?: unknown
-        meetingAddress?: unknown
-        meetingLatitude?: unknown
-        meetingLongitude?: unknown
-      }
-      if (!session.startAt) {
-        throw new Error("Session start time is required")
-      }
-      const capacity = Number.parseInt(String(session.capacity ?? 0), 10)
-      if (Number.isNaN(capacity) || capacity <= 0) {
-        throw new Error("Session capacity must be greater than zero")
-      }
-
-      const locationLabel = typeof session.locationLabel === "string" && session.locationLabel.trim()
-        ? session.locationLabel.trim()
-        : null
-      const meetingAddress = typeof session.meetingAddress === "string" && session.meetingAddress.trim()
-        ? session.meetingAddress.trim()
-        : null
-      const duration = typeof session.duration === "string" && session.duration.trim() ? session.duration.trim() : null
-      const meetingLatitude = typeof session.meetingLatitude === "number" ? session.meetingLatitude : null
-      const meetingLongitude = typeof session.meetingLongitude === "number" ? session.meetingLongitude : null
-
-      return {
-        id: typeof session.id === "string" ? session.id : undefined,
-        startAt: String(session.startAt),
-        duration,
-        capacity,
-        priceOverride:
-          session.priceOverride !== undefined && session.priceOverride !== null
-            ? Number.parseInt(String(session.priceOverride), 10)
-            : null,
-        locationLabel,
-        meetingAddress,
-        meetingLatitude,
-        meetingLongitude,
-      }
-    })
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Invalid sessions payload: ${error.message}`)
-    }
-    throw new Error("Invalid sessions payload")
-  }
-}
-
-function parseSessionsLenient(value: FormDataEntryValue | null): SessionInput[] {
-  if (typeof value !== "string") {
-    return []
-  }
-  try {
-    const parsed = JSON.parse(value) as Array<Record<string, unknown>>
-    const result: SessionInput[] = []
-    for (const session of parsed) {
-      if (!session || typeof session !== "object") continue
-      if (!session.startAt) continue
-      const capacity = Number.parseInt(String(session.capacity ?? 0), 10)
-      if (Number.isNaN(capacity) || capacity <= 0) continue
-      result.push({
-        id: typeof (session as { id?: unknown }).id === "string" ? ((session as { id?: string }).id as string) : undefined,
-        startAt: String((session as { startAt: unknown }).startAt),
-        duration: typeof (session as { duration?: unknown }).duration === "string" && String((session as { duration?: string }).duration).trim()
-          ? String((session as { duration?: string }).duration).trim()
-          : null,
-        capacity,
-        priceOverride:
-          (session as { priceOverride?: unknown }).priceOverride !== undefined && (session as { priceOverride?: unknown }).priceOverride !== null
-            ? Number.parseInt(String((session as { priceOverride?: unknown }).priceOverride), 10)
-            : null,
-        locationLabel:
-          typeof (session as { locationLabel?: unknown }).locationLabel === "string" && String((session as { locationLabel?: string }).locationLabel).trim()
-            ? String((session as { locationLabel?: string }).locationLabel).trim()
-            : null,
-        meetingAddress:
-          typeof (session as { meetingAddress?: unknown }).meetingAddress === "string" && String((session as { meetingAddress?: string }).meetingAddress).trim()
-            ? String((session as { meetingAddress?: string }).meetingAddress).trim()
-            : null,
-        meetingLatitude:
-          typeof (session as { meetingLatitude?: unknown }).meetingLatitude === "number"
-            ? ((session as { meetingLatitude?: number }).meetingLatitude as number)
-            : null,
-        meetingLongitude:
-          typeof (session as { meetingLongitude?: unknown }).meetingLongitude === "number"
-            ? ((session as { meetingLongitude?: number }).meetingLongitude as number)
-            : null,
-      })
-    }
-    return result
-  } catch {
-    return []
-  }
-}
-
-function parseItinerary(value: FormDataEntryValue | null): ItineraryInput[] {
-  if (typeof value !== "string" || !value.trim()) {
-    return []
-  }
-
-  try {
-    const parsed = JSON.parse(value) as ItineraryInput[]
-    return parsed
-      .map((item) => {
-        if (!item || typeof item !== "object") {
-          throw new Error("Invalid itinerary step")
-        }
-        const title = typeof item.title === "string" ? item.title.trim() : ""
-        if (!title) {
-          throw new Error("Each itinerary step must include a title")
-        }
-        const order = Number.parseInt(String(item.order ?? 0), 10)
-        if (Number.isNaN(order) || order < 0) {
-          throw new Error("Each itinerary step must include a valid order")
-        }
-        return {
-          id: item.id,
-          order,
-          title,
-          subtitle: typeof item.subtitle === "string" ? item.subtitle.trim() : null,
-          imageKey: item.imageKey,
-          imageUrl: item.imageUrl,
-          duration: typeof item.duration === "string" && item.duration.trim() ? item.duration.trim() : null,
-        }
-      })
-      .sort((a, b) => a.order - b.order)
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Invalid itinerary payload: ${error.message}`)
-    }
-    throw new Error("Invalid itinerary payload")
-  }
-}
-
-function parseItineraryLenient(value: FormDataEntryValue | null): ItineraryInput[] {
-  if (typeof value !== "string" || !value.trim()) {
-    return []
-  }
-  try {
-    const parsed = JSON.parse(value) as ItineraryInput[]
-    return parsed
-      .filter((item) => item && typeof item === "object")
-      .map((item) => ({
-        id: item.id,
-        order: Number.parseInt(String(item.order ?? 0), 10) || 0,
-        title: typeof item.title === "string" ? item.title : "",
-        subtitle: typeof item.subtitle === "string" ? item.subtitle : null,
-        imageKey: item.imageKey,
-        imageUrl: item.imageUrl,
-        duration: typeof item.duration === "string" && item.duration.trim() ? item.duration.trim() : null,
-      }))
-      .sort((a, b) => a.order - b.order)
-  } catch {
-    return []
-  }
-}
-
-function parseOptionalCoordinate(value: FormDataEntryValue | null, key: string) {
-  if (typeof value !== "string") {
-    return null
-  }
-  const trimmed = value.trim()
-  if (!trimmed) {
-    return null
-  }
-  const parsed = Number.parseFloat(trimmed)
-  if (Number.isNaN(parsed)) {
-    return null
-  }
-  return parsed
 }
 
 function parseRemoveGallery(value: FormDataEntryValue | null) {
@@ -562,45 +360,4 @@ function parseRemoveGallery(value: FormDataEntryValue | null) {
     throw new Error("Invalid removeGallery payload")
   }
 }
-
-function parseBoolean(value: FormDataEntryValue | null) {
-  if (typeof value !== "string") {
-    return false
-  }
-  return value === "true" || value === "1"
-}
-
-function getRequiredAudience(formData: FormData) {
-  const value = formData.get("audience")
-  if (typeof value !== "string" || !value.trim()) {
-    throw new Error("audience is required")
-  }
-  const normalized = value.trim().toLowerCase()
-  const allowed = new Set(["all", "men", "women", "kids"])
-  if (!allowed.has(normalized)) {
-    throw new Error("audience must be one of: all, men, women, kids")
-  }
-  return normalized
-}
-
-type SessionInput = {
-  id?: string
-  startAt: string
-  duration?: string | null
-  capacity: number
-  priceOverride?: number | null
-  locationLabel?: string | null
-  meetingAddress?: string | null
-  meetingLatitude?: number | null
-  meetingLongitude?: number | null
-}
-
-type ItineraryInput = {
-  id?: string
-  order: number
-  title: string
-  subtitle?: string | null
-  imageKey?: string
-  imageUrl?: string
-  duration?: string | null
-}
+// Types and helpers moved to shared util

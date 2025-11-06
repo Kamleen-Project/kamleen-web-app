@@ -57,7 +57,7 @@ export function RegisterForm() {
 			return;
 		}
 
-		router.push("/onboarding");
+		router.push("/onboarding?start=welcome");
 		router.refresh();
 	}
 

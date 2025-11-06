@@ -2,7 +2,6 @@ import { ConsolePage } from "@/components/console/page";
 import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { EditExperienceModal } from "@/components/organizer/edit-experience-modal";
 
 export default async function AdminExperiencesVerificationPage() {
@@ -40,7 +39,7 @@ function VerifyActions({ experienceId }: { experienceId: string }) {
 		// server action placeholder; actual approval via modal verification step
 	}
 	return (
-		<EditExperienceModal experienceId={experienceId} variant="default" size="sm" initialStep={5} enableVerification>
+		<EditExperienceModal experienceId={experienceId} color="black" size="sm" initialStep={5} enableVerification>
 			Open verification
 		</EditExperienceModal>
 	);

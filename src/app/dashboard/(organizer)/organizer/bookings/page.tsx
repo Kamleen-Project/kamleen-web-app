@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { Check, AlertCircle } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { OrganizerBookingExperienceCard } from "@/components/organizer/organizer-booking-experience-card";
 import { ConsolePage } from "@/components/console/page";
 import BalloonLoading from "@/components/ui/balloon-loading";
+import CtaButton from "@/components/ui/cta-button";
 
 const STATUS_FILTERS = [
 	{ label: "All", value: "ALL" },
@@ -130,20 +130,20 @@ export default function OrganizerBookingsPage() {
 
 	return (
 		<ConsolePage title="Bookings" subtitle="Grouped by experience and session with capacity utilization.">
-			<div className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/80 p-2">
+			<div className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/80 p-2 mb-4">
 				{STATUS_FILTERS.map((item) => {
 					const isActive = status === item.value;
 					return (
-						<Button
+						<CtaButton
 							key={item.value}
 							type="button"
-							variant={isActive ? "default" : "ghost"}
+							color={isActive ? "black" : "whiteBorder"}
 							size="sm"
 							onClick={() => handleStatusChange(item.value)}
 							className="text-xs"
 						>
 							{item.label}
-						</Button>
+						</CtaButton>
 					);
 				})}
 			</div>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import BalloonLoading from "@/components/ui/balloon-loading";
 
 import { ExperienceWizard } from "./experience-wizard";
@@ -55,17 +55,11 @@ export function AddExperienceModal() {
 		setOpen(false);
 	}, []);
 
-	const handleSuccess = useCallback(
-		(slug?: string) => {
-			setOpen(false);
-			if (slug) {
-				router.push(`/experiences/${slug}`);
-			} else {
-				router.refresh();
-			}
-		},
-		[router]
-	);
+	const handleSuccess = useCallback(() => {
+		setOpen(false);
+		// After creating and submitting for verification, go to organizer experiences list
+		router.push("/dashboard/organizer/experiences");
+	}, [router]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -133,7 +127,7 @@ export function AddExperienceModal() {
 
 	return (
 		<>
-			<Button onClick={() => setOpen(true)}>Add new experience</Button>
+			<CtaButton onClick={() => setOpen(true)}>Add new experience</CtaButton>
 			{modalContent}
 		</>
 	);

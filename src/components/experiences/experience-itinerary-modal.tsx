@@ -6,8 +6,8 @@ import Image from "next/image";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import CtaIconButton from "../ui/cta-icon-button";
+import CtaButton from "../ui/cta-button";
 
 export type ExperienceItineraryStep = {
 	id: string;
@@ -102,55 +102,46 @@ export function ExperienceItineraryModal({ steps, title, trigger }: ExperienceIt
 				onClick={closeModal}
 			>
 				<div onClick={(event) => event.stopPropagation()} className="relative w-full max-w-2xl">
-					<button
-						type="button"
-						onClick={closeModal}
-						className="absolute -right-6 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/80 bg-background/90 text-muted-foreground shadow-sm transition hover:text-foreground md:-right-12"
-						aria-label="Close itinerary modal"
-					>
-						<X className="size-5" />
-					</button>
+					<CtaIconButton color="whiteBorder" size="md" type="button" ariaLabel="Close itinerary modal" onClick={closeModal}>
+						<X />
+					</CtaIconButton>
 
 					<div className="pointer-events-auto hidden flex-col items-center gap-3 md:absolute md:-left-32 md:top-1/2 md:flex md:-translate-y-1/2">
-						<button
+						<CtaIconButton
+							color="whiteBorder"
+							size="md"
 							type="button"
+							ariaLabel="Show previous itinerary step"
 							onClick={() => setSelectedIndex((current) => (current - 1 + totalSteps) % totalSteps)}
-							className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground transition hover:text-foreground"
-							aria-label="Show previous itinerary step"
 						>
-							<ChevronUp className="size-4" />
-						</button>
+							<ChevronUp />
+						</CtaIconButton>
 						<div className="max-h-[420px] space-y-3 overflow-y-auto pr-2">
 							{steps.map((step, index) => {
 								const isActive = index === selectedIndex;
 								return (
-									<button
+									<CtaIconButton
 										key={step.id}
+										color="whiteBorder"
+										size="md"
 										type="button"
+										ariaLabel={`View ${step.title}`}
 										onClick={() => setSelectedIndex(index)}
-										className={cn(
-											"relative flex items-center overflow-hidden rounded-2xl border text-left transition p-1",
-											isActive
-												? "border-primary/80 bg-primary/100 text-foreground"
-												: "border-border/60 bg-background/100 text-muted-foreground hover:border-border/80 hover:text-foreground"
-										)}
-										aria-label={`View ${step.title}`}
 									>
-										<div className="relative h-24 w-24 overflow-hidden rounded-xl">
-											<ImageWithFallback src={step.image || "/images/image-placeholder.png"} alt={step.title} fill sizes="120px" className="object-cover" />
-										</div>
-									</button>
+										<ImageWithFallback src={step.image || "/images/exp-placeholder.png"} alt={step.title} fill sizes="120px" className="object-cover" />
+									</CtaIconButton>
 								);
 							})}
 						</div>
-						<button
+						<CtaIconButton
+							color="whiteBorder"
+							size="md"
 							type="button"
+							ariaLabel="Show next itinerary step"
 							onClick={() => setSelectedIndex((current) => (current + 1) % totalSteps)}
-							className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground transition hover:text-foreground"
-							aria-label="Show next itinerary step"
 						>
-							<ChevronDown className="size-4" />
-						</button>
+							<ChevronDown />
+						</CtaIconButton>
 					</div>
 
 					<div className="overflow-hidden rounded-3xl border border-border/60 bg-background text-foreground shadow-2xl">
@@ -159,17 +150,16 @@ export function ExperienceItineraryModal({ steps, title, trigger }: ExperienceIt
 								{steps.map((step, index) => {
 									const isActive = index === selectedIndex;
 									return (
-										<button
+										<CtaIconButton
 											key={step.id}
+											color="whiteBorder"
+											size="md"
 											type="button"
+											ariaLabel={`View ${step.title}`}
 											onClick={() => setSelectedIndex(index)}
-											className={cn(
-												"relative h-20 w-28 shrink-0 overflow-hidden rounded-2xl border",
-												isActive ? "border-primary" : "border-border/60 opacity-70"
-											)}
 										>
-											<ImageWithFallback src={step.image || "/images/image-placeholder.png"} alt={step.title} fill sizes="160px" className="object-cover" />
-										</button>
+											<ImageWithFallback src={step.image || "/images/exp-placeholder.png"} alt={step.title} fill sizes="160px" className="object-cover" />
+										</CtaIconButton>
 									);
 								})}
 							</div>
@@ -177,7 +167,7 @@ export function ExperienceItineraryModal({ steps, title, trigger }: ExperienceIt
 							<div className="flex flex-col justify-center gap-4">
 								<div className="relative aspect-square w-full overflow-hidden rounded-3xl border border-border/60 bg-muted">
 									<ImageWithFallback
-										src={selectedStep.image || "/images/image-placeholder.png"}
+										src={selectedStep.image || "/images/exp-placeholder.png"}
 										alt={selectedStep.title}
 										fill
 										sizes="(min-width: 1024px) 40vw, 90vw"
@@ -191,12 +181,24 @@ export function ExperienceItineraryModal({ steps, title, trigger }: ExperienceIt
 								</div>
 
 								<div className="flex gap-3 md:hidden">
-									<Button variant="outline" size="sm" onClick={() => setSelectedIndex((current) => (current - 1 + totalSteps) % totalSteps)} className="flex-1">
+									<CtaButton
+										color="whiteBorder"
+										size="sm"
+										type="button"
+										onClick={() => setSelectedIndex((current) => (current - 1 + totalSteps) % totalSteps)}
+										className="flex-1"
+									>
 										Previous
-									</Button>
-									<Button size="sm" onClick={() => setSelectedIndex((current) => (current + 1) % totalSteps)} className="flex-1">
+									</CtaButton>
+									<CtaButton
+										color="whiteBorder"
+										size="sm"
+										type="button"
+										onClick={() => setSelectedIndex((current) => (current + 1) % totalSteps)}
+										className="flex-1"
+									>
 										Next
-									</Button>
+									</CtaButton>
 								</div>
 							</div>
 						</div>

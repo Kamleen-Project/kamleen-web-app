@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { FormControl, FormDescription, FormField, FormLabel, FormSelect } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
@@ -208,22 +208,23 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 				<p className="mb-3 text-sm text-muted-foreground">Deleting this user will permanently remove their account and related data.</p>
 				<Dialog>
 					<DialogTrigger asChild>
-						<Button type="button" variant="destructive">
+						<CtaButton type="button" color="white" className="bg-destructive text-white hover:bg-destructive/90">
 							Delete user…
-						</Button>
+						</CtaButton>
 					</DialogTrigger>
 					<DialogContent>
 						<DialogTitle>Delete this user?</DialogTitle>
 						<DialogDescription>This action cannot be undone. This will permanently delete the user and all associated data.</DialogDescription>
 						<DialogFooter>
 							<DialogClose asChild>
-								<Button type="button" variant="outline">
+								<CtaButton type="button" color="whiteBorder">
 									Cancel
-								</Button>
+								</CtaButton>
 							</DialogClose>
-							<Button
+							<CtaButton
 								type="button"
-								variant="destructive"
+								color="white"
+								className="bg-destructive text-white hover:bg-destructive/90"
 								onClick={() => {
 									startTransition(async () => {
 										setError(null);
@@ -239,16 +240,16 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 								}}
 							>
 								Delete user
-							</Button>
+							</CtaButton>
 						</DialogFooter>
 					</DialogContent>
 				</Dialog>
 			</div>
 			<div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-muted/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="text-xs text-muted-foreground">Changes take effect immediately and will show in the user’s next session.</div>
-				<Button type="submit" disabled={pending} className={cn(pending && "opacity-80")}>
+				<CtaButton type="submit" color="black" disabled={pending} className={cn(pending && "opacity-80")}>
 					Save updates
-				</Button>
+				</CtaButton>
 			</div>
 			{message ? <p className="text-sm text-emerald-600">{message}</p> : null}
 			{error ? <p className="text-sm text-destructive">{error}</p> : null}

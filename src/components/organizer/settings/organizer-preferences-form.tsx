@@ -4,7 +4,7 @@ import { useTransition, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { FormControl, FormDescription, FormField, FormLabel, FormSelect } from "@/components/ui/form";
 import type { UserPreferencesData } from "@/lib/user-preferences";
 import { cn } from "@/lib/utils";
@@ -163,9 +163,9 @@ export function OrganizerPreferencesForm({ user }: { user: UserPreferencesData }
 					</CardContent>
 					<CardFooter className="flex flex-col gap-2 border-t border-border/60 bg-muted/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
 						<div className="text-xs text-muted-foreground">Updates apply immediately across your organizer workspace.</div>
-						<Button type="submit" disabled={pending} className={cn(pending && "opacity-80")}>
+						<CtaButton color="black" size="md" type="submit" disabled={pending} className={cn(pending && "opacity-80")}>
 							Save preferences
-						</Button>
+						</CtaButton>
 					</CardFooter>
 				</Card>
 
@@ -222,9 +222,9 @@ export function OrganizerPreferencesForm({ user }: { user: UserPreferencesData }
 					</CardContent>
 					<CardFooter className="flex flex-col gap-2 border-t border-border/60 bg-muted/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
 						<div className="text-xs text-muted-foreground">Channel and event choices apply to your account.</div>
-						<Button type="submit" disabled={pending} className={cn(pending && "opacity-80")}>
+						<CtaButton color="black" size="md" type="submit" disabled={pending} className={cn(pending && "opacity-80")}>
 							Save preferences
-						</Button>
+						</CtaButton>
 					</CardFooter>
 				</Card>
 

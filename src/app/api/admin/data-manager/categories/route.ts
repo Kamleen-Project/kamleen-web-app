@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { getServerAuthSession } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { saveUploadedFile } from "@/lib/uploads"
+import { slugify } from "@/lib/slug"
 
 function normalizeString(value: unknown) {
   if (typeof value !== "string") return null
@@ -48,6 +49,7 @@ export async function GET() {
   return NextResponse.json({
     categories: categories.map((category) => ({
       id: category.id,
+      slug: category.slug,
       name: category.name,
       subtitle: category.subtitle,
       picture: category.picture,
@@ -67,12 +69,25 @@ export async function POST(request: Request) {
 
   const contentType = request.headers.get("content-type") ?? ""
 
-if (contentType.includes("multipart/form-data")) {
+  async function generateUniqueCategorySlug(input: string) {
+    const base = slugify(input) || "category"
+    let s = base
+    let i = 1
+    while (true) {
+      const existing = await prisma.experienceCategory.findUnique({ where: { slug: s } })
+      if (!existing) return s
+      s = `${base}-${i}`
+      i += 1
+    }
+  }
+
+  if (contentType.includes("multipart/form-data")) {
     const formData = await request.formData()
 
     try {
       const name = getRequiredString(formData, "name")
       const subtitle = getRequiredString(formData, "subtitle")
+      const inputSlug = getOptionalString(formData, "slug")
 
       const pictureFile = formData.get("picture")
       if (!(pictureFile instanceof File) || pictureFile.size === 0) {
@@ -87,6 +102,7 @@ if (contentType.includes("multipart/form-data")) {
 
       const category = await prisma.experienceCategory.create({
         data: {
+          slug: inputSlug ?? (await generateUniqueCategorySlug(name)),
           name,
           subtitle,
           picture: stored.publicPath,
@@ -118,6 +134,7 @@ if (contentType.includes("multipart/form-data")) {
   const name = normalizeString((body as Record<string, unknown>).name)
   const subtitle = normalizeString((body as Record<string, unknown>).subtitle)
   const picture = normalizeString((body as Record<string, unknown>).picture)
+  const slug = normalizeString((body as Record<string, unknown>).slug)
 
   if (!name) {
     return NextResponse.json({ message: "Name is required" }, { status: 400 })
@@ -134,6 +151,7 @@ if (contentType.includes("multipart/form-data")) {
   try {
     const category = await prisma.experienceCategory.create({
       data: {
+        slug: slug ?? (await generateUniqueCategorySlug(String(name))),
         name,
         subtitle,
         picture,

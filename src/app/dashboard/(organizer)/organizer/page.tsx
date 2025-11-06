@@ -2,11 +2,11 @@ import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddExperienceModal } from "@/components/organizer/add-experience-modal";
 import { formatUserPreferences } from "@/lib/user-preferences";
 import { ConsolePage } from "@/components/console/page";
+import CtaButton from "@/components/ui/cta-button";
 
 export default async function OrganizerOverviewPage() {
 	const session = await getServerAuthSession();
@@ -39,9 +39,9 @@ export default async function OrganizerOverviewPage() {
 					</CardHeader>
 					<CardContent className="flex flex-wrap items-center gap-3">
 						<AddExperienceModal />
-						<Button asChild variant="outline">
+						<CtaButton color="whiteBorder" size="sm" asChild>
 							<Link href="/dashboard/organizer/experiences">Manage experiences</Link>
-						</Button>
+						</CtaButton>
 					</CardContent>
 				</Card>
 
@@ -72,9 +72,9 @@ export default async function OrganizerOverviewPage() {
 							<p className="font-medium text-foreground">Time zone</p>
 							<p className="text-muted-foreground">{preferences.timezoneLabel}</p>
 						</div>
-						<Button asChild variant="ghost" className="mt-2 text-sm">
+						<CtaButton color="black" size="sm" asChild>
 							<Link href="/dashboard/organizer/settings">Edit preferences</Link>
-						</Button>
+						</CtaButton>
 					</CardContent>
 				</Card>
 			</div>

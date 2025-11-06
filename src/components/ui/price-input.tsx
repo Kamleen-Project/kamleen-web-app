@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FormControl, FormDescription, FormField, FormLabel, FormMessage } from "./form";
-import { Input } from "./input";
+// using native input instead of the shared Input component for this field
 
 type PriceInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 	label?: React.ReactNode;
@@ -70,14 +70,17 @@ export function PriceInput({
 				{labelContent ? <FormLabel>{labelContent}</FormLabel> : null}
 				<FormControl>
 					<div className="relative">
-						<Input
+						<input
 							type="text"
 							inputMode="numeric"
 							pattern="[0-9]*"
 							onKeyDown={handleKeyDown}
 							onChange={handleChange}
 							onBlur={handleBlur}
-							className={cn("pr-16", className)}
+							className={cn(
+								"pr-16 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus-visible:border-ring",
+								className
+							)}
 							{...props}
 						/>
 						{currency ? (

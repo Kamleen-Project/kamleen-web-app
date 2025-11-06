@@ -4,9 +4,10 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import CtaIconButton from "../ui/cta-icon-button";
+import CtaButton from "../ui/cta-button";
 
 export function ExperiencesActions({
 	experienceId,
@@ -27,9 +28,9 @@ export function ExperiencesActions({
 		<div className="flex items-center gap-1.5">
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverTrigger asChild>
-					<Button variant="ghost" size="icon" aria-label="More actions">
+					<CtaIconButton color="whiteBorder" size="md" ariaLabel="More actions">
 						<MoreHorizontal />
-					</Button>
+					</CtaIconButton>
 				</PopoverTrigger>
 				<PopoverContent align="end" className="w-48 p-1">
 					<button
@@ -70,13 +71,14 @@ export function ExperiencesActions({
 					{error ? <p className="text-sm text-destructive">{error}</p> : null}
 					<DialogFooter>
 						<DialogClose asChild>
-							<Button type="button" variant="outline">
+							<CtaButton color="whiteBorder" size="sm" type="button">
 								Cancel
-							</Button>
+							</CtaButton>
 						</DialogClose>
-						<Button
+						<CtaButton
 							type="button"
-							variant="destructive"
+							color="white"
+							className="bg-destructive text-white hover:bg-destructive/90"
 							disabled={pending}
 							onClick={() => {
 								startTransition(async () => {
@@ -93,7 +95,7 @@ export function ExperiencesActions({
 							}}
 						>
 							Delete experience
-						</Button>
+						</CtaButton>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>

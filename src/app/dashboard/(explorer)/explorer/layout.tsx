@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { ConsoleLayout } from "@/components/console/layout";
 import { explorerNavItems } from "@/config/console-nav";
-import { Button } from "@/components/ui/button";
 import { getServerAuthSession } from "@/lib/auth";
+import CtaButton from "@/components/ui/cta-button";
 
 export default async function ExplorerLayout({ children }: { children: React.ReactNode }) {
 	const session = await getServerAuthSession();
@@ -29,9 +29,9 @@ export default async function ExplorerLayout({ children }: { children: React.Rea
 			headerHref="/dashboard/explorer"
 			navItems={explorerNavItems}
 			footer={
-				<Button asChild variant="ghost" className="w-full justify-start text-sm text-muted-foreground">
+				<CtaButton color="black" size="sm" asChild>
 					<Link href="/experiences">Browse experiences</Link>
-				</Button>
+				</CtaButton>
 			}
 		>
 			{children}

@@ -23,6 +23,8 @@ export type OrganizerBookingExperience = {
 		bookings: Array<{
 			id: string;
 			status: "PENDING" | "CONFIRMED" | "CANCELLED";
+			paymentStatus?: "REQUIRES_PAYMENT_METHOD" | "REQUIRES_ACTION" | "PROCESSING" | "SUCCEEDED" | "CANCELLED" | "REFUNDED" | null;
+			paymentMethod?: "STRIPE" | "CMI" | "PAYZONE" | "CASH" | "PAYPAL" | null;
 			guests: number;
 			totalPrice: number;
 			createdAt: string;

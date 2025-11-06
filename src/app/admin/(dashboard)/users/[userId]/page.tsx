@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { AdminUserForm } from "@/components/admin/admin-user-form";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNowStrict } from "date-fns";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
@@ -42,12 +42,17 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 	return (
 		<div className="space-y-10">
 			<div className="flex flex-col gap-4">
-				<Button asChild variant="ghost" className="w-fit gap-2 px-0 text-muted-foreground hover:text-foreground">
+				<CtaButton
+					asChild
+					color="whiteBorder"
+					size="sm"
+					className="w-fit gap-2 px-0 bg-transparent border-transparent text-muted-foreground hover:text-foreground"
+				>
 					<Link href="/admin/users">
 						<ArrowLeft className="h-4 w-4" />
 						Back to users
 					</Link>
-				</Button>
+				</CtaButton>
 				<div className="flex flex-col gap-3">
 					<h1 className="text-3xl font-semibold tracking-tight text-foreground">{user.name ?? user.email ?? "Untitled user"}</h1>
 					<p className="max-w-2xl text-sm text-muted-foreground">

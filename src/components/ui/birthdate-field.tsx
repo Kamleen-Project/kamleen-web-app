@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
 import { FormControl, FormDescription, FormField, FormLabel, FormMessage } from "./form";
 
 type BirthdateFieldProps = {
@@ -140,7 +141,8 @@ export function BirthdateField({
 		return `${yNum}-${mm}-${dd}`;
 	}, [year, month, day]);
 
-	const selectClass = "h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none transition focus-visible:border-ring";
+	const selectClass =
+		"h-11 w-full appearance-none rounded-lg border border-input bg-background px-4 pr-10 text-base transition focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50";
 
 	const showRequiredStar = Boolean(required) && Boolean(label);
 
@@ -162,57 +164,66 @@ export function BirthdateField({
 				<FormControl>
 					<div id={id} className="grid grid-cols-3 gap-2">
 						{typeof name === "string" ? <input type="hidden" name={name} value={formatted} readOnly /> : null}
-						<select
-							aria-label="Year"
-							className={selectClass}
-							value={year}
-							onChange={(e) => setYear(e.target.value)}
-							disabled={disabled}
-							required={Boolean(required)}
-						>
-							<option value="" disabled>
-								Year
-							</option>
-							{Array.from({ length: Math.max(0, yEnd - yStart + 1) }, (_, idx) => yEnd - idx).map((y) => (
-								<option key={y} value={String(y)}>
-									{y}
+						<div className="relative">
+							<select
+								aria-label="Year"
+								className={selectClass}
+								value={year}
+								onChange={(e) => setYear(e.target.value)}
+								disabled={disabled}
+								required={Boolean(required)}
+							>
+								<option value="" disabled>
+									Year
 								</option>
-							))}
-						</select>
-						<select
-							aria-label="Month"
-							className={selectClass}
-							value={month}
-							onChange={(e) => setMonth(e.target.value)}
-							disabled={disabled}
-							required={Boolean(required)}
-						>
-							<option value="" disabled>
-								Month
-							</option>
-							{MONTHS.map((m) => (
-								<option key={m.value} value={m.value}>
-									{m.label}
+								{Array.from({ length: Math.max(0, yEnd - yStart + 1) }, (_, idx) => yEnd - idx).map((y) => (
+									<option key={y} value={String(y)}>
+										{y}
+									</option>
+								))}
+							</select>
+							<ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						</div>
+						<div className="relative">
+							<select
+								aria-label="Month"
+								className={selectClass}
+								value={month}
+								onChange={(e) => setMonth(e.target.value)}
+								disabled={disabled}
+								required={Boolean(required)}
+							>
+								<option value="" disabled>
+									Month
 								</option>
-							))}
-						</select>
-						<select
-							aria-label="Day"
-							className={selectClass}
-							value={day}
-							onChange={(e) => setDay(e.target.value)}
-							disabled={disabled}
-							required={Boolean(required)}
-						>
-							<option value="" disabled>
-								Day
-							</option>
-							{Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1).map((d) => (
-								<option key={d} value={String(d)}>
-									{d}
+								{MONTHS.map((m) => (
+									<option key={m.value} value={m.value}>
+										{m.label}
+									</option>
+								))}
+							</select>
+							<ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						</div>
+						<div className="relative">
+							<select
+								aria-label="Day"
+								className={selectClass}
+								value={day}
+								onChange={(e) => setDay(e.target.value)}
+								disabled={disabled}
+								required={Boolean(required)}
+							>
+								<option value="" disabled>
+									Day
 								</option>
-							))}
-						</select>
+								{Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1).map((d) => (
+									<option key={d} value={String(d)}>
+										{d}
+									</option>
+								))}
+							</select>
+							<ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+						</div>
 					</div>
 				</FormControl>
 				{caption && typeof caption !== "string" ? <div className="text-xs text-muted-foreground">{caption}</div> : <FormDescription />}

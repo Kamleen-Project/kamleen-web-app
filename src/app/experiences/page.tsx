@@ -17,6 +17,8 @@ type ExperiencesPageProps = {
 		start?: string;
 		guests?: string;
 		location?: string;
+		categorySlug?: string;
+		categoryId?: string;
 	}>;
 };
 
@@ -45,12 +47,42 @@ export default async function ExperiencesPage({ searchParams }: ExperiencesPageP
 
 	const [list, total] = await Promise.all([
 		prisma.experience.findMany({
-			where: { AND: [where, { status: "PUBLISHED" }] },
+			where: {
+				AND: [
+					where,
+					resolvedSearchParams.categoryId
+						? { categoryId: resolvedSearchParams.categoryId }
+						: resolvedSearchParams.categorySlug
+						? {
+								experienceCategory: {
+									slug: resolvedSearchParams.categorySlug,
+								},
+						  }
+						: {},
+					{ status: "PUBLISHED" },
+				],
+			},
 			orderBy: { createdAt: "desc" },
 			take: PAGE_SIZE,
 			select: experienceCardSelect,
 		}),
-		prisma.experience.count({ where: { AND: [where, { status: "PUBLISHED" }] } }),
+		prisma.experience.count({
+			where: {
+				AND: [
+					where,
+					resolvedSearchParams.categoryId
+						? { categoryId: resolvedSearchParams.categoryId }
+						: resolvedSearchParams.categorySlug
+						? {
+								experienceCategory: {
+									slug: resolvedSearchParams.categorySlug,
+								},
+						  }
+						: {},
+					{ status: "PUBLISHED" },
+				],
+			},
+		}),
 	]);
 
 	const experiences = list.map(mapExperienceToCard);
@@ -67,6 +99,9 @@ export default async function ExperiencesPage({ searchParams }: ExperiencesPageP
 			q: resolvedSearchParams.q,
 			start: resolvedSearchParams.start,
 			guests: resolvedSearchParams.guests,
+			location: resolvedSearchParams.location,
+			categorySlug: resolvedSearchParams.categorySlug,
+			categoryId: resolvedSearchParams.categoryId,
 		}).filter(([, value]) => Boolean(value))
 	);
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import CtaButton from "@/components/ui/cta-button";
 
 interface ConsoleSubPageProps {
 	backHref: string;
@@ -17,9 +17,6 @@ export function ConsoleSubPage({ backHref, backLabel = "Back", badgeLabel, title
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-col gap-2">
-				<Button asChild variant="ghost" className="w-fit px-0 text-sm text-muted-foreground">
-					<Link href={backHref}>{backLabel}</Link>
-				</Button>
 				{badgeLabel ? (
 					<Badge variant="soft" className="w-fit text-xs">
 						{badgeLabel}

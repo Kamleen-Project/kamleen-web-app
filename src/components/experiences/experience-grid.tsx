@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ExperienceCard, type Experience } from "@/components/cards/experience-card";
-import { Button } from "@/components/ui/button";
+import CtaButton from "@/components/ui/cta-button";
 import BalloonLoading from "@/components/ui/balloon-loading";
 
 type ExperienceGridProps = {
@@ -107,9 +107,9 @@ export function ExperienceGrid({ initialExperiences, initialHasMore, searchParam
 					loading ? (
 						<BalloonLoading sizeClassName="w-14" label="Loading more experiences" />
 					) : (
-						<Button onClick={loadMore} disabled={loading} variant="outline">
+						<CtaButton color="whiteBorder" size="sm" type="button" onClick={loadMore} disabled={loading}>
 							Load more
-						</Button>
+						</CtaButton>
 					)
 				) : null}
 				<div ref={sentinelRef} className="h-1 w-full" aria-hidden />

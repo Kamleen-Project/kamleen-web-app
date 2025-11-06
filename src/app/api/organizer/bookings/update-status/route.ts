@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 import { renderTemplate, sendEmail } from "@/lib/email"
 import { buildTicketsPdfForBooking, createTicketsForBooking } from "@/lib/tickets"
+import { runBookingConfirmationSideEffects } from "@/lib/booking-confirmation"
 
 const ALLOWED_STATUSES = ["CONFIRMED", "CANCELLED"] as const
 
@@ -81,48 +82,7 @@ export async function POST(request: Request) {
   // Notify explorer on state changes
   try {
     if (nextStatus === "CONFIRMED") {
-      await createNotification({
-        userId: updated.explorer.id,
-        title: "Reservation confirmed",
-        message: `Your reservation for ${updated.experience.title} has been confirmed`,
-        eventType: "BOOKING_CONFIRMED",
-        priority: "NORMAL",
-        channels: ["TOAST", "EMAIL"],
-        href: "/dashboard/explorer/reservations",
-        metadata: { bookingId: updated.id, experienceId: updated.experience.id },
-      })
-
-      // Generate tickets and email them as PDF attachment
-      try {
-        await createTicketsForBooking(updated.id)
-        const pdf = await buildTicketsPdfForBooking(updated.id)
-        const userEmail = updated.explorer.email
-        if (userEmail) {
-          const origin = (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.length > 0)
-            ? process.env.NEXT_PUBLIC_APP_URL
-            : new URL(request.url).origin
-          const sessionDate = new Date(updated.session.startAt).toLocaleString()
-          const tpl = await renderTemplate("tickets_delivery", {
-            name: updated.explorer.name || "",
-            experienceTitle: updated.experience.title,
-            sessionDate,
-            dashboardUrl: `${origin}/dashboard/explorer/reservations`,
-          })
-          if (tpl) {
-            void sendEmail({
-              to: userEmail,
-              subject: tpl.subject,
-              html: tpl.html,
-              text: tpl.text,
-              attachments: [
-                { filename: `tickets-${updated.id}.pdf`, content: pdf, contentType: "application/pdf" },
-              ],
-            }).catch(() => {})
-          }
-        }
-      } catch (e) {
-        console.error("[tickets] failed to generate/send", e)
-      }
+      await runBookingConfirmationSideEffects({ bookingId: updated.id, origin: new URL(request.url).origin })
     } else if (nextStatus === "CANCELLED") {
       await createNotification({
         userId: updated.explorer.id,

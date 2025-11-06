@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 
 export function SubmitVerificationButton({
 	experienceId,
@@ -43,9 +43,15 @@ export function SubmitVerificationButton({
 
 	return (
 		<div className="flex items-center gap-2">
-			<Button type="button" size="sm" onClick={handleSubmit} disabled={pending || disabled}>
-				{verificationStatus === "PENDING" ? "Pending verification" : pending ? "Submitting…" : "Submit for verification"}
-			</Button>
+			<CtaButton
+				type="button"
+				size="sm"
+				color="black"
+				onClick={handleSubmit}
+				disabled={disabled}
+				isLoading={pending}
+				label={verificationStatus === "PENDING" ? "Pending verification" : pending ? "Submitting…" : "Submit for verification"}
+			/>
 			{error ? <span className="text-xs text-destructive">{error}</span> : null}
 		</div>
 	);

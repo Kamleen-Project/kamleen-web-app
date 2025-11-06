@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { ConsoleLayout } from "@/components/console/layout";
 import { adminNavItems } from "@/config/console-nav";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/ui/cta-button";
 import { getServerAuthSession } from "@/lib/auth";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -24,9 +24,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 			headerHref="/admin"
 			navItems={adminNavItems}
 			footer={
-				<Button asChild variant="ghost" className="w-full justify-start text-sm text-muted-foreground">
+				<CtaButton asChild color="whiteBorder" size="md" className="w-full justify-start text-sm">
 					<Link href="/dashboard">Back to app</Link>
-				</Button>
+				</CtaButton>
 			}
 		>
 			{children}

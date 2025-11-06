@@ -3,7 +3,6 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { SelectField, type SelectOption } from "@/components/ui/select-field";
 
 type Props = {
@@ -29,13 +28,22 @@ export function ExperienceStatusControl({ experienceId, currentStatus, verificat
 		const canArchive = currentStatus !== "PUBLISHED" && currentStatus !== "UNLISTED";
 
 		const canDraft = currentStatus === "UNPUBLISHED" || currentStatus === "ARCHIVED";
-		return [
-			{ label: "Draft", value: "DRAFT", disabled: !canDraft },
+		const showDraft = verificationStatus === "NOT_SUBMITTED";
+		const base: SelectOption[] = [];
+		if (showDraft) {
+			base.push({ label: "Draft", value: "DRAFT", disabled: !canDraft });
+		}
+		base.push(
 			{ label: "Published", value: "PUBLISHED", disabled: !canPublish },
 			{ label: "Unpublished", value: "UNPUBLISHED", disabled: !canUnpublish },
 			{ label: "Unlisted", value: "UNLISTED", disabled: !canUnlist },
-			{ label: "Archived", value: "ARCHIVED", disabled: !canArchive },
-		];
+			{ label: "Archived", value: "ARCHIVED", disabled: !canArchive }
+		);
+		// When pending verification, prepend an empty placeholder option
+		if (verificationStatus === "PENDING") {
+			return [{ label: "", value: "", disabled: true }, ...base];
+		}
+		return base;
 	}, [verificationStatus, hasActiveBookings, currentStatus]);
 
 	const submit = (next: string) => {
@@ -59,14 +67,18 @@ export function ExperienceStatusControl({ experienceId, currentStatus, verificat
 		});
 	};
 
+	const selectedValue = verificationStatus === "PENDING" ? "" : value;
+
 	return (
 		<div className="flex items-center gap-2">
 			<SelectField
 				name="nextStatus"
 				className="h-9 w-44"
-				value={value}
+				disabled={verificationStatus === "PENDING" || pending}
+				value={selectedValue}
 				onChange={(e) => {
 					const next = e.currentTarget.value;
+					if (!next) return; // ignore placeholder
 					setValue(next);
 					submit(next);
 				}}

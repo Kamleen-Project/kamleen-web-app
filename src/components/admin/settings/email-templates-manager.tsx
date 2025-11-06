@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormControl, FormDescription, FormField, FormInput, FormLabel, FormMessage } from "@/components/ui/form";
 import { InputField } from "@/components/ui/input-field";
@@ -10,6 +9,8 @@ import { TextareaField } from "@/components/ui/textarea-field";
 import { SelectField } from "@/components/ui/select-field";
 import { Plus } from "lucide-react";
 import { CodeEditor } from "@/components/ui/code-editor";
+import CtaIconButton from "@/components/ui/cta-icon-button";
+import CtaButton from "@/components/ui/cta-button";
 
 type EmailTemplate = {
 	id: string;
@@ -258,9 +259,9 @@ export function EmailTemplatesManager() {
 					<CardHeader className="gap-2">
 						<div className="flex items-center justify-between">
 							<h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Templates</h3>
-							<Button type="button" variant="outline" className="h-8 w-8 p-0" onClick={() => setCreateOpen(true)} title="Add template">
+							<CtaIconButton color="whiteBorder" size="md" ariaLabel="Add template" onClick={() => setCreateOpen(true)}>
 								<Plus className="h-4 w-4" />
-							</Button>
+							</CtaIconButton>
 						</div>
 						<SelectField
 							name="sidebar_category_filter"
@@ -311,12 +312,12 @@ export function EmailTemplatesManager() {
 								{createError ? <p className="text-sm text-destructive">{createError}</p> : null}
 							</div>
 							<div className="mt-6 flex justify-end gap-2">
-								<Button type="button" variant="ghost" onClick={() => setCreateOpen(false)} disabled={isPending}>
+								<CtaButton color="whiteBorder" size="sm" type="button" onClick={() => setCreateOpen(false)} disabled={isPending}>
 									Close
-								</Button>
-								<Button type="button" onClick={onCreateTemplate} disabled={isPending}>
+								</CtaButton>
+								<CtaButton color="black" size="sm" type="button" onClick={onCreateTemplate} disabled={isPending}>
 									Add
-								</Button>
+								</CtaButton>
 							</div>
 						</div>
 					</div>
@@ -397,9 +398,10 @@ export function EmailTemplatesManager() {
 
 							<div className="flex items-center justify-between gap-3">
 								<div className="flex items-center gap-3">
-									<Button
+									<CtaButton
+										color="whiteBorder"
+										size="sm"
 										type="button"
-										variant="outline"
 										onClick={() => {
 											setTestEmail("");
 											setTestStatus(null);
@@ -408,7 +410,7 @@ export function EmailTemplatesManager() {
 										disabled={isPending}
 									>
 										Send test
-									</Button>
+									</CtaButton>
 									{testOpen ? (
 										<div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 px-4 py-10">
 											<div className="w-full max-w-md rounded-2xl border border-border/70 bg-background p-6 shadow-2xl">
@@ -428,20 +430,20 @@ export function EmailTemplatesManager() {
 													) : null}
 												</div>
 												<div className="mt-6 flex justify-end gap-2">
-													<Button type="button" variant="ghost" onClick={() => setTestOpen(false)} disabled={isPending}>
+													<CtaButton color="whiteBorder" size="sm" type="button" onClick={() => setTestOpen(false)} disabled={isPending}>
 														Close
-													</Button>
-													<Button type="button" onClick={onSendTest} disabled={isPending}>
+													</CtaButton>
+													<CtaButton color="black" size="sm" type="button" onClick={onSendTest} disabled={isPending}>
 														{isPending ? "Sending..." : "Send"}
-													</Button>
+													</CtaButton>
 												</div>
 											</div>
 										</div>
 									) : null}
 								</div>
-								<Button type="submit" disabled={isPending}>
+								<CtaButton color="black" size="sm" type="submit" disabled={isPending}>
 									{isPending ? "Saving..." : "Save template"}
-								</Button>
+								</CtaButton>
 							</div>
 						</form>
 					</div>

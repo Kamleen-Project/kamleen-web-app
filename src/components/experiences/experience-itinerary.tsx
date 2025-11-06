@@ -29,7 +29,7 @@ export function ExperienceItinerary({ title, steps }: ExperienceItineraryProps) 
 								aria-label={`Open ${step.title} photo`}
 							>
 								<ImageWithFallback
-									src={step.image || "/images/image-placeholder.png"}
+									src={step.image || "/images/exp-placeholder.png"}
 									alt={`${step.title} visuals`}
 									fill
 									sizes="(min-width: 1024px) 18rem, 90vw"

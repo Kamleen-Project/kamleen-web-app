@@ -18,10 +18,24 @@ type TagsInputProps = {
 };
 
 export function TagsInput({ label, caption, error, tags, inputValue, onChangeInput, onAddTags, onRemoveTag, placeholder, containerClassName }: TagsInputProps) {
+	const parseTagsFromInput = (raw: string): string[] => {
+		if (!raw) return [];
+		const cleaned = raw
+			.replace(/[\[\]\"]/g, "") // remove brackets and quotes
+			.replace(/[;\n\r\t]+/g, ",") // treat ; and newlines as separators
+			.replace(/\s*,\s*/g, ",") // normalise comma spacing
+			.trim();
+		const parts = cleaned
+			.split(/,/) // split on commas
+			.map((v) => v.trim())
+			.filter(Boolean);
+		return parts;
+	};
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
 		if (event.key === "Enter" && inputValue.trim()) {
 			event.preventDefault();
-			onAddTags([inputValue.trim()]);
+			const parts = parseTagsFromInput(inputValue);
+			if (parts.length) onAddTags(parts);
 			onChangeInput("");
 		} else if (event.key === "Backspace" && !inputValue && tags.length > 0) {
 			event.preventDefault();
@@ -34,7 +48,7 @@ export function TagsInput({ label, caption, error, tags, inputValue, onChangeInp
 			<FormField error={typeof error === "string" ? error : undefined} description={typeof caption === "string" ? caption : undefined}>
 				{label ? <FormLabel>{label}</FormLabel> : null}
 				<FormControl>
-					<div className="flex flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2">
+					<div className="flex flex-wrap items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 min-h-11">
 						{tags.map((tag) => (
 							<span key={tag} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
 								{tag}
@@ -52,19 +66,23 @@ export function TagsInput({ label, caption, error, tags, inputValue, onChangeInp
 							value={inputValue}
 							onChange={(event) => {
 								const value = event.target.value;
-								if (value.includes(",")) {
-									const parts = value
-										.split(",")
-										.map((v) => v.trim())
-										.filter(Boolean);
+								if (/[,\n;]/.test(value)) {
+									const parts = parseTagsFromInput(value);
 									if (parts.length) onAddTags(parts);
 									onChangeInput("");
 								} else {
-									onChangeInput(value);
+									// sanitize quotes/brackets even while typing
+									const interim = value.replace(/[\[\]"]/g, "");
+									onChangeInput(interim);
 								}
 							}}
 							onKeyDown={handleKeyDown}
-							onBlur={() => (inputValue ? onAddTags([inputValue]) : undefined)}
+							onBlur={() => {
+								if (!inputValue.trim()) return;
+								const parts = parseTagsFromInput(inputValue);
+								if (parts.length) onAddTags(parts);
+								onChangeInput("");
+							}}
 							placeholder={placeholder ?? (tags.length ? "Add more" : "wellness")}
 							className="min-w-[120px] flex-1 border-none bg-transparent text-sm outline-none"
 						/>

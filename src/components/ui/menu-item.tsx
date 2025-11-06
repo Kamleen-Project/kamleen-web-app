@@ -17,7 +17,7 @@ const baseItemClasses =
 	"rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-pointer";
 const neutralItemClasses = "text-foreground hover:bg-muted";
 const dangerItemClasses = "text-destructive hover:bg-destructive/10 hover:text-destructive";
-const ctaItemClasses = "text-white bg-[#ec3856] hover:bg-[#ec3856]/90";
+const ctaItemClasses = "text-white bg-[#EC4050] hover:bg-[#EC4050]/90";
 
 export type MenuItemVariant = "neutral" | "danger" | "cta";
 

@@ -82,11 +82,17 @@ export function NotificationsBell() {
 												{formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
 											</div>
 										</div>
-										{n.href ? (
-											<Link href={normalizeHref(n.href) ?? "#"} className="text-xs text-primary underline underline-offset-2" onClick={() => setOpen(false)}>
-												Open
-											</Link>
-										) : null}
+										{n.href
+											? (() => {
+													const overrideHref = n.title === "Organizer request approved" ? "/notifications/organizer-approved" : null;
+													const itemHref = overrideHref ?? normalizeHref(n.href) ?? "#";
+													return (
+														<Link href={itemHref} className="text-xs text-primary underline underline-offset-2" onClick={() => setOpen(false)}>
+															Open
+														</Link>
+													);
+											  })()
+											: null}
 									</div>
 								</li>
 							))}

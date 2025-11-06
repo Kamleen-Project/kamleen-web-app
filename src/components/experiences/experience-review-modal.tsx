@@ -3,13 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { Star } from "lucide-react";
+import { Star, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { CtaButton } from "@/components/ui/cta-button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { TextareaField } from "@/components/ui/textarea-field";
 import { cn } from "@/lib/utils";
+import CtaIconButton from "@/components/ui/cta-icon-button";
 
 type ExperienceReviewModalProps = {
 	experienceId: string;
@@ -64,9 +64,9 @@ export function ExperienceReviewModal({ experienceId, experienceTitle }: Experie
 			{open ? (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 					<div className="relative w-full max-w-lg rounded-2xl border border-border/60 bg-background p-6 shadow-xl">
-						<button type="button" className="absolute right-4 top-4 text-sm text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-							Close
-						</button>
+						<CtaIconButton color="whiteBorder" size="md" type="button" ariaLabel="Close review modal" onClick={() => setOpen(false)}>
+							<X />
+						</CtaIconButton>
 						<div className="space-y-1">
 							<h2 className="text-xl font-semibold text-foreground">Share your experience</h2>
 							<p className="text-sm text-muted-foreground">
@@ -106,17 +106,15 @@ export function ExperienceReviewModal({ experienceId, experienceTitle }: Experie
 										})}
 									</div>
 								</div>
-								<div className="space-y-2">
-									<Label htmlFor="experience-review-comment">What made {experienceTitle} memorable?</Label>
-									<Textarea
-										name="comment"
-										id="experience-review-comment"
-										placeholder="Share highlights, host shout-outs, or tips for future explorers."
-										rows={5}
-										value={comment}
-										onChange={(event) => setComment(event.target.value)}
-									/>
-								</div>
+								<TextareaField
+									label={`What made ${experienceTitle} memorable?`}
+									name="comment"
+									id="experience-review-comment"
+									placeholder="Share highlights, host shout-outs, or tips for future explorers."
+									rows={5}
+									value={comment}
+									onChange={(event) => setComment(event.target.value)}
+								/>
 							</div>
 							<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 								<p className="text-xs text-muted-foreground">Reviews help explorers decide what to book next. Keep it kind and constructive.</p>

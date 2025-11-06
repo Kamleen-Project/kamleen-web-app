@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import Link from "next/link";
-import { Clock, Eye, MapPin, Pencil, Plus, Tags, Users } from "lucide-react";
+import { Clock, Eye, ExternalLink, MapPin, Pencil, Plus, Tags, Users } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import type { ExperienceStatus, ExperienceVerificationStatus } from "@/generated/prisma";
@@ -9,11 +9,12 @@ import { getServerAuthSession } from "@/lib/auth";
 import { experienceCardSelect, mapExperienceToCard } from "@/lib/experiences";
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoBadge } from "@/components/ui/info-badge";
-import { Button } from "@/components/ui/button";
+import { CtaIconButton } from "@/components/ui/cta-icon-button";
 import { ExperienceStatusControl } from "@/components/organizer/experience-status-control";
 import { SubmitVerificationButton } from "@/components/organizer/submit-verification-button";
 import { AddExperienceModal } from "@/components/organizer/add-experience-modal";
 import { EditExperienceModal } from "@/components/organizer/edit-experience-modal";
+import { ImportExperienceModal } from "@/components/organizer/import-experience-modal";
 import { ConsolePage } from "@/components/console/page";
 
 export default async function OrganizerExperiencesPage() {
@@ -52,7 +53,16 @@ export default async function OrganizerExperiencesPage() {
 	const experiences: OrganizerListExperience[] = experiencesRaw.map((e) => mapExperienceToCard(e) as unknown as OrganizerListExperience);
 
 	return (
-		<ConsolePage title="Experiences" subtitle="Update details, refresh imagery, and make sure your sessions feel accurate." action={<AddExperienceModal />}>
+		<ConsolePage
+			title="Experiences"
+			subtitle="Update details, refresh imagery, and make sure your sessions feel accurate."
+			action={
+				<div className="flex items-center gap-2">
+					<AddExperienceModal />
+					<ImportExperienceModal />
+				</div>
+			}
+		>
 			<div className="grid gap-4">
 				{experiences.length ? (
 					experiences.map((experience) => {
@@ -68,15 +78,37 @@ export default async function OrganizerExperiencesPage() {
 
 						return (
 							<Card key={experience.id} className="overflow-hidden border-border/60 bg-card/80 shadow-sm">
-								{/* Full-width cover image at top with max height and rounded corners */}
+								{/* Full-width cover image at top with overlay controls */}
 								<div className="relative aspect-[16/4] w-full overflow-hidden rounded-xl">
 									<ImageWithFallback
-										src={experience.image ?? "/images/image-placeholder.png"}
+										src={experience.image ?? "/images/exp-placeholder.png"}
 										alt={experience.title}
 										fill
 										className="object-cover object-center"
 										sizes="100vw"
 									/>
+									<div className="pointer-events-none absolute inset-0 p-2">
+										<div className="pointer-events-auto absolute right-2 top-2 flex items-center gap-2">
+											<CtaIconButton asChild size="md" color="whiteBorder" ariaLabel="Preview">
+												<Link href={`/experiences/preview/${experience.slug}`} target="_blank" rel="noopener noreferrer">
+													<Eye />
+												</Link>
+											</CtaIconButton>
+											<ExperienceStatusControl
+												experienceId={experience.id}
+												currentStatus={(experience.status ?? "PUBLISHED") as ExperienceStatus}
+												verificationStatus={(experience.verificationStatus ?? "NOT_SUBMITTED") as ExperienceVerificationStatus}
+												hasActiveBookings={Boolean(experience.hasActiveBookings)}
+											/>
+											{experience.status === "PUBLISHED" ? (
+												<CtaIconButton asChild size="md" color="whiteBorder" ariaLabel="Open public page">
+													<Link href={`/experiences/${experience.slug}`} target="_blank" rel="noopener noreferrer">
+														<ExternalLink />
+													</Link>
+												</CtaIconButton>
+											) : null}
+										</div>
+									</div>
 								</div>
 
 								{/* Content area */}
@@ -91,20 +123,9 @@ export default async function OrganizerExperiencesPage() {
 											</div>
 										</div>
 										<div className="flex shrink-0 items-center gap-2">
-											<Button asChild variant="outline" size="icon" aria-label="View live">
-												<Link href={`/experiences/${experience.slug}`} target="_blank" rel="noopener noreferrer">
-													<Eye />
-												</Link>
-											</Button>
-											<EditExperienceModal experienceId={experience.id} variant="outline" size="icon">
+											<EditExperienceModal experienceId={experience.id} color="whiteBorder" size="icon">
 												<Pencil />
 											</EditExperienceModal>
-											<ExperienceStatusControl
-												experienceId={experience.id}
-												currentStatus={(experience.status ?? "PUBLISHED") as ExperienceStatus}
-												verificationStatus={(experience.verificationStatus ?? "NOT_SUBMITTED") as ExperienceVerificationStatus}
-												hasActiveBookings={Boolean(experience.hasActiveBookings)}
-											/>
 											<SubmitVerificationButton
 												experienceId={experience.id}
 												verificationStatus={(experience.verificationStatus ?? "NOT_SUBMITTED") as ExperienceVerificationStatus}
@@ -168,10 +189,11 @@ export default async function OrganizerExperiencesPage() {
 														{/* Add new session card */}
 														<EditExperienceModal
 															experienceId={experience.id}
-															variant="outline"
+															color="whiteBorder"
 															size="icon"
 															className="grid h-20 w-20 shrink-0 place-items-center rounded-md border border-dashed border-border/60 bg-background/50 text-muted-foreground"
 															initialStep={4}
+															sessionsOnly
 														>
 															<Plus />
 														</EditExperienceModal>

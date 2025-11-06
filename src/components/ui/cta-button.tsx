@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import { Loader2 } from "lucide-react";
+import { Slot } from "@radix-ui/react-slot";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+// export { Button, buttonVariants } from "@/components/ui/button";
 
 type CtaButtonProps = {
-	color?: "black" | "white" | "whiteBorder";
+	color?: "black" | "white" | "whiteBorder" | "primary";
 	size?: "sm" | "md" | "lg";
 	label?: string;
 	className?: string;
@@ -24,22 +25,23 @@ type CtaButtonProps = {
 	title?: string;
 };
 
-const sizeMap = {
-	sm: "sm",
-	md: "default",
-	lg: "lg",
-} as const;
-
 const fontSizeMap = {
 	sm: "text-sm",
 	md: "text-sm",
 	lg: "text-md",
 } as const;
 
+const sizeClass = {
+	sm: "h-8 px-3",
+	md: "h-9 px-4",
+	lg: "h-10 px-6",
+} as const;
+
 const colorClass = {
 	black: "bg-black text-white hover:bg-black/80 border border-transparent",
 	white: "bg-white text-black hover:bg-zinc-100 border border-transparent",
 	whiteBorder: "bg-white text-black hover:bg-zinc-100 border border-input",
+	primary: "bg-[#EC4050] text-white hover:bg-[#EC4050]/80 border border-transparent",
 };
 
 export function CtaButton({
@@ -60,31 +62,27 @@ export function CtaButton({
 	title,
 }: CtaButtonProps) {
 	const content = children ?? label ?? "Button";
+	const classes = cn(
+		"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-all cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+		colorClass[color],
+		fontSizeMap[size],
+		sizeClass[size],
+		className
+	);
 
-	// When asChild is true, Button expects a single element child. Render children directly.
+	// When asChild is true, render a Slot so props/classNames are applied to the child element.
 	if (asChild) {
 		return (
-			<Button
-				id={id}
-				asChild
-				size={sizeMap[size]}
-				className={cn(colorClass[color], fontSizeMap[size], "font-medium hover:cursor-pointer rounded-full inline-flex items-center gap-2", className)}
-				onClick={onClick}
-				type={type}
-				disabled={Boolean(disabled || isLoading)}
-				form={form}
-				title={title}
-			>
+			<Slot id={id} className={classes} onClick={onClick} title={title}>
 				{children as React.ReactElement}
-			</Button>
+			</Slot>
 		);
 	}
 
 	return (
-		<Button
+		<button
 			id={id}
-			size={sizeMap[size]}
-			className={cn(colorClass[color], fontSizeMap[size], "font-medium hover:cursor-pointer rounded-full inline-flex items-center gap-2", className)}
+			className={classes}
 			onClick={onClick}
 			type={type}
 			disabled={Boolean(disabled || isLoading)}
@@ -101,7 +99,7 @@ export function CtaButton({
 			) : null}
 			<span>{content}</span>
 			{endIcon ? <span className="-mr-0.5 inline-flex items-center">{endIcon}</span> : null}
-		</Button>
+		</button>
 	);
 }
 

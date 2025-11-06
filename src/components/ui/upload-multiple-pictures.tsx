@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { useRef } from "react";
+import { Trash } from "lucide-react";
+import { CtaIconButton } from "./cta-icon-button";
 
-type AspectMode = "square" | "threeFour" | "fullWidth";
+type AspectMode = "square" | "threeFour" | "fullWidth" | "twentyOneNine" | "twentyOneSix" | "twentyFourFour";
 
 export type UploadMultiplePicturesItem = {
 	id: string;
@@ -17,6 +19,13 @@ export type UploadMultiplePicturesProps = {
 	uploadLabel?: string;
 	max?: number;
 	aspect?: AspectMode;
+	fieldAspect?: AspectMode;
+	previewAspect?: AspectMode;
+	previewColumns?: number;
+	backgroundImageUrl?: string;
+	backgroundPatternColor?: string; // e.g. "#000000"
+	backgroundPatternOpacity?: number; // 0..1
+	backgroundPatternSize?: string; // e.g. "560px" (consistent scale)
 	id?: string;
 	className?: string;
 	gridClassName?: string;
@@ -29,6 +38,13 @@ export function UploadMultiplePictures({
 	uploadLabel = "Add photos",
 	max,
 	aspect = "threeFour",
+	fieldAspect,
+	previewAspect,
+	previewColumns,
+	backgroundImageUrl,
+	backgroundPatternColor,
+	backgroundPatternOpacity,
+	backgroundPatternSize,
 	id,
 	className = "",
 	gridClassName = "grid gap-3 sm:grid-cols-2 lg:grid-cols-3",
@@ -41,29 +57,63 @@ export function UploadMultiplePictures({
 		if (inputRef.current) inputRef.current.value = "";
 	}
 
-	const ratioClasses = aspect === "square" ? "aspect-square" : aspect === "threeFour" ? "aspect-[3/4]" : "aspect-[16/9]";
+	const ASPECT_CLASSES: Record<AspectMode, string> = {
+		square: "aspect-square",
+		threeFour: "aspect-[3/4]",
+		twentyOneNine: "aspect-[21/9]",
+		twentyOneSix: "aspect-[21/6]",
+		twentyFourFour: "aspect-[24/4]",
+		fullWidth: "aspect-[16/9]",
+	};
+
+	const fieldRatioClasses = ASPECT_CLASSES[fieldAspect ?? aspect];
+	const previewRatioClasses = ASPECT_CLASSES[previewAspect ?? aspect];
+
+	const computedGridClass = (() => {
+		if (gridClassName && gridClassName.trim()) return gridClassName;
+		const cols = Math.max(1, Math.min(12, Number(previewColumns ?? 0)));
+		if (cols > 0) return `grid gap-3 grid-cols-${cols}`;
+		return "grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
+	})();
+
+	const bgUrl = backgroundImageUrl ?? "/images/pattern-svg.svg";
+	const backgroundPatternStyle = {
+		WebkitMaskImage: `url('${bgUrl}')`,
+		maskImage: `url('${bgUrl}')`,
+		WebkitMaskRepeat: "repeat",
+		maskRepeat: "repeat",
+		WebkitMaskSize: backgroundPatternSize ?? "800px",
+		maskSize: backgroundPatternSize ?? "800px",
+		backgroundColor: backgroundPatternColor ?? "#000000",
+		opacity: typeof backgroundPatternOpacity === "number" ? backgroundPatternOpacity : 0.24,
+	} as const;
 
 	return (
 		<div className={className}>
-			<label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-background/70 px-6 py-8 text-center transition hover:border-primary hover:bg-primary/5">
-				<input ref={inputRef} id={id} type="file" accept="image/*" multiple className="hidden" onChange={handleInputChange} />
-				<span className="text-sm font-medium text-foreground">{uploadLabel}</span>
-				<span className="text-xs text-muted-foreground">Upload multiple images at once.</span>
-			</label>
+			<div className={`relative w-full overflow-hidden rounded-lg border border-border/60 ${fieldRatioClasses}`}>
+				<div aria-hidden className="absolute inset-0 rounded-lg pointer-events-none" style={backgroundPatternStyle} />
+				<label className="absolute inset-0 flex h-full w-full cursor-pointer flex-col items-center justify-center gap-1 text-center hover:bg-primary/5">
+					<input ref={inputRef} id={id} type="file" accept="image/*" multiple className="hidden" onChange={handleInputChange} />
+					<span className="text-sm font-medium text-foreground">{uploadLabel}</span>
+					<span className="text-xs text-muted-foreground">Upload multiple images at once.</span>
+				</label>
+			</div>
 
-			<div className={gridClassName}>
+			<div className={computedGridClass}>
 				{selected.map((item) => (
-					<div key={item.id} className={`group relative overflow-hidden rounded-xl border border-border/60 w-full ${ratioClasses}`}>
+					<div key={item.id} className={`group relative overflow-hidden rounded-lg border border-border/60 w-full ${previewRatioClasses}`}>
+						<div aria-hidden className="absolute inset-0 rounded-lg pointer-events-none" style={backgroundPatternStyle} />
 						<Image src={item.previewUrl} alt="Selected" fill unoptimized sizes="200px" className="object-cover" />
 						{onRemove ? (
-							<button
-								type="button"
-								className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-xs text-white opacity-0 transition group-hover:opacity-100"
+							<CtaIconButton
+								size="sm"
+								color="whiteBorder"
+								className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100"
 								onClick={() => onRemove(item.id)}
-								aria-label="Remove image"
+								ariaLabel="Remove image"
 							>
-								×
-							</button>
+								<Trash className="h-4 w-4" />
+							</CtaIconButton>
 						) : null}
 					</div>
 				))}

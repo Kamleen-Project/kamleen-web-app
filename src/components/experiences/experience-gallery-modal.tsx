@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import CtaButton from "../ui/cta-button";
 
 type TriggerRender = (helpers: { open: () => void }) => ReactNode;
 
@@ -66,10 +65,9 @@ export function ExperienceGalleryModal({ title, images, trigger }: { title: stri
 									<p className="text-xs text-white/60">{images.length} photos</p>
 								</div>
 								<div className="flex items-center gap-3">
-									<Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={closeModal}>
-										<X className="h-5 w-5" />
-										<span className="sr-only">Close gallery</span>
-									</Button>
+									<CtaButton color="whiteBorder" size="md" type="button" onClick={closeModal}>
+										Close
+									</CtaButton>
 								</div>
 							</header>
 

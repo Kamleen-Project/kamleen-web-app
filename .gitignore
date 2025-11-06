@@ -42,3 +42,12 @@ next-env.d.ts
 
 /src/generated/prisma
 public/uploads
+
+# test artifacts and local envs
+browser/
+tests/output/
+.rf-venv/
+log.html
+output.xml
+report.html
+playwright-log.txt

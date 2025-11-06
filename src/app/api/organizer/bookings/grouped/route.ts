@@ -60,9 +60,11 @@ export async function GET(request: Request) {
               select: {
                 id: true,
                 status: true,
+                paymentStatus: true,
                 guests: true,
                 totalPrice: true,
                 createdAt: true,
+                payment: { select: { provider: true } },
                 explorer: { select: { name: true, email: true } },
               },
               orderBy: { createdAt: "desc" },
@@ -127,6 +129,8 @@ export async function GET(request: Request) {
           bookings: s.bookings.map((b) => ({
             id: b.id,
             status: b.status,
+            paymentStatus: b.paymentStatus || null,
+            paymentMethod: b.payment?.provider || null,
             guests: b.guests,
             totalPrice: b.totalPrice,
             createdAt: b.createdAt,

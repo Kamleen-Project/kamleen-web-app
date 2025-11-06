@@ -657,6 +657,7 @@ async function seed() {
     })
   }
 
+  // Seed organizers only; experiences are seeded by scripts/seed-experiences.mjs
   for (const host of hosts) {
     const now = new Date()
     const organizer = await prisma.user.upsert({
@@ -701,138 +702,15 @@ async function seed() {
       create: { userId: organizer.id },
     })
 
-    for (const experience of host.experiences) {
-      const baseSlug = slugify(experience.title) || "experience"
-      let slug = baseSlug
-
-      const existing = await prisma.experience.findUnique({ where: { slug: baseSlug } })
-      if (existing && existing.organizerId !== organizer.id) {
-        let suffix = 1
-        let candidate = `${baseSlug}-${suffix}`
-        while (await prisma.experience.findUnique({ where: { slug: candidate } })) {
-          suffix += 1
-          candidate = `${baseSlug}-${suffix}`
-        }
-        slug = candidate
-      } else if (existing && existing.organizerId === organizer.id) {
-        slug = existing.slug
-      }
-
-      await prisma.experience.upsert({
-        where: { slug },
-        update: {
-          organizerId: organizer.id,
-          title: experience.title,
-          summary: experience.summary,
-          description: experience.description,
-          location: experience.location,
-          duration: experience.duration,
-          price: experience.price,
-          currency: experience.currency ?? "USD",
-          category: experience.category ?? "general",
-          tags: experience.tags,
-          heroImage: experience.heroImage,
-          galleryImages: experience.galleryImages ?? [],
-          averageRating: experience.averageRating,
-          reviewCount: experience.reviewCount,
-          meetingAddress: experience.meeting?.address ?? null,
-          meetingCity: experience.meeting?.city ?? null,
-          meetingCountry: experience.meeting?.country ?? null,
-          meetingLatitude: experience.meeting?.latitude ?? null,
-          meetingLongitude: experience.meeting?.longitude ?? null,
-          sessions: {
-            deleteMany: {},
-            create: experience.sessions.map(buildSession),
-          },
-          itinerarySteps: {
-            deleteMany: {},
-            create: (experience.itinerary ?? []).map((step, index) => ({
-              order: index,
-              title: step.title,
-              subtitle: step.subtitle ?? null,
-              image: step.image,
-            })),
-          },
-        },
-        create: {
-          organizerId: organizer.id,
-          title: experience.title,
-          summary: experience.summary,
-          description: experience.description,
-          location: experience.location,
-          duration: experience.duration,
-          price: experience.price,
-          currency: experience.currency ?? "USD",
-          category: experience.category ?? "general",
-          tags: experience.tags,
-          heroImage: experience.heroImage,
-          galleryImages: experience.galleryImages ?? [],
-          averageRating: experience.averageRating,
-          reviewCount: experience.reviewCount,
-          meetingAddress: experience.meeting?.address ?? null,
-          meetingCity: experience.meeting?.city ?? null,
-          meetingCountry: experience.meeting?.country ?? null,
-          meetingLatitude: experience.meeting?.latitude ?? null,
-          meetingLongitude: experience.meeting?.longitude ?? null,
-          slug,
-          sessions: {
-            create: experience.sessions.map(buildSession),
-          },
-          itinerarySteps: {
-            create: (experience.itinerary ?? []).map((step, index) => ({
-              order: index,
-              title: step.title,
-              subtitle: step.subtitle ?? null,
-              image: step.image,
-            })),
-          },
-        },
-      })
-    }
+    // Experiences intentionally not seeded here
   }
 
-  const experiences = await prisma.experience.findMany({ select: { id: true } })
-
-  for (const [experienceIndex, experience] of experiences.entries()) {
-    await prisma.experienceReview.deleteMany({ where: { experienceId: experience.id } })
-
-    const reviewCountTarget = Math.max(12, reviewTemplates.length)
-    const reviewData = []
-    let totalRating = 0
-
-    for (let i = 0; i < reviewCountTarget; i += 1) {
-      const template = reviewTemplates[(experienceIndex + i) % reviewTemplates.length]
-      const explorer = explorerRecords[(experienceIndex + i) % explorerRecords.length]
-      const createdAt = new Date(Date.now() - (experienceIndex * 7 + i) * 24 * 60 * 60 * 1000)
-
-      reviewData.push({
-        experienceId: experience.id,
-        explorerId: explorer.id,
-        rating: template.rating,
-        comment: template.comment,
-        createdAt,
-      })
-
-      totalRating += template.rating
-    }
-
-    await prisma.experienceReview.createMany({ data: reviewData })
-
-    const averageRating = Number((totalRating / reviewData.length).toFixed(2))
-
-    await prisma.experience.update({
-      where: { id: experience.id },
-      data: {
-        averageRating,
-        reviewCount: reviewData.length,
-      },
-    })
-  }
+  // Reviews are attached when experiences are seeded
 }
 
 seed()
   .then(() => {
-    console.log("Seeded organizers, experiences, explorers, and reviews successfully.")
+    console.log("Seeded users (admin, organizers, explorers) and notification prefs successfully.")
   })
   .catch((error) => {
     console.error(error)

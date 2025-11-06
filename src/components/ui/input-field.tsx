@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { FormControl, FormDescription, FormField, FormLabel, FormMessage } from "./form";
-import { Input } from "./input";
+// native input used directly; former shared Input removed
 
 type InputFieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
 	label?: React.ReactNode;
@@ -29,7 +29,13 @@ export function InputField({ label, caption, error, className, containerClassNam
 			<FormField error={typeof error === "string" ? error : undefined} description={typeof caption === "string" ? caption : undefined}>
 				{labelContent ? <FormLabel>{labelContent}</FormLabel> : null}
 				<FormControl>
-					<Input className={className} {...props} />
+					<input
+						className={cn(
+							"flex h-11 w-full rounded-lg border border-input bg-background px-4 text-sm transition hover:border-foreground/20 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
+							className
+						)}
+						{...props}
+					/>
 				</FormControl>
 				{caption && typeof caption !== "string" ? <div className="text-xs text-muted-foreground">{caption}</div> : <FormDescription />}
 				<FormMessage />

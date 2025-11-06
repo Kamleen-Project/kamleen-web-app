@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 	const pricePerGuest = sessionRecord.priceOverride ?? sessionRecord.experience.price;
 	const totalPrice = pricePerGuest * guests;
 
-	const booking = await prisma.experienceBooking.create({
+    const booking = await prisma.experienceBooking.create({
 		data: {
 			experienceId,
 			sessionId,
@@ -86,6 +86,7 @@ export async function POST(request: Request) {
 			guests,
 			totalPrice,
 			status: "PENDING",
+        expiresAt: new Date(Date.now() + 20 * 60 * 1000),
 			notes,
 		},
 		include: {

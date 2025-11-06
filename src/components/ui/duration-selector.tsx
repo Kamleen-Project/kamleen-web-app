@@ -1,6 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { FormControl, FormDescription, FormField, FormLabel, FormMessage } from "./form";
 
 type DurationValue = {
 	days: string;
@@ -18,6 +21,11 @@ type DurationSelectorProps = {
 	maxHours?: number;
 	minuteStep?: number;
 	className?: string;
+	label?: React.ReactNode;
+	caption?: React.ReactNode;
+	error?: string;
+	containerClassName?: string;
+	required?: boolean;
 };
 
 export function DurationSelector({
@@ -30,7 +38,14 @@ export function DurationSelector({
 	maxHours = 23,
 	minuteStep = 5,
 	className,
+	label,
+	caption,
+	error,
+	containerClassName,
+	required,
 }: DurationSelectorProps) {
+	const selectClass =
+		"h-11 w-full appearance-none rounded-lg border border-input bg-background px-4 pr-10 text-base transition focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50";
 	const handleDays = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		onChange({ days: e.target.value, hours: value.hours, minutes: value.minutes });
 	};
@@ -48,53 +63,70 @@ export function DurationSelector({
 		return list;
 	}, [minuteStep]);
 
-	return (
+	const content = (
 		<div className={"grid gap-2 sm:grid-cols-3 " + (className ?? "")}>
 			{daysEnabled ? (
-				<div>
-					<select
-						className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none transition focus-visible:border-ring"
-						value={value.days}
-						onChange={handleDays}
-					>
+				<div className="relative">
+					<select className={selectClass} value={value.days} onChange={handleDays}>
 						{Array.from({ length: maxDays + 1 }).map((_, i) => (
 							<option key={i} value={String(i)}>
 								{i} day{i === 1 ? "" : "s"}
 							</option>
 						))}
 					</select>
+					<ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				</div>
 			) : null}
 			{hoursEnabled ? (
-				<div>
-					<select
-						className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none transition focus-visible:border-ring"
-						value={value.hours}
-						onChange={handleHours}
-					>
+				<div className="relative">
+					<select className={selectClass} value={value.hours} onChange={handleHours}>
 						{Array.from({ length: maxHours + 1 }).map((_, i) => (
 							<option key={i} value={String(i)}>
 								{i} hour{i === 1 ? "" : "s"}
 							</option>
 						))}
 					</select>
+					<ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				</div>
 			) : null}
 			{minutesEnabled ? (
-				<div>
-					<select
-						className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none transition focus-visible:border-ring"
-						value={value.minutes}
-						onChange={handleMinutes}
-					>
+				<div className="relative">
+					<select className={selectClass} value={value.minutes} onChange={handleMinutes}>
 						{minutesOptions.map((m) => (
 							<option key={m} value={String(m)}>
 								{m} min
 							</option>
 						))}
 					</select>
+					<ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 				</div>
 			) : null}
 		</div>
 	);
+
+	const showRequiredStar = Boolean(required) && Boolean(label);
+	const labelContent = label ? (
+		<span className="inline-flex items-center gap-1">
+			{label}
+			{showRequiredStar ? (
+				<span className="text-destructive" aria-hidden="true">
+					*
+				</span>
+			) : null}
+		</span>
+	) : null;
+
+	if (label || caption || error) {
+		return (
+			<div className={cn("space-y-2", containerClassName)}>
+				<FormField error={typeof error === "string" ? error : undefined} description={typeof caption === "string" ? caption : undefined}>
+					{labelContent ? <FormLabel>{labelContent}</FormLabel> : null}
+					<FormControl>{content}</FormControl>
+					{caption && typeof caption !== "string" ? <div className="text-xs text-muted-foreground">{caption}</div> : <FormDescription />}
+					<FormMessage />
+				</FormField>
+			</div>
+		);
+	}
+	return content;
 }

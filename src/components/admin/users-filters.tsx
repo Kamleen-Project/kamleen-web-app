@@ -4,7 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import CtaIconButton from "../ui/cta-icon-button";
 
 export function UsersFilters({ initialRole, initialOrganizer, initialQuery }: { initialRole: string; initialOrganizer: string; initialQuery: string | null }) {
 	const router = useRouter();
@@ -97,9 +97,9 @@ export function UsersFilters({ initialRole, initialOrganizer, initialQuery }: { 
 					<option value="REJECTED">Rejected</option>
 				</select>
 				{role !== "__ALL__" || organizer !== "__ALL__" || (q ?? "").trim().length > 0 ? (
-					<Button type="button" variant="outline" size="icon" aria-label="Reset filters" onClick={onReset}>
+					<CtaIconButton color="whiteBorder" size="md" ariaLabel="Reset filters" onClick={onReset}>
 						<X />
-					</Button>
+					</CtaIconButton>
 				) : null}
 			</div>
 			<div className="ml-auto flex items-center gap-2">
