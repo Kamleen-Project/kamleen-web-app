@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRef } from "react";
+import { processImageFile, type ImageProcessOptions } from "@/lib/image-process";
 import { Trash } from "lucide-react";
 import { CtaIconButton } from "./cta-icon-button";
 
@@ -30,6 +31,10 @@ export type UploadMultiplePicturesProps = {
 	id?: string;
 	className?: string;
 	gridClassName?: string;
+  // Enable client-side compression before emitting files (default: true)
+  compress?: boolean;
+  // Optional compression options override
+  compressOptions?: ImageProcessOptions;
 };
 
 export function UploadMultiplePictures({
@@ -49,12 +54,33 @@ export function UploadMultiplePictures({
 	id,
 	className = "",
 	gridClassName = "grid gap-3 sm:grid-cols-2 lg:grid-cols-3",
+  compress = true,
+  compressOptions,
 }: UploadMultiplePicturesProps) {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 
-	function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
 		const files = Array.from(event.target.files ?? []);
-		if (files.length) onAddFiles(files);
+    if (files.length) {
+      let toSend = files;
+      if (compress) {
+        const defaults = deriveMultipleDefaults(previewAspect ?? aspect);
+        try {
+          toSend = await Promise.all(
+            files.map(async (f) => {
+              try {
+                return await processImageFile(f, { ...defaults, ...(compressOptions ?? {}) });
+              } catch {
+                return f;
+              }
+            })
+          );
+        } catch {
+          toSend = files;
+        }
+      }
+      onAddFiles(toSend);
+    }
 		if (inputRef.current) inputRef.current.value = "";
 	}
 
@@ -127,6 +153,20 @@ export function UploadMultiplePictures({
 			{typeof max === "number" ? <p className="mt-1 text-xs text-muted-foreground">You can add up to {max} images.</p> : null}
 		</div>
 	);
+}
+
+function deriveMultipleDefaults(aspect: AspectMode): ImageProcessOptions {
+  switch (aspect) {
+    case "twentyOneSix":
+    case "twentyOneNine":
+      return { maxWidth: 1920, maxHeight: 1080, mimeType: "image/webp", quality: 0.8 }
+    case "threeFour":
+    case "twentyFourFour":
+      return { maxWidth: 1600, maxHeight: 1200, mimeType: "image/webp", quality: 0.8 }
+    case "square":
+    default:
+      return { maxWidth: 1280, maxHeight: 1280, mimeType: "image/webp", quality: 0.8 }
+  }
 }
 
 export default UploadMultiplePictures;

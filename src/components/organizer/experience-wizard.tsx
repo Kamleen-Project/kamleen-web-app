@@ -8,7 +8,6 @@ import { X, CheckCircle2, XCircle } from "lucide-react";
 import CtaIconButton from "../ui/cta-icon-button";
 import { format } from "date-fns";
 import { parseDurationParts } from "@/lib/duration";
-import { processImageFile } from "@/lib/image-process";
 import { MAX_GALLERY_IMAGES, MAX_SESSIONS } from "@/config/experiences";
 import { buildExperienceFormData } from "@/lib/experience-formdata";
 import { getDatePart, getTimePart, formatLocalInput } from "@/lib/datetime";
@@ -494,8 +493,7 @@ export function ExperienceWizard({
 			setUploading((u) => ({ ...u, gallery: { ...u.gallery, [imageId]: true } }));
 			void (async () => {
 				try {
-					const compressed = await processImageFile(item.file as File, { maxWidth: 1600, maxHeight: 1200, mimeType: "image/webp", quality: 0.8 });
-					const url = await uploadToServer(compressed, "gallery");
+					const url = await uploadToServer(item.file as File, "gallery");
 					setState((prev) => ({
 						...prev,
 						gallery: prev.gallery.map((g) => (g.id === imageId ? { ...g, url, file: undefined } : g)),
@@ -568,8 +566,7 @@ export function ExperienceWizard({
 		setUploading((u) => ({ ...u, itinerary: { ...u.itinerary, [id]: true } }));
 		void (async () => {
 			try {
-				const compressed = await processImageFile(file, { maxWidth: 1280, maxHeight: 1280, mimeType: "image/webp", quality: 0.8 });
-				const url = await uploadToServer(compressed, "itinerary");
+				const url = await uploadToServer(file, "itinerary");
 				setState((prev) => ({
 					...prev,
 					itinerary: prev.itinerary.map((item) => (item.id === id ? { ...item, url, file: undefined } : item)),
@@ -765,8 +762,7 @@ export function ExperienceWizard({
 		setUploading((u) => ({ ...u, hero: true }));
 		void (async () => {
 			try {
-				const compressed = await processImageFile(file, { maxWidth: 1920, maxHeight: 1080, mimeType: "image/webp", quality: 0.82 });
-				const url = await uploadToServer(compressed, "hero");
+				const url = await uploadToServer(file, "hero");
 				setState((prev) => ({ ...prev, hero: { url, file: null, preview: prev.hero.preview, removed: false } }));
 			} catch (e) {
 				setError(e instanceof Error ? e.message : "Failed to upload hero image");

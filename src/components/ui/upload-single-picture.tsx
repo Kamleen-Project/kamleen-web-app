@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useId, useRef } from "react";
+import { processImageFile, type ImageProcessOptions } from "@/lib/image-process";
 import { RefreshCcw, Trash } from "lucide-react";
 
 type AspectMode = "square" | "threeFour" | "fullWidth" | "twentyOneNine" | "twentyOneSix";
@@ -31,6 +32,10 @@ export type UploadSinglePictureProps = {
 	className?: string;
 	// Optional loading overlay
 	loading?: boolean;
+    // Enable client-side compression before emitting file (default: true)
+    compress?: boolean;
+    // Optional compression options override
+    compressOptions?: ImageProcessOptions;
 };
 
 export function UploadSinglePicture({
@@ -47,15 +52,26 @@ export function UploadSinglePicture({
 	name,
 	className = "",
 	loading = false,
+    compress = true,
+    compressOptions,
 }: UploadSinglePictureProps) {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const generatedId = useId();
 	const inputId = id ?? generatedId;
 
-	function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+	async function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
 		const file = event.target.files?.[0];
 		if (file) {
-			onChangeFile(file);
+			let toSend = file;
+			if (compress) {
+				const defaultOpts = deriveSingleDefaults(aspect);
+				try {
+					toSend = await processImageFile(file, { ...defaultOpts, ...(compressOptions ?? {}) });
+				} catch {
+					toSend = file;
+				}
+			}
+			onChangeFile(toSend);
 			event.currentTarget.value = "";
 		}
 	}
@@ -131,6 +147,19 @@ export function UploadSinglePicture({
 			)}
 		</div>
 	);
+}
+
+function deriveSingleDefaults(aspect: AspectMode): ImageProcessOptions {
+  switch (aspect) {
+    case "twentyOneSix":
+    case "twentyOneNine":
+      return { maxWidth: 1920, maxHeight: 1080, mimeType: "image/webp", quality: 0.82 }
+    case "threeFour":
+      return { maxWidth: 1600, maxHeight: 1600, mimeType: "image/webp", quality: 0.82 }
+    case "square":
+    default:
+      return { maxWidth: 1280, maxHeight: 1280, mimeType: "image/webp", quality: 0.82 }
+  }
 }
 
 export default UploadSinglePicture;
