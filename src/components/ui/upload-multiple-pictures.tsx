@@ -10,6 +10,7 @@ type AspectMode = "square" | "threeFour" | "fullWidth" | "twentyOneNine" | "twen
 export type UploadMultiplePicturesItem = {
 	id: string;
 	previewUrl: string;
+	loading?: boolean;
 };
 
 export type UploadMultiplePicturesProps = {
@@ -104,6 +105,11 @@ export function UploadMultiplePictures({
 					<div key={item.id} className={`group relative overflow-hidden rounded-lg border border-border/60 w-full ${previewRatioClasses}`}>
 						<div aria-hidden className="absolute inset-0 rounded-lg pointer-events-none" style={backgroundPatternStyle} />
 						<Image src={item.previewUrl} alt="Selected" fill unoptimized sizes="200px" className="object-cover" />
+						{item.loading ? (
+							<div className="absolute inset-0 flex items-center justify-center bg-black/40">
+								<div className="h-7 w-7 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />
+							</div>
+						) : null}
 						{onRemove ? (
 							<CtaIconButton
 								size="sm"

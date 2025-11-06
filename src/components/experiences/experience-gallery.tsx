@@ -34,6 +34,7 @@ function GalleryTile({
 	onSelect?: (index: number) => void;
 }) {
 	const [src, setSrc] = useState<string>(image);
+	const isBlob = typeof src === "string" && src.includes("public.blob.vercel-storage.com");
 	const content = (
 		<div className="relative h-full w-full">
 			<Image
@@ -42,6 +43,7 @@ function GalleryTile({
 				fill
 				sizes={sizes}
 				className="object-cover"
+				unoptimized={isBlob}
 				onError={() => setSrc("/images/image-placeholder.png")}
 			/>
 		</div>

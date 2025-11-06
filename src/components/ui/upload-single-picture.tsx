@@ -29,6 +29,8 @@ export type UploadSinglePictureProps = {
 	name?: string;
 	// Optional className for container
 	className?: string;
+	// Optional loading overlay
+	loading?: boolean;
 };
 
 export function UploadSinglePicture({
@@ -44,6 +46,7 @@ export function UploadSinglePicture({
 	id,
 	name,
 	className = "",
+	loading = false,
 }: UploadSinglePictureProps) {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const generatedId = useId();
@@ -85,6 +88,11 @@ export function UploadSinglePicture({
 			{previewUrl ? (
 				<>
 					<Image src={previewUrl} alt="Selected image" fill unoptimized sizes="200px" className="object-cover" />
+					{loading ? (
+						<div className="absolute inset-0 flex items-center justify-center bg-black/40">
+							<div className="h-8 w-8 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />
+						</div>
+					) : null}
 					<div className="absolute inset-2 flex items-start justify-end gap-2">
 						{onRemove ? (
 							<button

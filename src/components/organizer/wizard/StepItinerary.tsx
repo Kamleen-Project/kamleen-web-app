@@ -18,9 +18,10 @@ export type StepItineraryProps = {
 	onRemoveImage: (id: string) => void;
 	onRemoveStep: (id: string) => void;
 	onUpdateField: (id: string, key: "title" | "subtitle" | "durationHours" | "durationMinutes", value: string) => void;
+	uploading?: Record<string, boolean>;
 };
 
-export default function StepItinerary({ items, onAdd, onImageChange, onRemoveImage, onRemoveStep, onUpdateField }: StepItineraryProps) {
+export default function StepItinerary({ items, onAdd, onImageChange, onRemoveImage, onRemoveStep, onUpdateField, uploading }: StepItineraryProps) {
 	return (
 		<div className="space-y-4">
 			{items
@@ -39,6 +40,7 @@ export default function StepItinerary({ items, onAdd, onImageChange, onRemoveIma
 										uploadLabel="Upload image"
 										aspect="square"
 										className="mt-4"
+										loading={Boolean(uploading?.[step.id])}
 									/>
 								</div>
 								<div className="space-y-4 flex-1 min-w-0">

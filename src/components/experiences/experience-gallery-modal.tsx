@@ -104,5 +104,6 @@ export function ExperienceGalleryModal({ title, images, trigger }: { title: stri
 
 function FallbackImage(props: Omit<React.ComponentProps<typeof Image>, "onError">) {
 	const [src, setSrc] = useState<string>(String(props.src));
-	return <Image {...props} src={src} onError={() => setSrc("/images/image-placeholder.png")} />;
+	const isBlob = typeof src === "string" && src.includes("public.blob.vercel-storage.com");
+	return <Image {...props} src={src} unoptimized={isBlob} onError={() => setSrc("/images/image-placeholder.png")} />;
 }

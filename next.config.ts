@@ -10,16 +10,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+      },
+      {
+        protocol: "https",
         hostname: "images.unsplash.com",
       },
       {
         protocol: "https",
         hostname: "picsum.photos",
-      },
-      // Allow project-scoped Vercel Blob public URLs (e.g., <project>.public.blob.vercel-storage.com)
-      {
-        protocol: "https",
-        hostname: "*.public.blob.vercel-storage.com",
       },
     ],
   },

@@ -15,9 +15,20 @@ export type StepVisualsProps = {
 	onRemoveHero: () => void;
 	onGalleryAddFiles: (files: File[]) => void;
 	onRemoveGalleryItem: (id: string) => void;
+	// optional uploading indicators
+	heroUploading?: boolean;
+	galleryUploading?: Record<string, boolean>;
 };
 
-export default function StepVisuals({ state, onHeroFileSelected, onRemoveHero, onGalleryAddFiles, onRemoveGalleryItem }: StepVisualsProps) {
+export default function StepVisuals({
+	state,
+	onHeroFileSelected,
+	onRemoveHero,
+	onGalleryAddFiles,
+	onRemoveGalleryItem,
+	heroUploading,
+	galleryUploading,
+}: StepVisualsProps) {
 	const galleryCount = state.gallery.filter((item) => !item.removed).length;
 
 	return (
@@ -35,6 +46,7 @@ export default function StepVisuals({ state, onHeroFileSelected, onRemoveHero, o
 						onRemove={onRemoveHero}
 						uploadLabel="Upload hero image"
 						aspect="twentyOneSix"
+						loading={Boolean(heroUploading)}
 					/>
 				</div>
 			</div>
@@ -54,7 +66,7 @@ export default function StepVisuals({ state, onHeroFileSelected, onRemoveHero, o
 						id="gallery-images"
 						selected={state.gallery
 							.filter((item) => item.status === "new" && !item.removed)
-							.map((item) => ({ id: item.id, previewUrl: item.preview ?? item.url ?? "" }))}
+							.map((item) => ({ id: item.id, previewUrl: item.preview ?? item.url ?? "", loading: Boolean(galleryUploading?.[item.id]) }))}
 						onAddFiles={(files) => onGalleryAddFiles(Array.from(files))}
 						onRemove={(id) => onRemoveGalleryItem(id)}
 						uploadLabel="Add gallery photos"
@@ -72,7 +84,7 @@ export default function StepVisuals({ state, onHeroFileSelected, onRemoveHero, o
 									.filter((item) => item.status === "existing" && !item.removed)
 									.map((item) => (
 										<div key={item.id} className="relative overflow-hidden rounded-lg border border-border/60 aspect-[3/4]">
-											<Image src={item.url ?? ""} alt="Existing" fill sizes="200px" className="object-cover" />
+											<Image src={item.url ?? ""} alt="Existing" fill sizes="200px" unoptimized className="object-cover" />
 											<CtaIconButton
 												className="absolute right-2 top-2"
 												size="sm"

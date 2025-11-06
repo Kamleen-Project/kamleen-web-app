@@ -184,6 +184,12 @@ export async function POST(request: Request) {
       })
       heroImagePath = stored.publicPath
     }
+    if (!heroImagePath) {
+      const heroImageUrl = getOptionalString(formData, "heroImageUrl")
+      if (heroImageUrl) {
+        heroImagePath = heroImageUrl
+      }
+    }
 
     const galleryEntries = formData.getAll("galleryImages")
     const galleryPaths: string[] = []
@@ -198,6 +204,23 @@ export async function POST(request: Request) {
           maxSizeBytes: 10 * 1024 * 1024,
         })
         galleryPaths.push(stored.publicPath)
+      }
+    }
+
+    // Optionally accept pre-uploaded gallery URLs
+    const galleryUrlsRaw = formData.get("galleryImageUrls")
+    if (typeof galleryUrlsRaw === "string" && galleryUrlsRaw.trim()) {
+      try {
+        const parsed = JSON.parse(galleryUrlsRaw) as unknown
+        if (Array.isArray(parsed)) {
+          for (const url of parsed) {
+            if (typeof url === "string" && url && galleryPaths.length < MAX_GALLERY_IMAGES) {
+              galleryPaths.push(url)
+            }
+          }
+        }
+      } catch {
+        // ignore bad payload; server already accepts files
       }
     }
 

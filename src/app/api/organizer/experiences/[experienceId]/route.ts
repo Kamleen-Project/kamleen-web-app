@@ -159,6 +159,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
       })
       heroImagePath = stored.publicPath
     }
+    if (!heroImagePath) {
+      const heroImageUrl = getOptionalString(formData, "heroImageUrl")
+      if (heroImageUrl) {
+        heroImagePath = heroImageUrl
+      }
+    }
 
     const removeHero = parseBoolean(formData.get("removeHero"))
     if (removeHero) {
@@ -184,6 +190,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ex
         maxSizeBytes: 10 * 1024 * 1024,
       })
       updatedGallery.add(stored.publicPath)
+    }
+
+    // Optionally accept pre-uploaded gallery URLs
+    const galleryUrlsRaw = formData.get("galleryImageUrls")
+    if (typeof galleryUrlsRaw === "string" && galleryUrlsRaw.trim()) {
+      try {
+        const parsed = JSON.parse(galleryUrlsRaw) as unknown
+        if (Array.isArray(parsed)) {
+          for (const url of parsed) {
+            if (typeof url === "string" && url && updatedGallery.size < MAX_GALLERY_IMAGES) {
+              updatedGallery.add(url)
+            }
+          }
+        }
+      } catch {
+        // ignore bad payload
+      }
     }
 
     const itinerarySteps = await resolveItineraryStepsFromMeta(formData, itineraryMeta, experience.organizerId)

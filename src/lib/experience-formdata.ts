@@ -42,6 +42,8 @@ export function buildExperienceFormData(state: WizardLikeState, options: BuildOp
 
   if (state.hero.file) {
     formData.append("heroImage", state.hero.file);
+  } else if (state.hero.url && !state.hero.removed) {
+    formData.append("heroImageUrl", state.hero.url);
   }
   if (mode === "edit" && state.hero.removed && !state.hero.file) {
     formData.append("removeHero", "true");
@@ -54,8 +56,16 @@ export function buildExperienceFormData(state: WizardLikeState, options: BuildOp
     formData.append("removeGallery", JSON.stringify(galleryRemove.map((item) => item.id)));
   }
 
+  const galleryPreuploadedUrls: string[] = [];
   for (const item of galleryNew) {
-    if (item.file) formData.append("galleryImages", item.file);
+    if (item.file) {
+      formData.append("galleryImages", item.file);
+    } else if (item.url) {
+      galleryPreuploadedUrls.push(item.url);
+    }
+  }
+  if (galleryPreuploadedUrls.length) {
+    formData.append("galleryImageUrls", JSON.stringify(galleryPreuploadedUrls));
   }
 
   if (!lenientDraftFields || state.meeting.address) formData.append("meetingAddress", state.meeting.address);

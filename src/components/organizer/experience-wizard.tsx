@@ -8,6 +8,7 @@ import { X, CheckCircle2, XCircle } from "lucide-react";
 import CtaIconButton from "../ui/cta-icon-button";
 import { format } from "date-fns";
 import { parseDurationParts } from "@/lib/duration";
+import { processImageFile } from "@/lib/image-process";
 import { MAX_GALLERY_IMAGES, MAX_SESSIONS } from "@/config/experiences";
 import { buildExperienceFormData } from "@/lib/experience-formdata";
 import { getDatePart, getTimePart, formatLocalInput } from "@/lib/datetime";
@@ -268,6 +269,11 @@ export function ExperienceWizard({
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const canSaveDraft = mode === "create" || initialData?.verificationStatus === "NOT_SUBMITTED";
+	const [uploading, setUploading] = useState<{ hero: boolean; gallery: Record<string, boolean>; itinerary: Record<string, boolean> }>({
+		hero: false,
+		gallery: {},
+		itinerary: {},
+	});
 
 	const totalSteps = steps.length;
 	const galleryCount = useMemo(() => state.gallery.filter((item) => !item.removed).length, [state.gallery]);
@@ -371,6 +377,11 @@ export function ExperienceWizard({
 		return Boolean(state.hero.preview) && galleryCount >= 5;
 	}, [galleryCount, state.hero.preview]);
 
+	const hasPendingUploadsStep2 = useMemo(() => {
+		const anyGallery = Object.values(uploading.gallery).some(Boolean);
+		return uploading.hero || anyGallery;
+	}, [uploading.hero, uploading.gallery]);
+
 	const canProceedStep3 = useMemo(() => {
 		const active = state.itinerary.filter((step) => !step.removed);
 		if (!active.length) {
@@ -378,6 +389,8 @@ export function ExperienceWizard({
 		}
 		return active.every((step) => Boolean(step.title.trim()));
 	}, [state.itinerary]);
+
+	const hasPendingUploadsStep3 = useMemo(() => Object.values(uploading.itinerary).some(Boolean), [uploading.itinerary]);
 
 	const canProceedStep5 = useMemo(() => {
 		return state.sessions.every((session) => session.startAt && session.capacity);
@@ -473,6 +486,27 @@ export function ExperienceWizard({
 		setState((prev) => ({ ...prev, gallery: [...prev.gallery, ...additions] }));
 
 		event.target.value = "";
+
+		// upload each addition immediately
+		for (const item of additions) {
+			if (!item.file) continue;
+			const imageId = item.id;
+			setUploading((u) => ({ ...u, gallery: { ...u.gallery, [imageId]: true } }));
+			void (async () => {
+				try {
+					const compressed = await processImageFile(item.file as File, { maxWidth: 1600, maxHeight: 1200, mimeType: "image/webp", quality: 0.8 });
+					const url = await uploadToServer(compressed, "gallery");
+					setState((prev) => ({
+						...prev,
+						gallery: prev.gallery.map((g) => (g.id === imageId ? { ...g, url, file: undefined } : g)),
+					}));
+				} catch (e) {
+					setError(e instanceof Error ? e.message : "Failed to upload gallery image");
+				} finally {
+					setUploading((u) => ({ ...u, gallery: { ...u.gallery, [imageId]: false } }));
+				}
+			})();
+		}
 	};
 
 	const removeGalleryItem = (id: string) => {
@@ -530,6 +564,22 @@ export function ExperienceWizard({
 					: item
 			),
 		}));
+
+		setUploading((u) => ({ ...u, itinerary: { ...u.itinerary, [id]: true } }));
+		void (async () => {
+			try {
+				const compressed = await processImageFile(file, { maxWidth: 1280, maxHeight: 1280, mimeType: "image/webp", quality: 0.8 });
+				const url = await uploadToServer(compressed, "itinerary");
+				setState((prev) => ({
+					...prev,
+					itinerary: prev.itinerary.map((item) => (item.id === id ? { ...item, url, file: undefined } : item)),
+				}));
+			} catch (e) {
+				setError(e instanceof Error ? e.message : "Failed to upload itinerary image");
+			} finally {
+				setUploading((u) => ({ ...u, itinerary: { ...u.itinerary, [id]: false } }));
+			}
+		})();
 	};
 
 	const removeItineraryImage = (id: string) => {
@@ -674,6 +724,23 @@ export function ExperienceWizard({
 	}
 
 	// Step components adapters
+
+	async function uploadToServer(file: File, folder: "hero" | "gallery" | "itinerary"): Promise<string> {
+		const fd = new FormData();
+		fd.append("file", file);
+		fd.append("folder", folder);
+		const res = await fetch("/api/uploads/image", { method: "POST", body: fd });
+		if (!res.ok) {
+			try {
+				const data = await res.json();
+				throw new Error((data?.message as string) || "Upload failed");
+			} catch {
+				throw new Error("Upload failed");
+			}
+		}
+		const data = (await res.json()) as { url: string };
+		return data.url;
+	}
 	function onHeroFileSelected(file: File) {
 		if (!isAllowedImageFile(file)) {
 			setError("Unsupported image type. Use JPG, PNG, or WebP.");
@@ -693,6 +760,20 @@ export function ExperienceWizard({
 				removed: false,
 			},
 		}));
+
+		// upload immediately
+		setUploading((u) => ({ ...u, hero: true }));
+		void (async () => {
+			try {
+				const compressed = await processImageFile(file, { maxWidth: 1920, maxHeight: 1080, mimeType: "image/webp", quality: 0.82 });
+				const url = await uploadToServer(compressed, "hero");
+				setState((prev) => ({ ...prev, hero: { url, file: null, preview: prev.hero.preview, removed: false } }));
+			} catch (e) {
+				setError(e instanceof Error ? e.message : "Failed to upload hero image");
+			} finally {
+				setUploading((u) => ({ ...u, hero: false }));
+			}
+		})();
 	}
 
 	function onGalleryAddFiles(files: File[]) {
@@ -917,9 +998,9 @@ export function ExperienceWizard({
 			case 0:
 				return !canProceedStep1;
 			case 1:
-				return !canProceedStep2;
+				return !canProceedStep2 || hasPendingUploadsStep2;
 			case 2:
-				return !canProceedStep3;
+				return !canProceedStep3 || hasPendingUploadsStep3;
 			case 3:
 				return !canProceedStep4;
 			case 4:
@@ -985,6 +1066,8 @@ export function ExperienceWizard({
 						onRemoveHero={removeHero}
 						onGalleryAddFiles={onGalleryAddFiles}
 						onRemoveGalleryItem={(id) => removeGalleryItem(id)}
+						heroUploading={uploading.hero}
+						galleryUploading={uploading.gallery}
 					/>
 				);
 
@@ -997,6 +1080,7 @@ export function ExperienceWizard({
 						onRemoveImage={removeItineraryImage}
 						onRemoveStep={removeItineraryStep}
 						onUpdateField={updateItineraryField}
+						uploading={uploading.itinerary}
 					/>
 				);
 
