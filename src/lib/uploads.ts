@@ -1,6 +1,7 @@
 import { promises as fs } from "fs"
 import path from "path"
 import { randomUUID } from "crypto"
+import { put } from "@vercel/blob"
 
 type SaveFileOptions = {
   file: File
@@ -30,22 +31,32 @@ export async function saveUploadedFile({
     throw new Error("Unsupported file type")
   }
 
-  const uploadRoot = path.join(process.cwd(), "public", "uploads")
-  const targetDir = path.join(uploadRoot, directory)
-
-  await fs.mkdir(targetDir, { recursive: true })
-
   const extension = determineExtension(file)
   const fileName = `${randomUUID()}${extension}`
-  const filePath = path.join(targetDir, fileName)
+  const key = `${directory.replace(/^\/+|\/+$/g, "")}/${fileName}`
+
+  // Use Vercel Blob in production (or when a Blob token is available), otherwise fall back to local FS for dev
+  const shouldUseVercelBlob = process.env.VERCEL === "1" || Boolean(process.env.BLOB_READ_WRITE_TOKEN)
 
   const buffer = Buffer.from(await file.arrayBuffer())
-  await fs.writeFile(filePath, buffer)
 
-  return {
-    filePath,
-    publicPath: `/uploads/${directory}/${fileName}`,
+  if (shouldUseVercelBlob) {
+    const uploaded = await put(key, buffer, {
+      access: "public",
+      contentType: file.type || "application/octet-stream",
+    })
+    return {
+      filePath: uploaded.url,
+      publicPath: uploaded.url,
+    }
   }
+
+  const uploadRoot = path.join(process.cwd(), "public", "uploads")
+  const targetDir = path.join(uploadRoot, directory)
+  await fs.mkdir(targetDir, { recursive: true })
+  const filePath = path.join(targetDir, fileName)
+  await fs.writeFile(filePath, buffer)
+  return { filePath, publicPath: `/uploads/${directory}/${fileName}` }
 }
 
 function determineExtension(file: File) {
