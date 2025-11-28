@@ -31,10 +31,10 @@ export type UploadMultiplePicturesProps = {
 	id?: string;
 	className?: string;
 	gridClassName?: string;
-  // Enable client-side compression before emitting files (default: true)
-  compress?: boolean;
-  // Optional compression options override
-  compressOptions?: ImageProcessOptions;
+	// Enable client-side compression before emitting files (default: true)
+	compress?: boolean;
+	// Optional compression options override
+	compressOptions?: ImageProcessOptions;
 };
 
 export function UploadMultiplePictures({
@@ -54,33 +54,33 @@ export function UploadMultiplePictures({
 	id,
 	className = "",
 	gridClassName = "grid gap-3 sm:grid-cols-2 lg:grid-cols-3",
-  compress = true,
-  compressOptions,
+	compress = true,
+	compressOptions,
 }: UploadMultiplePicturesProps) {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 
-  async function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+	async function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
 		const files = Array.from(event.target.files ?? []);
-    if (files.length) {
-      let toSend = files;
-      if (compress) {
-        const defaults = deriveMultipleDefaults(previewAspect ?? aspect);
-        try {
-          toSend = await Promise.all(
-            files.map(async (f) => {
-              try {
-                return await processImageFile(f, { ...defaults, ...(compressOptions ?? {}) });
-              } catch {
-                return f;
-              }
-            })
-          );
-        } catch {
-          toSend = files;
-        }
-      }
-      onAddFiles(toSend);
-    }
+		if (files.length) {
+			let toSend = files;
+			if (compress) {
+				const defaults = deriveMultipleDefaults(previewAspect ?? aspect);
+				try {
+					toSend = await Promise.all(
+						files.map(async (f) => {
+							try {
+								return await processImageFile(f, { ...defaults, ...(compressOptions ?? {}) });
+							} catch {
+								return f;
+							}
+						})
+					);
+				} catch {
+					toSend = files;
+				}
+			}
+			onAddFiles(toSend);
+		}
 		if (inputRef.current) inputRef.current.value = "";
 	}
 
@@ -111,7 +111,7 @@ export function UploadMultiplePictures({
 		maskRepeat: "repeat",
 		WebkitMaskSize: backgroundPatternSize ?? "800px",
 		maskSize: backgroundPatternSize ?? "800px",
-		backgroundColor: backgroundPatternColor ?? "#000000",
+		backgroundColor: backgroundPatternColor ?? "var(--foreground)",
 		opacity: typeof backgroundPatternOpacity === "number" ? backgroundPatternOpacity : 0.24,
 	} as const;
 
@@ -132,8 +132,8 @@ export function UploadMultiplePictures({
 						<div aria-hidden className="absolute inset-0 rounded-lg pointer-events-none" style={backgroundPatternStyle} />
 						<Image src={item.previewUrl} alt="Selected" fill unoptimized sizes="200px" className="object-cover" />
 						{item.loading ? (
-							<div className="absolute inset-0 flex items-center justify-center bg-black/40">
-								<div className="h-7 w-7 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />
+							<div className="absolute inset-0 flex items-center justify-center bg-overlay">
+								<div className="h-7 w-7 animate-spin rounded-full border-2 border-foreground/60 border-t-transparent" />
 							</div>
 						) : null}
 						{onRemove ? (
@@ -156,17 +156,17 @@ export function UploadMultiplePictures({
 }
 
 function deriveMultipleDefaults(aspect: AspectMode): ImageProcessOptions {
-  switch (aspect) {
-    case "twentyOneSix":
-    case "twentyOneNine":
-      return { maxWidth: 1920, maxHeight: 1080, mimeType: "image/webp", quality: 0.8 }
-    case "threeFour":
-    case "twentyFourFour":
-      return { maxWidth: 1600, maxHeight: 1200, mimeType: "image/webp", quality: 0.8 }
-    case "square":
-    default:
-      return { maxWidth: 1280, maxHeight: 1280, mimeType: "image/webp", quality: 0.8 }
-  }
+	switch (aspect) {
+		case "twentyOneSix":
+		case "twentyOneNine":
+			return { maxWidth: 1920, maxHeight: 1080, mimeType: "image/webp", quality: 0.8 };
+		case "threeFour":
+		case "twentyFourFour":
+			return { maxWidth: 1600, maxHeight: 1200, mimeType: "image/webp", quality: 0.8 };
+		case "square":
+		default:
+			return { maxWidth: 1280, maxHeight: 1280, mimeType: "image/webp", quality: 0.8 };
+	}
 }
 
 export default UploadMultiplePictures;

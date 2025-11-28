@@ -18,16 +18,31 @@ function providerFor(id: PaymentProviderId): PaymentProvider {
   }
 }
 
-export async function getPaymentSettings() {
-  const existing = await prisma.paymentSettings.findFirst()
-  if (existing) return existing
-  return await prisma.paymentSettings.create({
-    data: {
-      defaultProvider: "STRIPE",
-      enabledProviders: ["STRIPE"],
-      testMode: true,
-    },
+async function getEnabledGateways(): Promise<Array<{ key: PaymentProviderId }>> {
+  const gateways = await prisma.paymentGateway.findMany({
+    where: { isEnabled: true },
+    select: { key: true },
+    orderBy: { createdAt: "asc" },
   })
+  // Narrow keys to known provider ids
+  const known: Set<string> = new Set(["stripe", "payzone", "paypal", "cash", "cmi"])
+  return gateways.filter((g) => known.has(g.key)).map((g) => ({ key: g.key as PaymentProviderId }))
+}
+
+function toPrismaProviderEnum(id: PaymentProviderId): any {
+  // Map lowercase id to Prisma enum without importing generated types
+  switch (id) {
+    case "stripe":
+      return "STRIPE" as any
+    case "payzone":
+      return "PAYZONE" as any
+    case "paypal":
+      return "PAYPAL" as any
+    case "cmi":
+      return "CMI" as any
+    case "cash":
+      return "CASH" as any
+  }
 }
 
 export async function createCheckoutForBooking(params: {
@@ -41,15 +56,20 @@ export async function createCheckoutForBooking(params: {
     include: { experience: true, explorer: true, session: true },
   })
   if (!booking) throw new Error("Booking not found")
-  const settings = await getPaymentSettings()
-  const implemented = new Set<PaymentProviderId>(["stripe", "payzone", "paypal", "cash"]) // currently supported
+  const implemented = new Set<PaymentProviderId>(["stripe", "payzone", "paypal", "cash"]) // supported right now
   const requested = params.providerId
-  const defaultCandidate = settings.defaultProvider.toLowerCase() as PaymentProviderId
-  const enabledCandidates = (settings.enabledProviders || []).map((p) => p.toLowerCase() as PaymentProviderId)
-  const candidates = [requested ?? defaultCandidate, ...enabledCandidates].filter((id, idx, arr) => arr.indexOf(id) === idx)
+  const enabledGateways = await getEnabledGateways()
+  const enabledCandidates = enabledGateways.map((g) => g.key)
+  // Fallback order when no default specified: prefer card processors, then PayPal, then cash
+  const fallbackOrder: PaymentProviderId[] = ["stripe", "payzone", "paypal", "cash"]
+  const candidates = [
+    ...(requested ? [requested] : []),
+    ...enabledCandidates,
+    ...fallbackOrder,
+  ].filter((id, idx, arr) => arr.indexOf(id) === idx)
   const chosen = candidates.find((id) => implemented.has(id))
   if (!chosen) {
-    throw new Error("No supported payment provider is enabled. Enable Stripe or Payzone in settings.")
+    throw new Error("No supported payment provider is enabled. Enable Stripe, Payzone, PayPal or Cash.")
   }
   // Cash flow: confirm immediately, create Payment with status PROCESSING, no redirect to external gateway
   if (chosen === "cash") {
@@ -81,7 +101,7 @@ export async function createCheckoutForBooking(params: {
       // Seed with configured default (typed from Prisma) to satisfy type constraints;
       // we correct it below if we fall back to another provider.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      provider: (chosen.toUpperCase()) as any,
+      provider: toPrismaProviderEnum(chosen),
       amount: Math.round(booking.totalPrice * 100),
       currency: booking.experience.currency,
       status: "REQUIRES_PAYMENT_METHOD",
@@ -110,7 +130,7 @@ export async function createCheckoutForBooking(params: {
       if (id !== chosen) {
         // Narrowing Prisma enum type for update without tying to client internals
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await prisma.payment.update({ where: { id: payment.id }, data: { provider: id.toUpperCase() as any } })
+        await prisma.payment.update({ where: { id: payment.id }, data: { provider: toPrismaProviderEnum(id) } })
       }
       break
     } catch (e) {

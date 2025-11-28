@@ -15,7 +15,7 @@ type ToggleFieldProps = {
 export function ToggleField({ label, checked, onChange, disabled, className, containerClassName }: ToggleFieldProps) {
 	return (
 		<div className={cn("flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2", containerClassName)}>
-			<div className={cn("text-sm text-muted-foreground", className)}>{label}</div>
+			<div className={cn("text-sm text-muted-foreground mr-4", className)}>{label}</div>
 			<button
 				type="button"
 				role="switch"

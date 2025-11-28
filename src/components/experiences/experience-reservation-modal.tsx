@@ -143,6 +143,9 @@ export function ExperienceReservationModal({
 	const [guestCount, setGuestCount] = useState(1);
 	const [apiState, setApiState] = useState<ApiState>({ status: "idle" });
 	const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "cash">("card");
+	const [enabledProviders, setEnabledProviders] = useState<Array<"STRIPE" | "PAYPAL" | "PAYZONE" | "CMI" | "CASH"> | null>(null);
+	const [providersList, setProvidersList] = useState<Array<{ key: string; type: "CARD" | "CASH" | "PAYPAL"; logoUrl?: string | null; isEnabled?: boolean; name?: string }> | null>(null);
+	const [brandLogo, setBrandLogo] = useState<string | null>(null);
 
 	const sessionLookup = useMemo(() => {
 		return new Map(sessions.map((session) => [session.id, session]));
@@ -196,6 +199,32 @@ export function ExperienceReservationModal({
 			document.body.classList.remove("overflow-hidden");
 		};
 	}, [closeModal, open]);
+
+	// Load public payment settings (enabled providers) for showing payment methods
+	useEffect(() => {
+		let active = true;
+		(async () => {
+			try {
+				const res = await fetch("/api/settings/payments", { cache: "no-store" });
+				if (!res.ok) return;
+				const data = (await res.json()) as {
+					enabledProviders?: string[];
+					paymentBrandImageUrl?: string | null;
+					providers?: Array<{ key: string; type: "CARD" | "CASH" | "PAYPAL"; logoUrl?: string | null; isEnabled?: boolean; name?: string }>;
+				} | null;
+				if (active && data) {
+					setEnabledProviders(data.enabledProviders.filter(Boolean) as Array<"STRIPE" | "PAYPAL" | "PAYZONE" | "CMI" | "CASH">);
+					setProvidersList(Array.isArray(data.providers) ? data.providers : []);
+					setBrandLogo(data.paymentBrandImageUrl ?? null);
+				}
+			} catch {
+				// ignore
+			}
+		})();
+		return () => {
+			active = false;
+		};
+	}, [open]);
 
 	// Allow opening via a global custom event for external triggers (e.g., sticky header)
 	useEffect(() => {
@@ -443,20 +472,103 @@ export function ExperienceReservationModal({
 													<span className="text-lg font-semibold text-foreground">{formatCurrency(totalPrice, experience.currency)}</span>
 												</div>
 												<div className="mt-3 grid gap-2">
-													<p className="text-xs font-medium text-foreground">Payment method</p>
+													<p className="text-xs font-medium text-foreground">Select a payment method</p>
 													<div className="flex flex-col gap-2">
-														<label className="inline-flex items-center gap-2 text-sm">
-															<input type="radio" name="payment-method" checked={paymentMethod === "card"} onChange={() => setPaymentMethod("card")} />
-															<span>Pay with Card</span>
-														</label>
-														<label className="inline-flex items-center gap-2 text-sm">
-															<input type="radio" name="payment-method" checked={paymentMethod === "paypal"} onChange={() => setPaymentMethod("paypal")} />
-															<span>PayPal</span>
-														</label>
-														<label className="inline-flex items-center gap-2 text-sm">
-															<input type="radio" name="payment-method" checked={paymentMethod === "cash"} onChange={() => setPaymentMethod("cash")} />
-															<span>Pay on Cash</span>
-														</label>
+														{(() => {
+															const allowed = new Set((enabledProviders ?? ["STRIPE", "PAYPAL", "CASH"]).map((p) => p.toUpperCase()));
+															const showCard = allowed.has("STRIPE") || allowed.has("PAYZONE") || allowed.has("CMI");
+															const showPaypal = allowed.has("PAYPAL");
+															// Apple Pay not supported yet; hide until implemented
+															const showApple = false;
+															const cardLogo = (() => {
+																const list = providersList ?? [];
+																const p = list.find((x) => x.isEnabled && x.type === "CARD" && typeof x.logoUrl === "string" && x.logoUrl.length > 0);
+																return p?.logoUrl ?? null;
+															})();
+															const paypalLogo = (() => {
+																const list = providersList ?? [];
+																const p = list.find((x) => x.isEnabled && x.type === "PAYPAL" && typeof x.logoUrl === "string" && x.logoUrl.length > 0);
+																return p?.logoUrl ?? null;
+															})();
+															const showCash = allowed.has("CASH");
+															return (
+																<>
+																	{showCard ? (
+																		<label className="flex items-center justify-between rounded-xl border border-border/60 p-4 hover:bg-muted/40">
+																			<div className="flex items-center gap-3">
+																				<input
+																					type="radio"
+																					name="payment-method"
+																					className="size-4"
+																					checked={paymentMethod === "card"}
+																					onChange={() => setPaymentMethod("card")}
+																				/>
+																				<div className="flex flex-col">
+																					<span className="text-base font-semibold text-foreground">Credit Card</span>
+																					<span className="text-xs text-muted-foreground">Takes minute</span>
+																				</div>
+																			</div>
+																			<div className="flex items-center gap-2">
+																				{cardLogo ? (
+																					<div className="relative h-5 w-16">
+																						<Image src={cardLogo} alt="Card payment" fill className="object-contain" sizes="64px" />
+																					</div>
+																				) : (
+																					<>
+																						<span className="rounded-md border border-border/60 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground">VISA</span>
+																						<span className="rounded-md border border-border/60 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground">MASTERCARD</span>
+																					</>
+																				)}
+																			</div>
+																		</label>
+																	) : null}
+																	{showPaypal ? (
+																		<label className="flex items-center justify-between rounded-xl border border-border/60 p-4 hover:bg-muted/40">
+																			<div className="flex items-center gap-3">
+																				<input
+																					type="radio"
+																					name="payment-method"
+																					className="size-4"
+																					checked={paymentMethod === "paypal"}
+																					onChange={() => setPaymentMethod("paypal")}
+																				/>
+																				<div className="flex flex-col">
+																					<span className="text-base font-semibold text-foreground">PayPal</span>
+																					<span className="text-xs text-muted-foreground">Takes minute</span>
+																				</div>
+																			</div>
+																			<div className="flex items-center">
+																				{paypalLogo ? (
+																					<div className="relative h-5 w-16">
+																						<Image src={paypalLogo} alt="PayPal" fill className="object-contain" sizes="64px" />
+																					</div>
+																				) : (
+																					<span className="rounded-md border border-border/60 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground">PayPal</span>
+																				)}
+																			</div>
+																		</label>
+																	) : null}
+																	{showApple ? null : null}
+																	{showCash ? (
+																		<label className="flex items-center justify-between rounded-xl border border-border/60 p-4 hover:bg-muted/40">
+																			<div className="flex items-center gap-3">
+																				<input
+																					type="radio"
+																					name="payment-method"
+																					className="size-4"
+																					checked={paymentMethod === "cash"}
+																					onChange={() => setPaymentMethod("cash")}
+																				/>
+																				<div className="flex flex-col">
+																					<span className="text-base font-semibold text-foreground">Cash</span>
+																					<span className="text-xs text-muted-foreground">Pay on arrival</span>
+																				</div>
+																			</div>
+																		</label>
+																	) : null}
+																</>
+															);
+														})()}
 													</div>
 												</div>
 												<p className="text-xs text-muted-foreground">You’ll be redirected to a secure payment page to complete your reservation.</p>

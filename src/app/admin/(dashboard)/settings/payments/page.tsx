@@ -5,9 +5,7 @@ import { PaymentSettingsManager } from "@/components/admin/settings/payment-sett
 export default function AdminPaymentsSettingsPage() {
 	return (
 		<ConsolePage title="Payments settings" subtitle="Configure payment providers and platform defaults.">
-			<ConsoleSection title="Providers" subtitle="Enable providers and set the default. Secrets are managed via environment variables." className="mb-6 gap-0">
-				<PaymentSettingsManager />
-			</ConsoleSection>
+			<PaymentSettingsManager />
 		</ConsolePage>
 	);
 }

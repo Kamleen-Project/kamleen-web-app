@@ -3,7 +3,7 @@ import { Pencil } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 
 import { prisma } from "@/lib/prisma";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { UsersActions } from "@/components/admin/users-actions";
 import { ConsolePage } from "@/components/console/page";
 import { Table, TableBody, TableCell, TableContainer, TableEmpty, TableHead, TableHeader, TableHeaderRow, TableRow } from "@/components/ui/table";
@@ -91,15 +91,13 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: S
 										<TableCell>{user._count.experienceBookings}</TableCell>
 										<TableCell>{user._count.experiences}</TableCell>
 										<TableCell>
-											<Badge variant="outline" className="text-xs uppercase">
-												{user.role.toLowerCase()}
-											</Badge>
+											<StatusBadge value={formatLabel(user.role)} variation={mapRoleVariation(user.role)} />
 										</TableCell>
 										<TableCell>
-											<OrganizerStatusBadge value={user.organizerStatus} />
+											<StatusBadge value={formatLabel(user.organizerStatus)} variation={mapOrganizerVariation(user.organizerStatus)} />
 										</TableCell>
 										<TableCell>
-											<AccountStatusBadge value={user.accountStatus} />
+											<StatusBadge value={formatAccountLabel(user.accountStatus)} variation={mapAccountVariation(user.accountStatus)} />
 										</TableCell>
 										<TableCell>
 											<span className="text-[12px] text-muted-foreground">{formatDistanceToNowStrict(user.createdAt, { addSuffix: true })}</span>
@@ -131,34 +129,34 @@ function normalizeStringParam(value: string | string[] | undefined): string | nu
 	return null;
 }
 
-function OrganizerStatusBadge({ value }: { value: string }) {
-	const label = value.toLowerCase().replace(/_/g, " ");
-	if (value === "APPROVED") return <Badge className="bg-emerald-600 text-white border-transparent">{label}</Badge>;
-	if (value === "PENDING") return <Badge className="bg-amber-500 text-white border-transparent">{label}</Badge>;
-	if (value === "REJECTED") return <Badge className="bg-rose-600 text-white border-transparent">{label}</Badge>;
-	return (
-		<Badge variant="outline" className="text-xs uppercase">
-			{label}
-		</Badge>
-	);
+function formatLabel(value: string): string {
+	return value.toLowerCase().replace(/_/g, " ");
 }
 
-function AccountStatusBadge({ value }: { value: string }) {
-	const label = value.toLowerCase().replace(/_/g, " ");
-	if (value === "ACTIVE") return <Badge className="bg-emerald-600 text-white border-transparent">{label}</Badge>;
-	if (value === "PENDING_VERIFICATION") return <Badge className="bg-amber-500 text-white border-transparent">{"pending"}</Badge>;
-	if (value === "ONBOARDING") return <Badge className="bg-sky-600 text-white border-transparent">{label}</Badge>;
-	if (value === "INACTIVE")
-		return (
-			<Badge variant="outline" className="text-xs uppercase">
-				{label}
-			</Badge>
-		);
-	if (value === "BANNED") return <Badge className="bg-rose-600 text-white border-transparent">{label}</Badge>;
-	if (value === "ARCHIVED") return <Badge className="bg-slate-600 text-white border-transparent">{label}</Badge>;
-	return (
-		<Badge variant="outline" className="text-xs uppercase">
-			{label}
-		</Badge>
-	);
+function mapRoleVariation(value: string): "info" | "outline" | "primary" {
+	if (value === "ORGANIZER") return "info";
+	if (value === "EXPLORER") return "primary";
+	return "outline";
+}
+
+function mapOrganizerVariation(value: string): "success" | "warning" | "danger" | "outline" {
+	if (value === "APPROVED") return "success";
+	if (value === "PENDING") return "warning";
+	if (value === "REJECTED") return "danger";
+	return "outline";
+}
+
+function formatAccountLabel(value: string): string {
+	if (value === "PENDING_VERIFICATION") return "pending";
+	return formatLabel(value);
+}
+
+function mapAccountVariation(value: string): "success" | "warning" | "danger" | "muted" | "info" | "outline" {
+	if (value === "ACTIVE") return "success";
+	if (value === "PENDING_VERIFICATION") return "warning";
+	if (value === "ONBOARDING") return "info";
+	if (value === "INACTIVE") return "outline";
+	if (value === "BANNED") return "danger";
+	if (value === "ARCHIVED") return "muted";
+	return "outline";
 }

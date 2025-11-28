@@ -1,11 +1,21 @@
 import crypto from "crypto"
 
 import { PaymentProvider, CreateCheckoutParams, CreateCheckoutResult, ProviderCreateRefundParams, ProviderCreateRefundResult } from "@/lib/payments/types"
+import { prisma } from "@/lib/prisma"
 
-function getSecret(): string {
-  const key = process.env.PAYZONE_SECRET_KEY
-  if (!key) throw new Error("Missing PAYZONE_SECRET_KEY env var")
-  return key
+async function resolveConfig(): Promise<{ secret: string; gatewayBase: string }> {
+  const gw = await prisma.paymentGateway.findUnique({ where: { key: "payzone" } })
+  const cfg = (gw?.config as null | { secretKey?: string; gatewayUrl?: string }) || {}
+  const fromCfgSecret = typeof cfg.secretKey === "string" ? cfg.secretKey : null
+  const secret =
+    (fromCfgSecret && !fromCfgSecret.startsWith("env:")) ? fromCfgSecret :
+    (fromCfgSecret?.startsWith("env:") ? process.env[fromCfgSecret.slice(4)] : undefined) ||
+    process.env.PAYZONE_SECRET_KEY
+  if (!secret) throw new Error("Missing Payzone secret key (DB or PAYZONE_SECRET_KEY)")
+  const gatewayBase = (typeof cfg.gatewayUrl === "string" && cfg.gatewayUrl.length > 0)
+    ? cfg.gatewayUrl
+    : (process.env.PAYZONE_GATEWAY_URL || "https://secure.payzone.ma/checkout")
+  return { secret, gatewayBase }
 }
 
 function buildSignature(payload: Record<string, string>, secret: string): string {
@@ -27,8 +37,7 @@ export const payzoneProvider: PaymentProvider = {
   id: "payzone",
 
   async createCheckout(params: CreateCheckoutParams): Promise<CreateCheckoutResult> {
-    const secret = getSecret()
-    const gatewayBase = process.env.PAYZONE_GATEWAY_URL || "https://secure.payzone.ma/checkout"
+    const { secret, gatewayBase } = await resolveConfig()
     const ipn = `${process.env.NEXT_PUBLIC_APP_URL || ""}/api/webhooks/payzone`
 
     // Build minimal payload. We include booking/payment metadata via orderId and custom fields if supported
