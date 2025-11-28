@@ -37,6 +37,7 @@ export async function POST(request: Request) {
       type: body.type,
       logoUrl: (typeof body.logoUrl === "string" ? body.logoUrl : null) ?? null,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       config: (body.config ?? null) as any,
       testMode: typeof body.testMode === "boolean" ? body.testMode : true,
       isEnabled: typeof body.isEnabled === "boolean" ? body.isEnabled : false,

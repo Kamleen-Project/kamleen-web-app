@@ -13,6 +13,7 @@ type Gateway = {
 	name: string;
 	type: "CARD" | "CASH" | "PAYPAL";
 	logoUrl?: string | null;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	config?: any;
 	testMode: boolean;
 	isEnabled: boolean;

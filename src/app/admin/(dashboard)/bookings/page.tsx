@@ -31,17 +31,17 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
 		...(paymentStatusQuery !== "__ALL__" ? { paymentStatus: paymentStatusQuery as $Enums.PaymentStatus } : {}),
 		...(q
 			? {
-					OR: [
-						{ id: { contains: q, mode: "insensitive" } },
-						{ experience: { title: { contains: q, mode: "insensitive" } } as unknown as Prisma.ExperienceWhereInput },
-						{
-							explorer: {
-								OR: [{ name: { contains: q, mode: "insensitive" } }, { email: { contains: q, mode: "insensitive" } }],
-							} as unknown as Prisma.UserWhereInput,
-						},
-						{ payment: { is: { OR: [{ providerPaymentId: { contains: q, mode: "insensitive" } }, { id: { contains: q, mode: "insensitive" } }] } } },
-					],
-			  }
+				OR: [
+					{ id: { contains: q, mode: "insensitive" } },
+					{ experience: { title: { contains: q, mode: "insensitive" } } as unknown as Prisma.ExperienceWhereInput },
+					{
+						explorer: {
+							OR: [{ name: { contains: q, mode: "insensitive" } }, { email: { contains: q, mode: "insensitive" } }],
+						} as unknown as Prisma.UserWhereInput,
+					},
+					{ payment: { is: { OR: [{ providerPaymentId: { contains: q, mode: "insensitive" } }, { id: { contains: q, mode: "insensitive" } }] } } },
+				],
+			}
 			: {}),
 	};
 
@@ -139,7 +139,10 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
 											) : (
 												<span className="text-xs text-muted-foreground">-</span>
 											)}
-											{b.payment ? <PaymentInfoButton payment={b.payment as any} /> : null}
+											{b.payment ? (
+												// eslint-disable-next-line @typescript-eslint/no-explicit-any
+												<PaymentInfoButton payment={b.payment as any} />
+											) : null}
 										</div>
 									</TableCell>
 									<TableCell align="right">
@@ -147,6 +150,7 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
 									</TableCell>
 									<TableCell align="right">
 										<div className="flex items-center justify-end gap-2">
+											{/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
 											<BookingInfoButton booking={b as any} />
 											{b.status === "PENDING" && b.paymentStatus === "PROCESSING" ? <MarkPaidButton bookingId={b.id} /> : null}
 										</div>

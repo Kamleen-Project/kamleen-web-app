@@ -35,18 +35,24 @@ async function getEnabledGateways(): Promise<Array<{ key: PaymentProviderId }>> 
   return gateways.filter((g) => known.has(g.key)).map((g) => ({ key: g.key as PaymentProviderId }))
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toPrismaProviderEnum(id: PaymentProviderId): any {
   // Map lowercase id to Prisma enum without importing generated types
   switch (id) {
     case "stripe":
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return "STRIPE" as any
     case "payzone":
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return "PAYZONE" as any
     case "paypal":
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return "PAYPAL" as any
     case "cmi":
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return "CMI" as any
     case "cash":
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return "CASH" as any
   }
 }

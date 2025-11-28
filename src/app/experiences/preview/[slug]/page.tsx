@@ -88,6 +88,7 @@ export default async function ExperiencePreviewPage({ params }: { params: Promis
 				reviewCount={experience.reviewCount ?? 0}
 				triggerId="experience-basic-info"
 				ctaTargetId="experience-reserve-button"
+				experienceId={experience.id}
 			/>
 
 			<Container className="mt-8">

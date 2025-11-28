@@ -22,8 +22,8 @@ import { useNotifications } from "@/components/providers/notification-provider"
 import { useRouter } from "next/navigation"
 
 export default function NewsletterPage() {
-    const [subscribers, setSubscribers] = useState<any[]>([])
-    const [campaigns, setCampaigns] = useState<any[]>([])
+    const [subscribers, setSubscribers] = useState<{ id: string; email: string; isActive: boolean; createdAt: Date }[]>([])
+    const [campaigns, setCampaigns] = useState<{ id: string; subject: string; content: string; status: string; totalRecipients: number; processedRecipients: number; recipientCount: number; sentAt: Date | null }[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<"subscribers" | "campaigns">("subscribers")
     const [refreshing, setRefreshing] = useState(false)
@@ -77,7 +77,7 @@ export default function NewsletterPage() {
         fetchData()
     }
 
-    const handleView = async (campaign: any) => {
+    const handleView = async (campaign: { subject: string; content: string }) => {
         setViewSubject(campaign.subject)
         setViewLoading(true)
         setViewOpen(true)

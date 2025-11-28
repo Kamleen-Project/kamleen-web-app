@@ -128,7 +128,7 @@ export async function sendCampaign(campaignId: string) {
   }
 }
 
-async function processCampaign(campaignId: string, subscribers: any[], rendered: any) {
+async function processCampaign(campaignId: string, subscribers: { email: string }[], rendered: { subject: string; html: string; text?: string }) {
   let sentCount = 0
   const batchSize = 10 // Update progress every 10 emails
 
