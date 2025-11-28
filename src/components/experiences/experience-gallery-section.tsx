@@ -25,8 +25,7 @@ export function ExperienceGallerySection({ title, images }: ExperienceGallerySec
 					<ExperienceGallery images={previewImages} title={title} onImageSelect={() => open()} />
 					{hasMoreImages ? (
 						<div className="absolute right-4 top-4 z-10">
-							<CtaButton type="button" color="black" size="sm" onClick={() => open()}>
-								<Images className="size-4" />
+							<CtaButton type="button" color="black" size="md" onClick={() => open()} startIcon={<Images className="size-4" />}>
 								Show all photos
 							</CtaButton>
 						</div>

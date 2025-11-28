@@ -96,9 +96,7 @@ function formatDate(value: string) {
 	}).format(new Date(value));
 }
 
-function formatCurrency(value: number, currency: string) {
-	return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(value);
-}
+import { formatCurrency } from "@/lib/format-currency";
 
 function StatusBadge({ status }: { status: "PENDING" | "CONFIRMED" | "CANCELLED" }) {
 	const statusStyles =

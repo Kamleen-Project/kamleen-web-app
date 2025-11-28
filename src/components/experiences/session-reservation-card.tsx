@@ -2,7 +2,6 @@
 
 import { MapPin } from "lucide-react";
 import { useMemo } from "react";
-import { getSessionName, type SessionNameVariant } from "@/lib/session-name";
 import { parseDurationToMinutes } from "@/lib/duration";
 
 type Session = {
@@ -26,7 +25,7 @@ type ExperienceMeta = {
 	location?: string | null;
 };
 
-export type SessionReservationCardVariant = SessionNameVariant;
+export type SessionReservationCardVariant = "full" | "preview";
 
 export type SessionReservationCardProps = {
 	session: Session;
@@ -37,9 +36,7 @@ export type SessionReservationCardProps = {
 	onSelect?: (sessionId: string) => void;
 };
 
-function formatCurrency(value: number, currency: string) {
-	return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
-}
+import { formatCurrency } from "@/lib/format-currency";
 
 function formatTime(value: string) {
 	const date = new Date(value);
@@ -72,62 +69,64 @@ function formatDateLabel(value: string) {
 	}).format(date);
 }
 
-export function SessionReservationCard({ session, experience, selected, disabled, variant = "time", onSelect }: SessionReservationCardProps) {
+function formatDateLabelNoYear(value: string) {
+	const date = new Date(value);
+	return new Intl.DateTimeFormat("en", {
+		weekday: "long",
+		month: "short",
+		day: "numeric",
+	}).format(date);
+}
+
+export function SessionReservationCard({ session, experience, selected, disabled, variant = "preview", onSelect }: SessionReservationCardProps) {
 	const available = session.availableSpots ?? session.capacity ?? 0;
 	const isSoldOut = available <= 0;
 	const pricePerSpot = session.priceOverride ?? experience.basePrice;
 
-	const whenLabel = useMemo(() => {
-		return getSessionName({
-			startAt: session.startAt,
-			durationLabel: session.duration ?? null,
-			fallbackDurationLabel: experience.duration ?? null,
-			variant,
-		});
-	}, [variant, session.startAt, session.duration, experience.duration]);
-
 	const locationLabel = useMemo(() => {
 		const top = session.meetingAddress ?? session.locationLabel ?? null;
+		if (!top) return null;
 		const city = experience.meetingCity ?? null;
-		const fallbackTop = experience.meetingAddress ?? experience.location ?? null;
-		const base = top ?? fallbackTop;
-		if (!base) return null;
-		return city ? `${base}, ${city}` : base;
-	}, [session.meetingAddress, session.locationLabel, experience.meetingAddress, experience.location, experience.meetingCity]);
+		return city ? `${top}, ${city}` : top;
+	}, [session.meetingAddress, session.locationLabel, experience.meetingCity]);
 
 	return (
 		<button
 			type="button"
 			disabled={disabled || isSoldOut}
 			onClick={() => onSelect?.(session.id)}
-			className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-				selected ? "border-primary bg-primary/10 text-foreground" : "border-border/60 bg-muted/40 text-muted-foreground hover:border-border"
-			} ${isSoldOut ? "opacity-50 cursor-not-allowed" : ""}`}
+			className={`w-full rounded-2xl border px-4 py-3 text-left transition ${selected ? "border-brand border-2 border-l-5 bg-white text-foreground" : "border-border border-2 bg-white text-muted-foreground hover:border-border"
+				} ${isSoldOut ? "opacity-50 cursor-not-allowed" : ""}`}
 		>
 			<div className="flex flex-col gap-2 text-sm">
 				<div className="flex items-start justify-between gap-3">
-					<span className="font-medium text-foreground">{whenLabel}</span>
+					<div className="flex flex-col">
+						{variant === "preview" && (
+							<span className="font-medium text-foreground">{formatDateLabelNoYear(session.startAt)}</span>
+						)}
+						<span className={variant === "full" ? "font-medium text-foreground" : "text-muted-foreground"}>
+							{formatTimeRange(session.startAt, session.duration, experience.duration)}
+						</span>
+					</div>
 					<span
-						className={`ml-auto whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-							isSoldOut ? "border-destructive/30 bg-background/50 text-destructive" : "border-border/50 bg-background/50 text-foreground"
-						}`}
+						className={`ml-auto whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium ${isSoldOut ? "border-destructive/30 bg-background/50 text-destructive" : "border-border/50 bg-background/50 text-foreground"
+							}`}
 					>
 						{isSoldOut ? "Sold out" : `${available} spots left`}
 					</span>
 				</div>
-				<div className="flex items-center justify-between gap-3 text-xs">
-					<div className="flex flex-wrap items-center gap-3 text-muted-foreground/80">
-						{experience.audience && experience.audience.toLowerCase() !== "all" ? (
-							<span className="rounded-full border border-border/40 bg-muted/30 px-2 py-0.5 text-[11px] uppercase tracking-wider">{experience.audience}</span>
-						) : null}
-						{locationLabel ? (
-							<span className="inline-flex items-center gap-1 text-muted-foreground">
-								<MapPin className="size-3" /> {locationLabel}
-							</span>
-						) : null}
+				{variant === "full" && (
+					<div className="flex items-center justify-between gap-3 text-xs pt-1 border-t border-border/40 mt-1">
+						<div className="flex flex-wrap items-center gap-3 text-muted-foreground/80">
+							{locationLabel ? (
+								<span className="inline-flex items-center gap-1 text-muted-foreground">
+									<MapPin className="size-3" /> {locationLabel}
+								</span>
+							) : null}
+						</div>
+						<span className="text-xs font-medium text-foreground">{formatCurrency(pricePerSpot, experience.currency)} / spot</span>
 					</div>
-					<span className="text-xs font-medium text-foreground">{formatCurrency(pricePerSpot, experience.currency)} / spot</span>
-				</div>
+				)}
 			</div>
 		</button>
 	);

@@ -548,27 +548,55 @@ model Refund {
   @@index([paymentId])
 }
 
-// Admin-configurable settings for payment providers
-model PaymentSettings {
-  id               String           @id @default(cuid())
-  defaultProvider  PaymentProvider  @default(STRIPE)
-  enabledProviders PaymentProvider[]
-  // Stripe (store non-secret values only; secrets via env)
-  stripePublishableKey String?
-  stripeAccountCountry String?
-  // CMI (avoid storing store key/secret)
-  cmiMerchantId     String?
-  cmiTerminalId     String?
-  cmiCurrency       String?
-  // Payzone (avoid storing secret key)
-  payzoneMerchantId String?
-  payzoneSiteId     String?
-  payzoneCurrency   String?
-  payzoneGatewayUrl String?
-  // PayPal (allow storing credentials in DB if desired)
-  paypalClientId    String?
-  paypalClientSecret String?
-  testMode          Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+// PaymentSettings model removed in favor of PaymentGateway
+
+// High-level categories of payment methods for UX and routing
+enum PaymentMethodType {
+  CARD
+  CASH
+  PAYPAL
+}
+
+// New table listing payment gateways/providers with per-provider config
+model PaymentGateway {
+  id         String            @id @default(cuid())
+  // Unique machine key to map code -> provider implementation: e.g., "stripe", "paypal", "payzone", "cmi", "cash"
+  key        String            @unique
+  name       String
+  type       PaymentMethodType
+  logoUrl    String?
+  // Arbitrary provider-specific configuration (credentials, options)
+  config     Json?
+  testMode   Boolean           @default(true)
+  isEnabled  Boolean           @default(false)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NewsletterCampaign {
+  id                  String         @id @default(cuid())
+  subject             String
+  content             String
+  sentAt              DateTime?
+  recipientCount      Int            @default(0)
+  totalRecipients     Int            @default(0)
+  processedRecipients Int            @default(0)
+  status              CampaignStatus @default(DRAFT)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+}
+
+enum CampaignStatus {
+  DRAFT
+  SENDING
+  SENT
+  FAILED
 }

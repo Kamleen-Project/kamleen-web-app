@@ -5,17 +5,16 @@ import { Camera, ChefHat, Compass, Flame, Heart, Palette, Sparkles, Users, Waves
 import { ExperienceCard, type Experience } from "@/components/cards/experience-card";
 import { FeatureCard } from "@/components/cards/feature-card";
 import { HostCard, type Host } from "@/components/cards/host-card";
-import Image from "next/image";
 // Removed StatCard import as stats section is being removed
 import { TestimonialCard, type Testimonial } from "@/components/cards/testimonial-card";
 import { Container } from "@/components/layout/container";
 import { SectionHeading } from "@/components/layout/section-heading";
-import { Badge } from "@/components/ui/badge";
 import StickySearchSection from "@/components/experiences/sticky-search-section";
 import { ExperienceCarousel } from "@/components/experiences/experience-carousel";
 import { prisma } from "@/lib/prisma";
 import { experienceCardSelect, mapExperienceToCard } from "@/lib/experiences";
 import { defaultFaqs } from "@/data/faqs";
+import { NewsletterSection } from "@/components/marketing/newsletter-section";
 
 type CarouselCategory = { id: string; slug: string; name: string; subtitle: string; picture: string; experienceCount: number };
 
@@ -233,25 +232,32 @@ export default async function Home() {
 					{categories.length ? (
 						<section>
 							<Container className="space-y-8">
-								<SectionHeading eyebrow="Browse" title="Popular categories" description="Explore by interest and find your next experience." align="center" />
-								<div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
-									{categories.map((c) => (
-										<Link key={c.id} href={`/categories/${c.slug}`} className="group rounded-xl border border-border/60 bg-card/60 shadow-sm overflow-hidden">
-											<div className="relative aspect-[3/2]">
-												<Image src={c.picture} alt={c.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-												<div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
-											</div>
-											<div className="p-4">
-												<div className="flex items-center justify-between gap-3">
-													<h3 className="text-base font-semibold tracking-tight">{c.name}</h3>
-													<Badge variant="soft" className="text-[11px]">
-														{c.experienceCount}
-													</Badge>
+								<div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+									<div className="flex snap-x snap-mandatory gap-4 sm:gap-4 md:gap-4">
+										{categories.map((c) => (
+											<Link
+												key={c.id}
+												href={`/categories/${c.slug}`}
+												className="group/item relative aspect-[3/4] w-32 flex-none overflow-hidden rounded-xl border border-border/60 bg-muted/20 sm:w-40 md:w-48 snap-start"
+											>
+												<div
+													className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover/item:scale-105"
+													style={{ backgroundImage: `url(${c.picture})` }}
+												/>
+												<div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/0 to-black/40" />
+												<div className="absolute left-3 right-3 top-3 flex flex-col gap-1">
+													<span className="w-fit px-0 py-0 text-lg font-extrabold tracking-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
+														{c.name}
+													</span>
+													{c.subtitle ? (
+														<span className="line-clamp-2 max-w-[85%] text-xs font-medium leading-snug text-white/90 opacity-0 transition-opacity duration-200 group-hover/item:opacity-100">
+															{c.subtitle}
+														</span>
+													) : null}
 												</div>
-												{c.subtitle ? <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{c.subtitle}</p> : null}
-											</div>
-										</Link>
-									))}
+											</Link>
+										))}
+									</div>
 								</div>
 							</Container>
 						</section>
@@ -268,6 +274,7 @@ export default async function Home() {
 						</section>
 					) : null}
 				</main>
+				<NewsletterSection />
 			</div>
 		</div>
 	);

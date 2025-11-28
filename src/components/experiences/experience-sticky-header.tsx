@@ -5,7 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Container } from "@/components/layout/container";
 import { CtaButton } from "@/components/ui/cta-button";
 import { cn } from "@/lib/utils";
-import { Star } from "lucide-react";
+
+import { useCountdown } from "@/hooks/use-countdown";
+import { EXPERIENCE_RESERVATION_STATUS_EVENT, type ReservationStatusDetail } from "@/lib/events/reservations";
+import { ExperienceRating } from "@/components/experiences/experience-rating";
 
 type ExperienceStickyHeaderProps = {
 	title: string;
@@ -13,10 +16,25 @@ type ExperienceStickyHeaderProps = {
 	ctaTargetId?: string;
 	averageRating: number;
 	reviewCount: number;
+	experienceId: string;
+	initialPendingReservation?: { expiresAt: string | null } | null;
 };
 
-export function ExperienceStickyHeader({ title, triggerId, ctaTargetId, averageRating, reviewCount }: ExperienceStickyHeaderProps) {
+export function ExperienceStickyHeader({
+	title,
+	triggerId,
+	ctaTargetId,
+	averageRating,
+	reviewCount,
+	experienceId,
+	initialPendingReservation = null,
+}: ExperienceStickyHeaderProps) {
 	const [isVisible, setIsVisible] = useState(false);
+	const [pendingReservation, setPendingReservation] = useState(initialPendingReservation);
+	const { formatted: countdownLabel, isExpired } = useCountdown(pendingReservation?.expiresAt ?? null, {
+		onExpire: () => setPendingReservation(null),
+	});
+	const hasPendingReservation = !!pendingReservation && !isExpired;
 
 	useEffect(() => {
 		const target = document.getElementById(triggerId);
@@ -67,7 +85,24 @@ export function ExperienceStickyHeader({ title, triggerId, ctaTargetId, averageR
 		}
 	}, [ctaTargetId]);
 
+	useEffect(() => {
+		const handler = (event: Event) => {
+			const detail = (event as CustomEvent<ReservationStatusDetail>).detail;
+			if (!detail || detail.experienceId !== experienceId) {
+				return;
+			}
+			if (detail.bookingId && detail.expiresAt) {
+				setPendingReservation({ expiresAt: detail.expiresAt });
+			} else {
+				setPendingReservation(null);
+			}
+		};
+		window.addEventListener(EXPERIENCE_RESERVATION_STATUS_EVENT, handler);
+		return () => window.removeEventListener(EXPERIENCE_RESERVATION_STATUS_EVENT, handler);
+	}, [experienceId]);
+
 	const hasReviews = reviewCount > 0;
+	const ctaLabel = hasPendingReservation ? `Complete your reservation${countdownLabel ? ` · ${countdownLabel}` : ""}` : "Reserve a spot";
 
 	return (
 		<div
@@ -80,20 +115,10 @@ export function ExperienceStickyHeader({ title, triggerId, ctaTargetId, averageR
 			<Container className={cn("flex items-center justify-between gap-4", isVisible ? "py-3" : "py-0")}>
 				<div className="min-w-0 flex-1">
 					<h2 className="truncate text-base font-semibold text-white sm:text-lg">{title}</h2>
-					<div className="mt-1 flex items-center gap-2 text-xs text-white/80">
-						<span className="inline-flex items-center gap-1">
-							<Star className={cn("size-4", hasReviews ? "text-amber-400" : "text-white/40")} aria-hidden="true" />
-							<span className="font-medium text-white">{hasReviews ? averageRating.toFixed(2) : "No reviews yet"}</span>
-						</span>
-						{hasReviews ? (
-							<span>
-								{reviewCount} review{reviewCount === 1 ? "" : "s"}
-							</span>
-						) : null}
-					</div>
+					<ExperienceRating averageRating={averageRating} reviewCount={reviewCount} variant="sticky" className="mt-1" />
 				</div>
-				<CtaButton size="lg" color="white" onClick={handleReserveClick}>
-					Reserve a spot
+				<CtaButton size="lg" color={hasPendingReservation ? "amber" : "white"} onClick={handleReserveClick}>
+					{ctaLabel}
 				</CtaButton>
 			</Container>
 		</div>

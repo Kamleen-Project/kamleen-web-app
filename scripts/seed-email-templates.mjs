@@ -200,6 +200,19 @@ function templates() {
   })
   const ticketsDeliveryText = `Hi {{ name }}, your reservation for {{ experienceTitle }} on {{ sessionDate }} is confirmed. Your tickets are attached as a PDF. View: {{ dashboardUrl }}`
 
+  const newsletterSubject = "{{ subject }}"
+  const newsletterHtml = baseLayout({
+    title: "{{ title }}",
+    preview: "{{ preview }}",
+    bodyHtml: `
+      <h1 class="text" style="margin:0 0 8px;font-size:22px;line-height:30px;color:#e5e7eb;">{{ title }}</h1>
+      <div style="color:#a3aab8;font-size:14px;line-height:22px;">
+        {{ bodyHtml }}
+      </div>
+    `,
+  })
+  const newsletterText = `{{ title }}\n\n{{ bodyHtml }}`
+
   return [
     {
       key: "email_verification",
@@ -264,6 +277,14 @@ function templates() {
       subject: welcomeVerifySubject,
       html: welcomeVerifyHtml,
       text: welcomeVerifyText,
+    },
+    {
+      key: "newsletter",
+      name: "Newsletter",
+      category: "ADMIN",
+      subject: newsletterSubject,
+      html: newsletterHtml,
+      text: newsletterText,
     },
   ]
 }

@@ -84,7 +84,7 @@ export function TagsInput({ label, caption, error, tags, inputValue, onChangeInp
 								onChangeInput("");
 							}}
 							placeholder={placeholder ?? (tags.length ? "Add more" : "wellness")}
-							className="min-w-[120px] flex-1 border-none bg-transparent text-sm outline-none"
+							className="min-w-[120px] flex-1 border-none bg-transparent text-sm placeholder:text-muted-foreground outline-none"
 						/>
 					</div>
 				</FormControl>

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 // export { Button, buttonVariants } from "@/components/ui/button";
 
 type CtaButtonProps = {
-	color?: "black" | "white" | "whiteBorder" | "primary";
+	color?: "black" | "white" | "whiteBorder" | "primary" | "amber";
 	size?: "sm" | "md" | "lg";
 	label?: string;
 	className?: string;
@@ -41,8 +41,9 @@ const colorClass = {
 	black: "bg-black text-white hover:bg-black/80 border border-transparent",
 	white: "bg-white text-black hover:bg-zinc-100 border border-transparent",
 	whiteBorder: "bg-white text-black hover:bg-zinc-100 border border-input",
-	primary: "bg-[#EC4050] text-white hover:bg-[#EC4050]/80 border border-transparent",
-};
+	primary: "bg-brand text-brand-foreground hover:bg-brand/90 border border-transparent",
+	amber: "bg-amber-400 text-black hover:bg-amber-300 border border-transparent",
+} as const;
 
 export function CtaButton({
 	color = "black",

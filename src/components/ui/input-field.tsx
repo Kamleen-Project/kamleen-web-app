@@ -31,7 +31,7 @@ export function InputField({ label, caption, error, className, containerClassNam
 				<FormControl>
 					<input
 						className={cn(
-							"flex h-11 w-full rounded-lg border border-input bg-background px-4 text-sm transition hover:border-foreground/20 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
+							"flex h-11 w-full rounded-lg border border-input bg-background px-4 text-sm placeholder:text-muted-foreground transition hover:border-foreground/20 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
 							className
 						)}
 						{...props}

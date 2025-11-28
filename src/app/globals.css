@@ -1,9 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+ 
+
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -37,6 +39,18 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-link: var(--link);
+  --color-link-foreground: var(--link-foreground);
+  --color-overlay: var(--overlay);
+  --color-backdrop: var(--backdrop);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -44,6 +58,20 @@
 }
 
 :root {
+
+  --brand: #EC4050;
+  --brand-foreground: oklch(0.985 0 0);
+  --success: oklch(0.72 0.17 142);
+  --success-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.86 0.19 83);
+  --warning-foreground: oklch(0.145 0 0);
+  --info: oklch(0.72 0.15 236);
+  --info-foreground: oklch(0.985 0 0);
+  --link: oklch(0.6 0.15 236);
+  --link-foreground: oklch(0.145 0 0);
+  --overlay: oklch(0 0 0 / 0.4);
+  --backdrop: oklch(0 0 0 / 0.5);
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

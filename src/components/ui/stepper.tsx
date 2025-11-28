@@ -1,6 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
+import CtaIconButton from "./cta-icon-button";
 
 type StepperProps = {
 	value: string;
@@ -28,16 +29,15 @@ export function Stepper({ value, onChange, min = 0, max = 100, step = 1, classNa
 
 	return (
 		<div className={`flex items-center gap-2 ${className}`}>
-			<button
-				type="button"
-				className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-input bg-muted/40 text-foreground hover:bg-muted"
+			<CtaIconButton
+				size="sm"
 				onClick={() => adjust(-1)}
 				aria-label="Decrease"
 			>
-				<Minus className="h-4 w-4" />
-			</button>
+				<Minus className="h-2 w-2" />
+			</CtaIconButton>
 			<input
-				className="h-11 w-24 shrink-0 rounded-md border border-input bg-background text-center text-sm outline-none"
+				className="h-11 w-11 shrink-0 rounded-md border-none bg-background text-center text-sm font-bold outline-none"
 				inputMode="numeric"
 				pattern="[0-9]*"
 				value={value}
@@ -48,14 +48,13 @@ export function Stepper({ value, onChange, min = 0, max = 100, step = 1, classNa
 				onChange={(e) => onChange(parseAndClamp(e.target.value))}
 				onBlur={(e) => onChange(parseAndClamp(e.target.value || String(min)))}
 			/>
-			<button
-				type="button"
-				className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-input bg-muted/40 text-foreground hover:bg-muted"
+			<CtaIconButton
+				size="sm"
 				onClick={() => adjust(1)}
 				aria-label="Increase"
 			>
-				<Plus className="h-4 w-4" />
-			</button>
+				<Plus className="h-2 w-2" />
+			</CtaIconButton>
 		</div>
 	);
 }

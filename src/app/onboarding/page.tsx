@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { CtaButton } from "@/components/ui/cta-button";
 import { ResendVerificationButton } from "@/components/auth/resend-verification-button";
 import { OnboardingProfileForm } from "@/components/auth/onboarding-profile-form";
+import { sanitizeRelativePath } from "@/lib/sanitize-relative-path";
 
 export default async function OnboardingPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
 	const session = await getServerAuthSession();
@@ -33,6 +34,10 @@ export default async function OnboardingPage({ searchParams }: { searchParams?: 
 	const startParam = resolvedSearchParams?.start ?? "";
 	const startValue = Array.isArray(startParam) ? startParam[0] : startParam;
 	const showWelcome = typeof startValue === "string" && startValue.toLowerCase() === "welcome";
+	const rawNextParam = resolvedSearchParams?.next ?? "";
+	const nextValue = Array.isArray(rawNextParam) ? rawNextParam[0] : rawNextParam;
+	const safeNext = typeof nextValue === "string" ? sanitizeRelativePath(nextValue) : null;
+	const onboardingContinueHref = safeNext ? `/onboarding?next=${encodeURIComponent(safeNext)}` : "/onboarding";
 
 	if (showWelcome) {
 		return (
@@ -66,7 +71,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams?: 
 							</p>
 							<div className="mt-8 flex items-center justify-start">
 								<CtaButton asChild color="primary" size="lg">
-									<Link href="/onboarding">Get started</Link>
+									<Link href={onboardingContinueHref}>Get started</Link>
 								</CtaButton>
 							</div>
 						</div>
@@ -88,6 +93,11 @@ export default async function OnboardingPage({ searchParams }: { searchParams?: 
 		status: index < currentStepIndex ? "complete" : index === currentStepIndex ? "current" : "upcoming",
 		index,
 	}));
+	const hasCustomNext = !!safeNext;
+	const skipNextPath = safeNext ?? "/";
+	const finishNextPath = safeNext ?? "/dashboard/explorer/profile";
+	const skipLinkLabel = hasCustomNext ? "Skip and return to your experience" : "Skip and go home";
+	const finishCtaLabel = hasCustomNext ? "Continue to your experience" : "Create my profile";
 
 	return (
 		<div className="min-h-[80vh] flex items-center justify-center py-16">
@@ -181,15 +191,15 @@ export default async function OnboardingPage({ searchParams }: { searchParams?: 
 					</div>
 					<div className="flex items-center justify-between">
 						{currentStepIndex === 2 ? (
-							<Link className="text-sm text-muted-foreground underline" href="/api/onboarding/complete?next=/">
-								Skip and go home
+							<Link className="text-sm text-muted-foreground underline" href={`/api/onboarding/complete?next=${encodeURIComponent(skipNextPath)}`}>
+								{skipLinkLabel}
 							</Link>
 						) : (
 							<span />
 						)}
 						{currentStepIndex === 2 ? (
 							<CtaButton asChild>
-								<Link href="/api/onboarding/complete?next=/dashboard/explorer/profile">Create my profile</Link>
+								<Link href={`/api/onboarding/complete?next=${encodeURIComponent(finishNextPath)}`}>{finishCtaLabel}</Link>
 							</CtaButton>
 						) : (
 							<CtaButton

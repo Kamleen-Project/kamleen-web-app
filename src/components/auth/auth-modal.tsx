@@ -15,9 +15,10 @@ type AuthModalProps = {
 	mode: AuthMode;
 	onOpenChange: (next: boolean) => void;
 	onModeChange: (next: AuthMode) => void;
+	redirectTo?: string;
 };
 
-export function AuthModal({ open, mode, onOpenChange, onModeChange }: AuthModalProps) {
+export function AuthModal({ open, mode, onOpenChange, onModeChange, redirectTo }: AuthModalProps) {
 	const { data: session } = useSession();
 
 	// Auto-close when a session appears (successful login/register)
@@ -46,7 +47,7 @@ export function AuthModal({ open, mode, onOpenChange, onModeChange }: AuthModalP
 						</>
 					)}
 				</DialogHeader>
-				<div className="mt-2">{isLogin ? <LoginForm mode="user" /> : <RegisterForm />}</div>
+				<div className="mt-2">{isLogin ? <LoginForm mode="user" redirectTo={redirectTo} /> : <RegisterForm onboardingNext={redirectTo} />}</div>
 				<div className="mt-4 flex items-center justify-between border-t border-border/60 pt-4 text-sm text-muted-foreground">
 					{isLogin ? (
 						<>

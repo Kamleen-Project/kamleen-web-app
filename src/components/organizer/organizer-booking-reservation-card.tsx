@@ -108,9 +108,7 @@ function formatDate24(value: string) {
 	}).format(new Date(value));
 }
 
-function formatCurrency(value: number, currency: string) {
-	return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(value);
-}
+import { formatCurrency } from "@/lib/format-currency";
 
 function StatusBadge({ status }: { status: "PENDING" | "CONFIRMED" | "CANCELLED" }) {
 	const statusStyles =
@@ -123,9 +121,9 @@ function PaymentStatusBadge({ status }: { status: "REQUIRES_PAYMENT_METHOD" | "R
 		status === "SUCCEEDED"
 			? "bg-emerald-100 text-emerald-700"
 			: status === "CANCELLED"
-			? "bg-destructive/10 text-destructive"
-			: status === "REFUNDED"
-			? "bg-indigo-100 text-indigo-700"
-			: "bg-amber-100 text-amber-700";
+				? "bg-destructive/10 text-destructive"
+				: status === "REFUNDED"
+					? "bg-indigo-100 text-indigo-700"
+					: "bg-amber-100 text-amber-700";
 	return <span className={cn("inline-flex rounded px-2 py-0.5 text-xs", styles)}>{status}</span>;
 }

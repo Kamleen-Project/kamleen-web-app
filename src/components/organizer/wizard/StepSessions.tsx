@@ -248,17 +248,17 @@ export default function StepSessions({
 						{(index === 0 ||
 							new Date(sessionsSorted[index - 1].startAt).getMonth() !== new Date(session.startAt).getMonth() ||
 							new Date(sessionsSorted[index - 1].startAt).getFullYear() !== new Date(session.startAt).getFullYear()) && (
-							<div className="pointer-events-none absolute right_full top-6 z-10 mr-3 rounded-md border border-border/60 bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground">
-								{(() => {
-									try {
-										const dateOnly = getDatePart(session.startAt) || session.startAt.split("T")[0];
-										return format(new Date(dateOnly as string), "LLL");
-									} catch {
-										return "";
-									}
-								})()}
-							</div>
-						)}
+								<div className="pointer-events-none absolute right_full top-6 z-10 mr-3 rounded-md border border-border/60 bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground">
+									{(() => {
+										try {
+											const dateOnly = getDatePart(session.startAt) || session.startAt.split("T")[0];
+											return format(new Date(dateOnly as string), "LLL");
+										} catch {
+											return "";
+										}
+									})()}
+								</div>
+							)}
 					</div>
 					<Card className="relative border-border/60 bg-card/80 shadow-sm">
 						<CardHeader className="flex flex-col mb-0 gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -302,6 +302,12 @@ export default function StepSessions({
 										<DateField
 											label="Start date"
 											value={getDatePart(session.startAt) ? new Date(getDatePart(session.startAt) as string) : undefined}
+											minDate={(() => {
+												const d = new Date();
+												d.setDate(d.getDate() + 1);
+												d.setHours(0, 0, 0, 0);
+												return d;
+											})()}
 											onChange={(date) => {
 												if (date) {
 													const dateOnly = format(date, "yyyy-MM-dd");

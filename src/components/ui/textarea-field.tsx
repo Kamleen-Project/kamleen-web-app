@@ -49,7 +49,7 @@ export function TextareaField({ label, caption, error, className, containerClass
 				<FormControl>
 					<textarea
 						className={cn(
-							"block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm transition focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
+							"block w-full rounded-lg border border-input bg-background px-4 py-3 text-sm placeholder:text-muted-foreground transition focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
 							className
 						)}
 						onChange={handleChange}

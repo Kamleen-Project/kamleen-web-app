@@ -1,10 +1,10 @@
 export type ConsoleNavItem = {
-  href: string;
-  label: string;
-  description?: string;
-  icon?: string;
-  // Optional nested items to render as a collapsible submenu in the console sidebar
-  children?: ConsoleNavItem[];
+	href: string;
+	label: string;
+	description?: string;
+	icon?: string;
+	// Optional nested items to render as a collapsible submenu in the console sidebar
+	children?: ConsoleNavItem[];
 };
 
 export const organizerNavItems: ConsoleNavItem[] = [
@@ -20,12 +20,12 @@ export const organizerNavItems: ConsoleNavItem[] = [
 		// description: "Update listings, pricing, and imagery",
 		icon: "Sparkles",
 	},
-  {
-    href: "/dashboard/organizer/experiences/archived",
-    label: "Archived",
-    // description: "Hidden items kept for records",
+	{
+		href: "/dashboard/organizer/experiences/archived",
+		label: "Archived",
+		// description: "Hidden items kept for records",
 		icon: "Archive",
-  },
+	},
 	{
 		href: "/dashboard/organizer/bookings",
 		label: "Bookings",
@@ -59,12 +59,12 @@ export const explorerNavItems: ConsoleNavItem[] = [
 		// description: "Review past and upcoming bookings",
 		icon: "CalendarRange",
 	},
-  {
-    href: "/dashboard/explorer/wishlist",
-    label: "Wishlist",
-    // description: "Collections and favorites",
+	{
+		href: "/dashboard/explorer/wishlist",
+		label: "Wishlist",
+		// description: "Collections and favorites",
 		icon: "Heart",
-  },
+	},
 	{
 		href: "/dashboard/explorer/profile",
 		label: "Profile",
@@ -115,44 +115,56 @@ export const adminNavItems: ConsoleNavItem[] = [
 		],
 	},
 	{
-    href: "/admin/payments",
-    label: "Payments",
-    // description: "Review and moderate platform payments",
-    icon: "CreditCard",
-  },
-  {
+		href: "/admin/bookings",
+		label: "Bookings",
+		// description: "Manage reservations and payments",
+		icon: "CalendarCheck",
+	},
+	{
+		href: "/admin/payments",
+		label: "Payments",
+		// description: "Review and moderate platform payments",
+		icon: "CreditCard",
+	},
+	{
 		href: "/admin/profile",
 		label: "Profile",
 		// description: "Your account details",
 		icon: "User",
 	},
 	{
-	    href: "/admin/settings",
-	    label: "Settings",
-	    // description: "Configure platform settings",
-	      icon: "Settings",
-	    children: [
-	      {
-	        href: "/admin/settings/email",
-	        label: "Email settings",
-	        // description: "SMTP and email template management",
-	      },
-	      {
-	        href: "/admin/settings/ticket-templates",
-	        label: "Ticket Templates",
-	        // description: "Design and branding for PDF tickets",
-	      },
-      {
-        href: "/admin/settings/payments",
-        label: "Payments",
-        // description: "Configure payment providers and defaults",
-      },
-	      {
-	        href: "/admin/settings/components",
-	        label: "Components",
-	        // description: "UI kit showcase and testing",
-	      },
-	    ],
+		href: "/admin/newsletter",
+		label: "Newsletter",
+		// description: "Manage subscribers and campaigns",
+		icon: "Mail",
+	},
+	{
+		href: "/admin/settings",
+		label: "Settings",
+		// description: "Configure platform settings",
+		icon: "Settings",
+		children: [
+			{
+				href: "/admin/settings/email",
+				label: "Email settings",
+				// description: "SMTP and email template management",
+			},
+			{
+				href: "/admin/settings/ticket-templates",
+				label: "Ticket Templates",
+				// description: "Design and branding for PDF tickets",
+			},
+			{
+				href: "/admin/settings/payments",
+				label: "Payments",
+				// description: "Configure payment providers and defaults",
+			},
+			{
+				href: "/admin/settings/components",
+				label: "Components",
+				// description: "UI kit showcase and testing",
+			},
+		],
 	},
 ];
 

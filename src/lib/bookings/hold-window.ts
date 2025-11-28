@@ -1,0 +1,3 @@
+export const BOOKING_HOLD_MINUTES = 15;
+export const BOOKING_HOLD_MS = BOOKING_HOLD_MINUTES * 60 * 1000;
+

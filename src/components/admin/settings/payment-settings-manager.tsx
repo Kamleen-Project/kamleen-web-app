@@ -1,66 +1,41 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { CtaButton } from "@/components/ui/cta-button";
 import { InputField } from "@/components/ui/input-field";
 import { SelectField } from "@/components/ui/select-field";
 import { ToggleField } from "@/components/ui/toggle-field";
+import { UploadSinglePicture } from "@/components/ui/upload-single-picture";
 
-type Settings = {
-	id: string;
-	defaultProvider: "STRIPE" | "CMI" | "PAYZONE" | "CASH" | "PAYPAL";
-	enabledProviders: ("STRIPE" | "CMI" | "PAYZONE" | "CASH" | "PAYPAL")[];
-	stripePublishableKey?: string | null;
-	stripeAccountCountry?: string | null;
-	cmiMerchantId?: string | null;
-	cmiTerminalId?: string | null;
-	cmiCurrency?: string | null;
-	payzoneMerchantId?: string | null;
-	payzoneSiteId?: string | null;
-	payzoneCurrency?: string | null;
-	payzoneGatewayUrl?: string | null;
-	paypalClientId?: string | null;
-	payload?: never; // keep shape stable
-	paypalClientSecret?: string | null;
+type Gateway = {
+	key: string;
+	name: string;
+	type: "CARD" | "CASH" | "PAYPAL";
+	logoUrl?: string | null;
+	config?: any;
 	testMode: boolean;
+	isEnabled: boolean;
 };
 
 export function PaymentSettingsManager() {
 	const [loading, setLoading] = useState(true);
-	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [ok, setOk] = useState<string | null>(null);
-	const [settings, setSettings] = useState<Settings | null>(null);
-
-	// use ToggleField from our UI kit
-
-	const enabledSet = useMemo(() => new Set(settings?.enabledProviders ?? []), [settings]);
-	const isEnabled = (p: "STRIPE" | "CMI" | "PAYZONE" | "CASH" | "PAYPAL") => enabledSet.has(p);
-	const setEnabled = (p: "STRIPE" | "CMI" | "PAYZONE" | "CASH" | "PAYPAL", next: boolean) => {
-		if (!settings) return;
-		const set = new Set(settings.enabledProviders);
-		if (next) set.add(p);
-		else set.delete(p);
-		setSettings({ ...settings, enabledProviders: Array.from(set) as ("STRIPE" | "CMI" | "PAYZONE" | "CASH" | "PAYPAL")[] });
-	};
-
-	const [openStripe, setOpenStripe] = useState(true);
-	const [openCmi, setOpenCmi] = useState(false);
-	const [openPayzone, setOpenPayzone] = useState(false);
-	const [openCash, setOpenCash] = useState(false);
-	const [openPaypal, setOpenPaypal] = useState(false);
+	const [gateways, setGateways] = useState<Gateway[]>([]);
+	const [saving, setSaving] = useState(false);
+	const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
 
 	useEffect(() => {
 		let mounted = true;
 		(async () => {
 			setLoading(true);
 			try {
-				const r = await fetch("/api/admin/settings/payments", { cache: "no-store" });
-				const data = (await r.json()) as { settings: Settings | null };
-				if (mounted) setSettings(data.settings);
-			} catch (e) {
-				if (mounted) setError("Failed to load settings");
+				const r = await fetch("/api/admin/payment-gateways", { cache: "no-store" });
+				const data = (await r.json()) as { gateways: Gateway[] };
+				if (mounted) setGateways(Array.isArray(data.gateways) ? data.gateways : []);
+			} catch {
+				if (mounted) setError("Failed to load gateways");
 			} finally {
 				if (mounted) setLoading(false);
 			}
@@ -70,279 +45,220 @@ export function PaymentSettingsManager() {
 		};
 	}, []);
 
-	async function save() {
-		if (!settings) return;
+	async function saveAll() {
 		setSaving(true);
-		setError(null);
 		setOk(null);
+		setError(null);
 		try {
-			const r = await fetch("/api/admin/settings/payments", {
-				method: "PUT",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					defaultProvider: settings.defaultProvider,
-					enabledProviders: settings.enabledProviders,
-					stripePublishableKey: settings.stripePublishableKey ?? undefined,
-					stripeAccountCountry: settings.stripeAccountCountry ?? undefined,
-					cmiMerchantId: settings.cmiMerchantId ?? undefined,
-					cmiTerminalId: settings.cmiTerminalId ?? undefined,
-					cmiCurrency: settings.cmiCurrency ?? undefined,
-					payzoneMerchantId: settings.payzoneMerchantId ?? undefined,
-					payzoneSiteId: settings.payzoneSiteId ?? undefined,
-					payzoneCurrency: settings.payzoneCurrency ?? undefined,
-					payzoneGatewayUrl: settings.payzoneGatewayUrl ?? undefined,
-					paypalClientId: settings.paypalClientId ?? undefined,
-					paypalClientSecret: settings.paypalClientSecret ?? undefined,
-					testMode: settings.testMode,
-				}),
-			});
-			if (!r.ok) throw new Error();
+			for (const g of gateways) {
+				const res = await fetch(`/api/admin/payment-gateways/${g.key}`, {
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						name: g.name,
+						type: g.type,
+						logoUrl: g.logoUrl ?? null,
+						config: g.config ?? {},
+						testMode: g.testMode,
+						isEnabled: g.isEnabled,
+					}),
+				});
+				if (!res.ok) throw new Error();
+			}
 			setOk("Saved");
-		} catch (e) {
-			setError("Failed to save settings");
+		} catch {
+			setError("Failed to save");
 		} finally {
 			setSaving(false);
 		}
 	}
 
-	if (loading) return <div className="text-sm text-muted-foreground">Loading…</div>;
-	if (!settings) return <div className="text-sm text-muted-foreground">No settings found.</div>;
+	async function uploadLogoFor(key: string, file: File): Promise<string | null> {
+		const form = new FormData();
+		form.set("file", file);
+		const res = await fetch(`/api/admin/payment-gateways/${key}/logo`, { method: "POST", body: form });
+		if (!res.ok) return null;
+		const data = (await res.json()) as { url?: string };
+		return data.url ?? null;
+	}
 
-	// function toggleEnabled(provider: "STRIPE" | "CMI" | "PAYZONE") {
-	// 	if (!settings) return;
-	// 	const set = new Set(settings.enabledProviders);
-	// 	if (set.has(provider)) set.delete(provider);
-	// 	else set.add(provider);
-	// 	setSettings({ ...settings, enabledProviders: Array.from(set) as ("STRIPE" | "CMI" | "PAYZONE")[] });
-	// }
+	function updateConfig(idx: number, key: string, value: string) {
+		const copy = [...gateways];
+		const g = copy[idx];
+		copy[idx] = { ...g, config: { ...g.config, [key]: value } };
+		setGateways(copy);
+	}
+
+	if (loading) return <div className="text-sm text-muted-foreground">Loading…</div>;
 
 	return (
 		<div className="space-y-6">
-			<div className="grid gap-4 mt-4">
-				<SelectField
-					label="Default provider"
-					value={settings.defaultProvider}
-					onChange={(e) => setSettings({ ...settings, defaultProvider: e.target.value as Settings["defaultProvider"] })}
-					options={[
-						{ label: "Stripe", value: "STRIPE" },
-						{ label: "CMI", value: "CMI" },
-						{ label: "Payzone", value: "PAYZONE" },
-						{ label: "Cash", value: "CASH" },
-						{ label: "PayPal", value: "PAYPAL" },
-					]}
-				/>
+			{gateways.length === 0 ? (
+				<div className="text-sm text-muted-foreground">No payment gateways found. Seed or create gateways to configure payments.</div>
+			) : null}
+			{gateways.map((g, idx) => {
+				return (
+					<div key={g.key} className="rounded-lg border border-border/60">
+						<div
+							role="button"
+							tabIndex={0}
+							onClick={() => setOpenMap((m) => ({ ...m, [g.key]: !m[g.key] }))}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") setOpenMap((m) => ({ ...m, [g.key]: !m[g.key] }));
+							}}
+							className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+						>
+							<div className="flex items-center gap-3">
+								<span className="text-sm font-medium">{g.name || g.key}</span>
+								<span className="text-xs text-muted-foreground">{g.type}</span>
+							</div>
+							<div className="flex items-center gap-3">
+								<ToggleField
+									label="Test mode"
+									checked={g.testMode}
+									onChange={(n) => {
+										const copy = [...gateways];
+										copy[idx] = { ...g, testMode: n };
+										setGateways(copy);
+									}}
+								/>
+								<ToggleField
+									label="Enabled"
+									checked={g.isEnabled}
+									onChange={(n) => {
+										const copy = [...gateways];
+										copy[idx] = { ...g, isEnabled: n };
+										setGateways(copy);
+									}}
+								/>
 
-				{/* <div className="self-end text-xs text-muted-foreground">Enable providers and set the default. Secrets are managed via environment variables.</div> */}
-			</div>
+								<ChevronDown className={"size-4 transition " + (openMap[g.key] ? "rotate-180" : "rotate-0")} />
+							</div>
+						</div>
+						{openMap[g.key] ? (
+							<div className="grid gap-4 border-t border-border/60 p-4 sm:grid-cols-3">
+								<UploadSinglePicture
+									aspect="twentyOneNine"
+									objectFit="contain"
+									previewUrl={g.logoUrl ?? null}
+									onChangeFile={async (file) => {
+										const url = await uploadLogoFor(g.key, file);
+										if (!url) return;
+										const copy = [...gateways];
+										copy[idx] = { ...g, logoUrl: url };
+										setGateways(copy);
+									}}
+									onRemove={() => {
+										const copy = [...gateways];
+										copy[idx] = { ...g, logoUrl: null };
+										setGateways(copy);
+									}}
+									uploadLabel="Upload logo"
+									className="w-40"
+								/>
+								<div className="space-y-2">
+									<InputField
+										label="Name"
+										value={g.name}
+										onChange={(e) => {
+											const copy = [...gateways];
+											copy[idx] = { ...g, name: e.target.value };
+											setGateways(copy);
+										}}
+									/>
+									<InputField label="Key" value={g.key} disabled />
+								</div>
+								<div className="space-y-2">
+									<SelectField
+										label="Type"
+										value={g.type}
+										onChange={(e) => {
+											const copy = [...gateways];
+											copy[idx] = { ...g, type: e.target.value as Gateway["type"] };
+											setGateways(copy);
+										}}
+										options={[
+											{ label: "Card", value: "CARD" },
+											{ label: "PayPal", value: "PAYPAL" },
+											{ label: "Cash", value: "CASH" },
+										]}
+									/>
+								</div>
 
-			{/* Stripe section */}
-			<div className="rounded-lg border border-border/60">
-				<div
-					role="button"
-					tabIndex={0}
-					onClick={() => setOpenStripe((v) => !v)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") setOpenStripe((v) => !v);
-					}}
-					className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-				>
-					<div className="flex items-center gap-3">
-						<span className="text-sm font-medium">Stripe</span>
-						<span className="text-xs text-muted-foreground">Checkout and webhooks</span>
+								<div className="col-span-full border-t border-border/40 pt-4">
+									<p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Configuration</p>
+									<div className="grid gap-4 sm:grid-cols-2">
+										{g.key === "stripe" ? (
+											<>
+												<InputField
+													label="Publishable Key"
+													value={g.config?.publishableKey || ""}
+													onChange={(e) => updateConfig(idx, "publishableKey", e.target.value)}
+													placeholder="pk_test_..."
+												/>
+												<InputField
+													label="Secret Key"
+													value={g.config?.secretKey || ""}
+													onChange={(e) => updateConfig(idx, "secretKey", e.target.value)}
+													placeholder="sk_test_..."
+													type="password"
+												/>
+												<InputField
+													label="Webhook Secret"
+													value={g.config?.webhookSecret || ""}
+													onChange={(e) => updateConfig(idx, "webhookSecret", e.target.value)}
+													placeholder="whsec_..."
+													type="password"
+												/>
+											</>
+										) : g.key === "paypal" ? (
+											<>
+												<InputField
+													label="Client ID"
+													value={g.config?.clientId || ""}
+													onChange={(e) => updateConfig(idx, "clientId", e.target.value)}
+												/>
+												<InputField
+													label="Client Secret"
+													value={g.config?.clientSecret || ""}
+													onChange={(e) => updateConfig(idx, "clientSecret", e.target.value)}
+													type="password"
+												/>
+											</>
+										) : (g.key === "payzone" || g.key === "cmi") ? (
+											<>
+												<InputField
+													label="Merchant/Client ID"
+													value={g.config?.clientId || ""}
+													onChange={(e) => updateConfig(idx, "clientId", e.target.value)}
+												/>
+												<InputField
+													label="Secret/Hash Key"
+													value={g.config?.secretKey || ""}
+													onChange={(e) => updateConfig(idx, "secretKey", e.target.value)}
+													type="password"
+												/>
+												<InputField
+													label="Gateway URL"
+													value={g.config?.gatewayUrl || ""}
+													onChange={(e) => updateConfig(idx, "gatewayUrl", e.target.value)}
+													placeholder="https://..."
+												/>
+											</>
+										) : (
+											<div className="col-span-full">
+												<p className="text-sm text-muted-foreground">No specific configuration needed for this provider.</p>
+											</div>
+										)}
+									</div>
+								</div>
+							</div>
+						) : null}
 					</div>
-					<div className="flex items-center gap-3">
-						<ToggleField label="Enabled " checked={isEnabled("STRIPE")} onChange={(n) => setEnabled("STRIPE", n)} />
-						<ChevronDown className={"size-4 transition " + (openStripe ? "rotate-180" : "rotate-0")} />
-					</div>
-				</div>
-				{openStripe ? (
-					<div className="grid gap-3 border-t border-border/60 p-4 sm:grid-cols-2">
-						<InputField
-							label="Publishable key"
-							placeholder="pk_…"
-							value={settings.stripePublishableKey ?? ""}
-							onChange={(e) => setSettings({ ...settings, stripePublishableKey: e.target.value })}
-						/>
-						<InputField
-							label="Account country"
-							placeholder="e.g., US"
-							value={settings.stripeAccountCountry ?? ""}
-							onChange={(e) => setSettings({ ...settings, stripeAccountCountry: e.target.value })}
-						/>
-						<p className="col-span-full text-xs text-muted-foreground">Secret key and webhook secret must be set as env vars.</p>
-					</div>
-				) : null}
-			</div>
-
-			{/* CMI section */}
-			<div className="rounded-lg border border-border/60">
-				<div
-					role="button"
-					tabIndex={0}
-					onClick={() => setOpenCmi((v) => !v)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") setOpenCmi((v) => !v);
-					}}
-					className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-				>
-					<div className="flex items-center gap-3">
-						<span className="text-sm font-medium">CMI</span>
-						<span className="text-xs text-muted-foreground">Hosted 3‑D Secure checkout</span>
-					</div>
-					<div className="flex items-center gap-3">
-						<ToggleField label="Enabled" checked={isEnabled("CMI")} onChange={(n) => setEnabled("CMI", n)} />
-						<ChevronDown className={"size-4 transition " + (openCmi ? "rotate-180" : "rotate-0")} />
-					</div>
-				</div>
-				{openCmi ? (
-					<div className="grid gap-3 border-t border-border/60 p-4 sm:grid-cols-3">
-						<InputField
-							label="Merchant ID"
-							value={settings.cmiMerchantId ?? ""}
-							onChange={(e) => setSettings({ ...settings, cmiMerchantId: e.target.value })}
-						/>
-						<InputField
-							label="Terminal ID"
-							value={settings.cmiTerminalId ?? ""}
-							onChange={(e) => setSettings({ ...settings, cmiTerminalId: e.target.value })}
-						/>
-						<InputField
-							label="Currency"
-							placeholder="e.g., MAD"
-							value={settings.cmiCurrency ?? ""}
-							onChange={(e) => setSettings({ ...settings, cmiCurrency: e.target.value })}
-						/>
-						<p className="col-span-full text-xs text-muted-foreground">Store key/secret must be set as env vars.</p>
-					</div>
-				) : null}
-			</div>
-
-			{/* Payzone section */}
-			<div className="rounded-lg border border-border/60">
-				<div
-					role="button"
-					tabIndex={0}
-					onClick={() => setOpenPayzone((v) => !v)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") setOpenPayzone((v) => !v);
-					}}
-					className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-				>
-					<div className="flex items-center gap-3">
-						<span className="text-sm font-medium">Payzone</span>
-						<span className="text-xs text-muted-foreground">Hosted checkout / IPN</span>
-					</div>
-					<div className="flex items-center gap-3">
-						<ToggleField label="Enabled" checked={isEnabled("PAYZONE")} onChange={(n) => setEnabled("PAYZONE", n)} />
-						<ChevronDown className={"size-4 transition " + (openPayzone ? "rotate-180" : "rotate-0")} />
-					</div>
-				</div>
-				{openPayzone ? (
-					<div className="grid gap-3 border-t border-border/60 p-4 sm:grid-cols-2">
-						<InputField
-							label="Merchant ID"
-							value={settings.payzoneMerchantId ?? ""}
-							onChange={(e) => setSettings({ ...settings, payzoneMerchantId: e.target.value })}
-						/>
-						<InputField label="Site ID" value={settings.payzoneSiteId ?? ""} onChange={(e) => setSettings({ ...settings, payzoneSiteId: e.target.value })} />
-						<InputField
-							label="Currency"
-							placeholder="e.g., MAD"
-							value={settings.payzoneCurrency ?? ""}
-							onChange={(e) => setSettings({ ...settings, payzoneCurrency: e.target.value })}
-						/>
-						<InputField
-							label="Gateway URL"
-							value={settings.payzoneGatewayUrl ?? ""}
-							onChange={(e) => setSettings({ ...settings, payzoneGatewayUrl: e.target.value })}
-						/>
-						<p className="col-span-full text-xs text-muted-foreground">Secret key must be set as PAYZONE_SECRET_KEY env var.</p>
-					</div>
-				) : null}
-			</div>
-
-			{/* PayPal section */}
-			<div className="rounded-lg border border-border/60">
-				<div
-					role="button"
-					tabIndex={0}
-					onClick={() => setOpenPaypal((v) => !v)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") setOpenPaypal((v) => !v);
-					}}
-					className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-				>
-					<div className="flex items-center gap-3">
-						<span className="text-sm font-medium">PayPal</span>
-						<span className="text-xs text-muted-foreground">Redirect checkout (env: PAYPAL_CLIENT_ID/SECRET)</span>
-					</div>
-					<div className="flex items-center gap-3">
-						<ToggleField label="Enabled" checked={isEnabled("PAYPAL")} onChange={(n) => setEnabled("PAYPAL", n)} />
-						<ChevronDown className={"size-4 transition " + (openPaypal ? "rotate-180" : "rotate-0")} />
-					</div>
-				</div>
-				{openPaypal ? (
-					<div className="grid gap-3 border-t border-border/60 p-4 sm:grid-cols-2">
-						<InputField
-							label="Client ID"
-							placeholder="PayPal Client ID"
-							value={settings.paypalClientId ?? ""}
-							onChange={(e) => setSettings({ ...settings, paypalClientId: e.target.value })}
-						/>
-						<InputField
-							label="Client Secret"
-							placeholder="PayPal Client Secret"
-							type="password"
-							value={settings.paypalClientSecret ?? ""}
-							onChange={(e) => setSettings({ ...settings, paypalClientSecret: e.target.value })}
-						/>
-						<p className="col-span-full text-xs text-muted-foreground">
-							These credentials will be stored in the database. Leave blank to use environment variables.
-						</p>
-					</div>
-				) : null}
-			</div>
-
-			{/* Cash section */}
-			<div className="rounded-lg border border-border/60">
-				<div
-					role="button"
-					tabIndex={0}
-					onClick={() => setOpenCash((v) => !v)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") setOpenCash((v) => !v);
-					}}
-					className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-				>
-					<div className="flex items-center gap-3">
-						<span className="text-sm font-medium">Cash</span>
-						<span className="text-xs text-muted-foreground">Pay on cash (no external gateway)</span>
-					</div>
-					<div className="flex items-center gap-3">
-						<ToggleField label="Enabled" checked={isEnabled("CASH")} onChange={(n) => setEnabled("CASH", n)} />
-						<ChevronDown className={"size-4 transition " + (openCash ? "rotate-180" : "rotate-0")} />
-					</div>
-				</div>
-				{openCash ? (
-					<div className="grid gap-3 border-t border-border/60 p-4">
-						<p className="text-sm text-muted-foreground">No configuration needed. Ensure operational process for collecting cash on arrival.</p>
-					</div>
-				) : null}
-			</div>
-
-			<div className="flex ">
-				<SelectField
-					label="Mode"
-					value={settings.testMode ? "test" : "production"}
-					onChange={(e) => setSettings({ ...settings, testMode: e.target.value === "test" })}
-					options={[
-						{ label: "Test mode", value: "test" },
-						{ label: "Production mode", value: "production" },
-					]}
-				/>
-			</div>
-			<div className="flex mt-4">
-				<CtaButton onClick={save} disabled={saving} color="black">
+				);
+			})}
+			<div className="flex items-center gap-3">
+				<CtaButton onClick={saveAll} disabled={saving} color="black">
 					{saving ? "Saving…" : "Save settings"}
 				</CtaButton>
 				{ok ? <span className="text-xs text-green-600">{ok}</span> : null}

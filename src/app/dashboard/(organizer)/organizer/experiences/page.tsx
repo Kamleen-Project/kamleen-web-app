@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import Link from "next/link";
 import { Clock, Eye, ExternalLink, MapPin, Pencil, Plus, Tags, Users } from "lucide-react";
@@ -9,6 +8,7 @@ import { getServerAuthSession } from "@/lib/auth";
 import { experienceCardSelect, mapExperienceToCard } from "@/lib/experiences";
 import { Card, CardContent } from "@/components/ui/card";
 import { InfoBadge } from "@/components/ui/info-badge";
+import { formatCurrency } from "@/lib/format-currency";
 import { CtaIconButton } from "@/components/ui/cta-icon-button";
 import { ExperienceStatusControl } from "@/components/organizer/experience-status-control";
 import { SubmitVerificationButton } from "@/components/organizer/submit-verification-button";
@@ -67,10 +67,7 @@ export default async function OrganizerExperiencesPage() {
 				{experiences.length ? (
 					experiences.map((experience) => {
 						const currency = experience.currency ?? "USD";
-						const formattedAmount = new Intl.NumberFormat("en", {
-							minimumFractionDigits: 2,
-							maximumFractionDigits: 2,
-						}).format(experience.price);
+						const formattedAmount = formatCurrency(experience.price, currency);
 						const now = new Date();
 						const upcoming = (experience.sessions ?? [])
 							.map((s) => ({ id: s.id, date: new Date(s.startAt) }))
@@ -210,8 +207,9 @@ export default async function OrganizerExperiencesPage() {
 					})
 				) : (
 					<Card className="border-dashed border-border/60 bg-card/60">
-						<CardContent className="py-12 text-center text-sm text-muted-foreground">
-							No experiences published yet. Use the <span className="font-medium text-foreground">Add new experience</span> action to create your first listing.
+						<CardContent className="flex flex-col items-center gap-4 py-24 text-center">
+							<h3 className="text-lg font-semibold text-foreground">No experiences published yet.</h3>
+							<AddExperienceModal />
 						</CardContent>
 					</Card>
 				)}

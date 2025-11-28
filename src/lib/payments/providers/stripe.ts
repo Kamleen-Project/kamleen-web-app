@@ -1,11 +1,19 @@
 import { PaymentProvider, CreateCheckoutParams, CreateCheckoutResult, ProviderCreateRefundParams, ProviderCreateRefundResult } from "@/lib/payments/types"
+import { prisma } from "@/lib/prisma"
 import crypto from "crypto"
 
-function getStripeSecretKey(): string {
-  const key = process.env.STRIPE_SECRET_KEY
-  if (!key) {
-    throw new Error("Missing STRIPE_SECRET_KEY env var")
-  }
+async function resolveStripeSecretKey(): Promise<string> {
+  // Prefer DB-configured secret in PaymentGateway, fallback to env
+  const gateway = await prisma.paymentGateway.findUnique({ where: { key: "stripe" } })
+  const fromConfig =
+    (gateway?.config as null | { secretKey?: string })?.secretKey &&
+    typeof (gateway?.config as { secretKey?: unknown }).secretKey === "string"
+      ? ((gateway?.config as { secretKey?: string }).secretKey as string)
+      : null
+  const key = fromConfig && !fromConfig.startsWith("env:")
+    ? fromConfig
+    : process.env[(fromConfig?.slice(4) as string) || "STRIPE_SECRET_KEY"] || process.env.STRIPE_SECRET_KEY
+  if (!key) throw new Error("Missing Stripe secret key (DB or STRIPE_SECRET_KEY)")
   return key
 }
 
@@ -30,7 +38,7 @@ export const stripeProvider: PaymentProvider = {
   id: "stripe",
 
   async createCheckout(params: CreateCheckoutParams): Promise<CreateCheckoutResult> {
-    const secret = getStripeSecretKey()
+    const secret = await resolveStripeSecretKey()
     const url = "https://api.stripe.com/v1/checkout/sessions"
 
     const form: Record<string, string> = {
@@ -54,7 +62,7 @@ export const stripeProvider: PaymentProvider = {
   },
 
   async createRefund(params: ProviderCreateRefundParams): Promise<ProviderCreateRefundResult> {
-    const secret = getStripeSecretKey()
+    const secret = await resolveStripeSecretKey()
     const url = "https://api.stripe.com/v1/refunds"
     const form: Record<string, string> = {
       payment_intent: params.paymentProviderId,

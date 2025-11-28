@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableContainer, TableEmpty, TableHead, Tab
 import { CtaIconButton } from "@/components/ui/cta-icon-button";
 import { Eye } from "lucide-react";
 import { OrganizerRequestActions } from "@/components/admin/organizer-request-actions";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 
@@ -108,12 +108,9 @@ export default async function AdminOrganizersPage() {
 // no draft/verification badges in the simplified organizer request list
 function OrganizerStatusBadge({ value }: { value: string }) {
 	const label = value.toLowerCase().replace(/_/g, " ");
-	if (value === "APPROVED") return <Badge className="bg-emerald-600 text-white border-transparent">{label}</Badge>;
-	if (value === "PENDING") return <Badge className="bg-amber-500 text-white border-transparent">{label}</Badge>;
-	if (value === "REJECTED") return <Badge className="bg-rose-600 text-white border-transparent">{label}</Badge>;
-	return (
-		<Badge variant="outline" className="text-xs uppercase">
-			{label}
-		</Badge>
-	);
+	let variation: "success" | "warning" | "danger" | "outline" = "outline";
+	if (value === "APPROVED") variation = "success";
+	else if (value === "PENDING") variation = "warning";
+	else if (value === "REJECTED") variation = "danger";
+	return <StatusBadge value={label} variation={variation} />;
 }

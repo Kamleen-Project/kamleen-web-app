@@ -15,8 +15,19 @@ type SelectFieldProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
 	containerClassName?: string;
 };
 
-export function SelectField({ label, caption, error, className, options, children, containerClassName, ...props }: SelectFieldProps) {
+export function SelectField({ label, caption, error, className, options, children, containerClassName, onChange, ...props }: SelectFieldProps) {
 	const showRequiredStar = Boolean(props?.required) && Boolean(label);
+	const getInitialHasValue = React.useCallback(() => {
+		if (props.value !== undefined) return String(props.value).length > 0;
+		if (props.defaultValue !== undefined) return String(props.defaultValue).length > 0;
+		return false;
+	}, [props.defaultValue, props.value]);
+	const [hasValue, setHasValue] = React.useState<boolean>(getInitialHasValue);
+
+	React.useEffect(() => {
+		setHasValue(getInitialHasValue());
+	}, [getInitialHasValue]);
+
 	const labelContent = label ? (
 		<span className="inline-flex items-center gap-1">
 			{label}
@@ -34,10 +45,17 @@ export function SelectField({ label, caption, error, className, options, childre
 				<FormControl>
 					<div className="relative">
 						<select
+							data-placeholder-shown={hasValue ? undefined : "true"}
 							className={cn(
-								"flex h-11 w-full appearance-none rounded-lg border border-input bg-background px-4 pr-10 text-base transition focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
+								"flex h-11 w-full appearance-none rounded-lg border border-input bg-background px-4 pr-10 text-base text-foreground transition focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder-shown=true]:text-muted-foreground",
 								className
 							)}
+							onChange={(event) => {
+								if (props.value === undefined) {
+									setHasValue(event.target.value.length > 0);
+								}
+								onChange?.(event);
+							}}
 							{...props}
 						>
 							{options

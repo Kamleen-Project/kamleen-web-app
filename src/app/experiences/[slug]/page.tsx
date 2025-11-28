@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { notFound } from "next/navigation";
-import { CalendarDays, Clock, MapPin, MessageCircle, Star, UserPlus, Users } from "lucide-react";
+import { CalendarDays, Clock, MapPin, MessageCircle, UserPlus, Users } from "lucide-react";
 
 import { Container } from "@/components/layout/container";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { ExperienceGallerySection } from "@/components/experiences/experience-gallery-section";
 import { ExperienceItinerary } from "@/components/experiences/experience-itinerary";
 import { ExperienceReviewsSection, type ExperienceReview } from "@/components/experiences/experience-reviews-section";
+import { ExperienceRating } from "@/components/experiences/experience-rating";
 import { ExperienceStickyHeader } from "@/components/experiences/experience-sticky-header";
 import { SaveExperienceButton } from "@/components/experiences/save-experience-button";
 import { ExperienceReservationModal } from "@/components/experiences/experience-reservation-modal";
@@ -19,9 +20,7 @@ import { getServerAuthSession } from "@/lib/auth";
 import { OpenReservationButton } from "@/components/experiences/open-reservation-button";
 import { parseDurationToMinutes } from "@/lib/duration";
 
-function formatCurrency(value: number, currency = "USD") {
-	return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
-}
+import { formatCurrency } from "@/lib/format-currency";
 
 // removed unused formatDateTime helper after updating session title format
 
@@ -115,15 +114,15 @@ async function getPageData(slug: string) {
 
 	const bookings = session?.user
 		? await prisma.experienceBooking.findMany({
-				where: {
-					experienceId: experience.id,
-					explorerId: session.user.id,
-				},
-				include: {
-					session: true,
-				},
-				orderBy: { createdAt: "desc" },
-		  })
+			where: {
+				experienceId: experience.id,
+				explorerId: session.user.id,
+			},
+			include: {
+				session: true,
+			},
+			orderBy: { createdAt: "desc" },
+		})
 		: [];
 
 	return {
@@ -186,9 +185,9 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 		createdAt: review.createdAt,
 		explorer: review.explorer
 			? {
-					name: review.explorer.name,
-					image: review.explorer.image,
-			  }
+				name: review.explorer.name,
+				image: review.explorer.image,
+			}
 			: null,
 	}));
 	const showMoreReviewsHref = experience.reviewCount > reviews.length ? `/experiences/${experience.slug}/reviews` : undefined;
@@ -200,18 +199,22 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 		totalPrice: booking.totalPrice,
 		currency: experience.currency,
 		createdAt: booking.createdAt.toISOString(),
+		expiresAt: booking.expiresAt ? booking.expiresAt.toISOString() : null,
+		sessionId: booking.sessionId,
 		session: booking.session
 			? {
-					id: booking.session.id,
-					// Preserve local time similar to reservationSessions
-					startAt: `${booking.session.startAt.getFullYear()}-${String(booking.session.startAt.getMonth() + 1).padStart(2, "0")}-${String(
-						booking.session.startAt.getDate()
-					).padStart(2, "0")}T${String(booking.session.startAt.getHours()).padStart(2, "0")}:${String(booking.session.startAt.getMinutes()).padStart(2, "0")}`,
-					duration: booking.session.duration ?? null,
-					locationLabel: booking.session.locationLabel,
-			  }
+				id: booking.session.id,
+				// Preserve local time similar to reservationSessions
+				startAt: `${booking.session.startAt.getFullYear()}-${String(booking.session.startAt.getMonth() + 1).padStart(2, "0")}-${String(
+					booking.session.startAt.getDate()
+				).padStart(2, "0")}T${String(booking.session.startAt.getHours()).padStart(2, "0")}:${String(booking.session.startAt.getMinutes()).padStart(2, "0")}`,
+				duration: booking.session.duration ?? null,
+				locationLabel: booking.session.locationLabel,
+			}
 			: null,
 	}));
+	const pendingViewerBooking =
+		serializedViewerBookings.find((booking) => booking.status === "PENDING" && (!booking.expiresAt || new Date(booking.expiresAt) > new Date())) ?? null;
 
 	return (
 		<div className="bg-muted/20 pb-16">
@@ -233,29 +236,24 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 				reviewCount={reviewCount}
 				triggerId="experience-basic-info"
 				ctaTargetId="experience-reserve-button"
+				experienceId={experience.id}
+				initialPendingReservation={
+					pendingViewerBooking
+						? {
+							expiresAt: pendingViewerBooking.expiresAt,
+						}
+						: null
+				}
 			/>
 
 			<Container className="mt-8">
 				<section id="experience-basic-info" className="space-y-4">
 					<div className="space-y-3">
-						<Badge variant="soft" className="text-xs">
-							Organized by {experience.organizer.name ?? "Kamleen organizer"}
-						</Badge>
 						<div className="flex items-start justify-between gap-3">
 							<h1 className="text-4xl font-semibold tracking-tight text-foreground">{experience.title}</h1>
 							<SaveExperienceButton experienceId={experience.id} size="lg" />
 						</div>
-						<div className="flex items-center gap-2 text-sm text-muted-foreground">
-							<span className="inline-flex items-center gap-1">
-								<Star className={`size-4 ${hasReviews ? "text-amber-500" : "text-muted-foreground/60"}`} aria-hidden="true" />
-								<span className="font-medium text-foreground">{hasReviews ? averageRating.toFixed(2) : "No reviews yet"}</span>
-							</span>
-							{hasReviews ? (
-								<span className="text-xs text-muted-foreground">
-									Based on {reviewCount} review{reviewCount === 1 ? "" : "s"}
-								</span>
-							) : null}
-						</div>
+						<ExperienceRating averageRating={averageRating} reviewCount={reviewCount} />
 						<p className="text-base text-muted-foreground">{experience.summary}</p>
 					</div>
 					<div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -383,8 +381,10 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 							<div className="flex flex-col gap-4">
 								<div className="space-y-2">
 									<p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">From</p>
-									<p className="text-3xl font-semibold text-foreground">{formatCurrency(experience.price, experience.currency)}</p>
-									<p className="text-xs text-muted-foreground">per guest · includes curated materials and refreshments</p>
+									<div className="flex items-end gap-2">
+										<p className="text-3xl font-semibold text-foreground">{formatCurrency(experience.price, experience.currency)}</p>
+										<p className="text-xs text-muted-foreground pb-1.5">per guest</p>
+									</div>
 								</div>
 								<div className="flex flex-col gap-3">
 									<ExperienceReservationModal
@@ -403,6 +403,16 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 										buttonSize="lg"
 										buttonClassName="w-full sm:w-auto"
 										buttonId="experience-reserve-button"
+										viewerPendingBooking={
+											pendingViewerBooking
+												? {
+													id: pendingViewerBooking.id,
+													sessionId: pendingViewerBooking.sessionId,
+													guests: pendingViewerBooking.guests,
+													expiresAt: pendingViewerBooking.expiresAt,
+												}
+												: undefined
+										}
 									/>
 								</div>
 							</div>
@@ -435,7 +445,7 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 													meetingCity: experience.meetingCity ?? null,
 													location: experience.location,
 												}}
-												variant="full"
+												variant="preview"
 												disabled={computeAvailableSpotsForSession(session as { capacity: number; bookings?: { guests: number }[] }) <= 0}
 											/>
 										))

@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
-import { renderTemplate, sendEmail } from "@/lib/email";
+import { BOOKING_HOLD_MS } from "@/lib/bookings/hold-window";
 
-const ACTIVE_BOOKING_STATUSES = ["PENDING", "CONFIRMED"] as const;
+// Only count confirmed bookings toward capacity; pending/payment-in-progress does not reserve
+const ACTIVE_BOOKING_STATUSES = ["CONFIRMED"] as const;
 
 type CreateBookingPayload = {
 	experienceId?: unknown;
@@ -75,10 +76,42 @@ export async function POST(request: Request) {
 		return NextResponse.json({ message: "Not enough spots left for this session." }, { status: 409 });
 	}
 
+	const now = new Date();
+	const existingPending = await prisma.experienceBooking.findFirst({
+		where: {
+			experienceId,
+			explorerId: session.user.id,
+			status: "PENDING",
+			expiresAt: { gt: now },
+		},
+		select: {
+			id: true,
+			guests: true,
+			sessionId: true,
+			expiresAt: true,
+		},
+	});
+	if (existingPending) {
+		return NextResponse.json(
+			{
+				message: "You already have a pending reservation for this experience.",
+				booking: {
+					id: existingPending.id,
+					status: "PENDING",
+					guests: existingPending.guests,
+					sessionId: existingPending.sessionId,
+					experienceId,
+					expiresAt: existingPending.expiresAt?.toISOString() ?? null,
+				},
+			},
+			{ status: 409 }
+		);
+	}
+
 	const pricePerGuest = sessionRecord.priceOverride ?? sessionRecord.experience.price;
 	const totalPrice = pricePerGuest * guests;
 
-    const booking = await prisma.experienceBooking.create({
+	const booking = await prisma.experienceBooking.create({
 		data: {
 			experienceId,
 			sessionId,
@@ -86,7 +119,7 @@ export async function POST(request: Request) {
 			guests,
 			totalPrice,
 			status: "PENDING",
-        expiresAt: new Date(Date.now() + 20 * 60 * 1000),
+			expiresAt: new Date(Date.now() + BOOKING_HOLD_MS),
 			notes,
 		},
 		include: {
@@ -114,45 +147,6 @@ export async function POST(request: Request) {
 		console.error("[booking] failed to notify organizer", err);
 	}
 
-	// Notify explorer (inbox + email via template)
-	try {
-		await createNotification({
-			userId: session.user.id,
-			title: "Request received",
-			message: `We\'ve received your reservation request for ${booking.experience.title}.`,
-			priority: "NORMAL",
-			eventType: "BOOKING_CREATED",
-			channels: ["TOAST"], // email sent below via template
-			href: "/dashboard/explorer/reservations",
-			metadata: { bookingId: booking.id, experienceId },
-		});
-
-		// Email via template if enabled
-		const pref = await prisma.notificationPreference.findUnique({ where: { userId: session.user.id } });
-		const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-		const emailOptIn = (pref?.emailEnabled ?? true) && !!user?.email;
-		if (emailOptIn) {
-			const sessionDate = new Date(sessionRecord.startAt).toLocaleString();
-			const total = new Intl.NumberFormat("en", { style: "currency", currency: booking.experience.currency }).format(totalPrice);
-			const origin = (process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL.length > 0) ? process.env.NEXT_PUBLIC_APP_URL : new URL(request.url).origin;
-			const tpl = await renderTemplate("booking_request_explorer", {
-				name: user.name || "",
-				experienceTitle: booking.experience.title,
-				sessionDate,
-				groupSize: guests,
-				totalPrice: total,
-				dashboardUrl: `${origin}/dashboard/explorer/reservations`,
-			});
-			if (tpl) {
-				void sendEmail({ to: user.email as string, subject: tpl.subject, html: tpl.html, text: tpl.text }).catch((err) => {
-					console.error("[booking] explorer email send error", err);
-				});
-			}
-		}
-	} catch (err) {
-		console.error("[booking] explorer notify/email error", err);
-	}
-
 	return NextResponse.json({
 		booking: {
 			id: booking.id,
@@ -163,7 +157,8 @@ export async function POST(request: Request) {
 			sessionId: booking.sessionId,
 			experienceId: booking.experienceId,
 			experienceTitle: booking.experience.title,
-				sessionStartAt: booking.session.startAt,
+			sessionStartAt: booking.session.startAt,
+			expiresAt: booking.expiresAt?.toISOString() ?? null,
 		},
 	});
 }

@@ -6,11 +6,10 @@ import { useRouter } from "next/navigation";
 import { CtaButton } from "@/components/ui/cta-button";
 import { X, CheckCircle2, XCircle } from "lucide-react";
 import CtaIconButton from "../ui/cta-icon-button";
-import { format } from "date-fns";
 import { parseDurationParts } from "@/lib/duration";
 import { MAX_GALLERY_IMAGES, MAX_SESSIONS } from "@/config/experiences";
 import { buildExperienceFormData } from "@/lib/experience-formdata";
-import { getDatePart, getTimePart, formatLocalInput } from "@/lib/datetime";
+import { formatLocalInput } from "@/lib/datetime";
 import { isAllowedImageFile } from "@/lib/media";
 import type { WizardState, SessionItem, ImageItem } from "@/types/experience-wizard";
 import { isMeetingValid } from "@/lib/locations";
@@ -119,19 +118,25 @@ type ExperienceWizardProps = {
 	submissionMode?: "create-experience" | "organizer-request";
 	// When true, show only the Sessions step (no progress nav/back/next)
 	sessionsOnly?: boolean;
+	// When false, omit the Sessions step from the standard wizard flow.
+	showSessionsStep?: boolean;
 };
 
 // currency is derived from the organizer's account on the server
 
 // const MAX_GALLERY_ITEMS = MAX_GALLERY_IMAGES;
 
-const stepsBase = [
-	{ title: "Basic info", description: "Name your experience and set the essentials." },
-	{ title: "Visuals", description: "Upload a hero image and supporting gallery." },
-	{ title: "Planning", description: "Outline each moment with imagery and captions." },
-	{ title: "Meeting point", description: "Let guests know where to arrive." },
-	{ title: "Sessions", description: "Schedule upcoming dates and capacities." },
-];
+type WizardStepKey = "organizer" | "basic" | "visuals" | "planning" | "meeting" | "sessions" | "verification";
+
+const wizardStepMeta: Record<WizardStepKey, { title: string; description: string }> = {
+	organizer: { title: "Organizer", description: "Tell us about you and agree to host terms." },
+	basic: { title: "Basic info", description: "Name your experience and set the essentials." },
+	visuals: { title: "Visuals", description: "Upload a hero image and supporting gallery." },
+	planning: { title: "Planning", description: "Outline each moment with imagery and captions." },
+	meeting: { title: "Meeting point", description: "Let guests know where to arrive." },
+	sessions: { title: "Sessions", description: "Schedule upcoming dates and capacities." },
+	verification: { title: "Verification", description: "Approve or reject this experience for publishing." },
+};
 
 function createId() {
 	if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -243,6 +248,7 @@ export function ExperienceWizard({
 	organizerIntro = false,
 	submissionMode = "create-experience",
 	sessionsOnly = false,
+	showSessionsStep = true,
 }: ExperienceWizardProps) {
 	const router = useRouter();
 	const [state, setState] = useState<WizardState>(() => createInitialState(initialData));
@@ -251,15 +257,40 @@ export function ExperienceWizard({
 		title: string;
 		message: string;
 	}>(null);
-	const steps = useMemo(() => {
+	const shouldIncludeSessionsStep = sessionsOnly || showSessionsStep;
+
+	const stepKeys = useMemo<WizardStepKey[]>(() => {
 		if (sessionsOnly) {
-			return [stepsBase[4]]; // Sessions only
+			return ["sessions"];
 		}
-		const base = organizerIntro ? [{ title: "Organizer", description: "Tell us about you and agree to host terms." }, ...stepsBase] : stepsBase;
-		return verificationStep?.enabled ? [...base, { title: "Verification", description: "Approve or reject this experience for publishing." }] : base;
-	}, [organizerIntro, verificationStep?.enabled, sessionsOnly]);
+		const base: WizardStepKey[] = ["basic", "visuals", "planning", "meeting"];
+		if (shouldIncludeSessionsStep) {
+			base.push("sessions");
+		}
+		let sequence: WizardStepKey[] = base;
+		if (organizerIntro) {
+			sequence = ["organizer", ...sequence];
+		}
+		if (verificationStep?.enabled) {
+			sequence = [...sequence, "verification"];
+		}
+		return sequence;
+	}, [organizerIntro, verificationStep?.enabled, sessionsOnly, shouldIncludeSessionsStep]);
+
+	const steps = useMemo(
+		() =>
+			stepKeys.map((key) => ({
+				key,
+				...wizardStepMeta[key],
+			})),
+		[stepKeys]
+	);
 	const initialStepNormalized = sessionsOnly ? 0 : Math.max(0, Math.min(steps.length - 1, initialStep ?? 0));
 	const [currentStep, setCurrentStep] = useState(initialStepNormalized);
+
+	useEffect(() => {
+		setCurrentStep((prev) => Math.min(prev, Math.max(steps.length - 1, 0)));
+	}, [steps.length]);
 	const [pending, startTransition] = useTransition();
 	const heroObjectUrl = useRef<string | null>(null);
 	const galleryObjectUrls = useRef<string[]>([]);
@@ -275,6 +306,8 @@ export function ExperienceWizard({
 	});
 
 	const totalSteps = steps.length;
+	const currentStepMeta = steps[currentStep] ?? steps[steps.length - 1] ?? null;
+	const currentStepKey = currentStepMeta?.key ?? null;
 	const galleryCount = useMemo(() => state.gallery.filter((item) => !item.removed).length, [state.gallery]);
 	const progressSteps = useMemo(
 		() =>
@@ -283,7 +316,7 @@ export function ExperienceWizard({
 				status: index < currentStep ? "complete" : index === currentStep ? "current" : "upcoming",
 				index,
 			})),
-		[currentStep]
+		[currentStep, steps]
 	);
 	const [verifyNote, setVerifyNote] = useState<string>("");
 
@@ -326,8 +359,8 @@ export function ExperienceWizard({
 
 	// Only introduce a default session if the organizer reaches the Sessions step
 	useEffect(() => {
-		const li = organizerIntro ? Math.max(0, currentStep - 1) : currentStep;
-		if (li < 4) return;
+		if (!shouldIncludeSessionsStep || sessionsOnly) return;
+		if (currentStepKey !== "sessions") return;
 		if (state.sessions.length > 0) return;
 		setState((prev) => {
 			if (prev.sessions.length > 0) return prev;
@@ -354,8 +387,7 @@ export function ExperienceWizard({
 				],
 			};
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [organizerIntro, currentStep]);
+	}, [currentStepKey, shouldIncludeSessionsStep, sessionsOnly, state.sessions.length]);
 
 	const canProceedStep1 = useMemo(() => {
 		const titleOk = Boolean(state.title.trim());
@@ -393,10 +425,6 @@ export function ExperienceWizard({
 
 	const canProceedStep5 = useMemo(() => {
 		return state.sessions.every((session) => session.startAt && session.capacity);
-	}, [state.sessions]);
-
-	const sessionsSorted = useMemo(() => {
-		return [...state.sessions].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
 	}, [state.sessions]);
 
 	// disabledNext is computed after meeting-point validation is derived (see below)
@@ -970,9 +998,6 @@ export function ExperienceWizard({
 
 	const selectedCountry = useMemo(() => countries.find((c) => c.id === state.meeting.countryId) ?? null, [countries, state.meeting.countryId]);
 	const availableStates = useMemo(() => selectedCountry?.states ?? [], [selectedCountry]);
-	const selectedState = useMemo(() => availableStates.find((s) => s.id === state.meeting.stateId) ?? null, [availableStates, state.meeting.stateId]);
-	const availableCities = useMemo(() => (selectedState ? selectedState.cities : selectedCountry?.cities ?? []), [selectedCountry, selectedState]);
-
 	const canProceedStep4 = useMemo(() => {
 		return isMeetingValid(state.meeting, availableStates.length > 0);
 	}, [availableStates.length, state.meeting]);
@@ -985,21 +1010,21 @@ export function ExperienceWizard({
 		return aboutSelf.length >= 30 && aboutExp.length >= 30 && terms;
 	}, [organizerIntro, state.organizerAboutSelf, state.organizerAboutExperience, state.organizerTermsAccepted]);
 
-	const logicalIndex = organizerIntro ? Math.max(0, currentStep - 1) : currentStep;
-
 	const disabledNext = (() => {
 		if (sessionsOnly) return !canProceedStep5;
-		if (organizerIntro && currentStep === 0) return !organizerIntroValid;
-		switch (logicalIndex) {
-			case 0:
+		if (!currentStepKey) return true;
+		switch (currentStepKey) {
+			case "organizer":
+				return !organizerIntroValid;
+			case "basic":
 				return !canProceedStep1;
-			case 1:
+			case "visuals":
 				return !canProceedStep2 || hasPendingUploadsStep2;
-			case 2:
+			case "planning":
 				return !canProceedStep3 || hasPendingUploadsStep3;
-			case 3:
+			case "meeting":
 				return !canProceedStep4;
-			case 4:
+			case "sessions":
 				return !canProceedStep5;
 			default:
 				return false;
@@ -1007,10 +1032,11 @@ export function ExperienceWizard({
 	})();
 
 	const renderStepContent = () => {
-		if (verificationStep?.enabled && currentStep === steps.length - 1) {
+		if (!currentStepKey) return null;
+		if (verificationStep?.enabled && currentStepKey === "verification") {
 			return <StepVerification verifyNote={verifyNote} error={error} onChangeNote={(v) => setVerifyNote(v)} />;
 		}
-		if (organizerIntro && currentStep === 0) {
+		if (currentStepKey === "organizer") {
 			return (
 				<div className="space-y-8 p-2">
 					<TextareaField
@@ -1039,9 +1065,8 @@ export function ExperienceWizard({
 			);
 		}
 
-		const activeIndex = sessionsOnly ? 4 : logicalIndex;
-		switch (activeIndex) {
-			case 0:
+		switch (currentStepKey) {
+			case "basic":
 				return (
 					<StepBasicInfo
 						state={state}
@@ -1053,8 +1078,7 @@ export function ExperienceWizard({
 						onRemoveTag={(tag) => removeTag(tag)}
 					/>
 				);
-
-			case 1:
+			case "visuals":
 				return (
 					<StepVisuals
 						state={state}
@@ -1066,8 +1090,7 @@ export function ExperienceWizard({
 						galleryUploading={uploading.gallery}
 					/>
 				);
-
-			case 2:
+			case "planning":
 				return (
 					<StepItinerary
 						items={state.itinerary}
@@ -1079,8 +1102,7 @@ export function ExperienceWizard({
 						uploading={uploading.itinerary}
 					/>
 				);
-
-			case 3:
+			case "meeting":
 				return (
 					<StepMeeting
 						meeting={state.meeting}
@@ -1127,8 +1149,7 @@ export function ExperienceWizard({
 						onMapChange={(lat, lng) => setState((prev) => ({ ...prev, meeting: { ...prev.meeting, latitude: String(lat), longitude: String(lng) } }))}
 					/>
 				);
-
-			case 4:
+			case "sessions":
 				return (
 					<StepSessions
 						state={state}
@@ -1141,7 +1162,6 @@ export function ExperienceWizard({
 						maxSessions={MAX_SESSIONS}
 					/>
 				);
-
 			default:
 				return null;
 		}
@@ -1171,8 +1191,8 @@ export function ExperienceWizard({
 			<header className="border-b border-border/60 px-6 py-4">
 				<div className="flex items-center justify-between">
 					<div>
-						<h2 className="text-lg font-semibold text-foreground">{steps[currentStep].title}</h2>
-						<p className="text-sm text-muted-foreground">{steps[currentStep].description}</p>
+						<h2 className="text-lg font-semibold text-foreground">{currentStepMeta?.title ?? ""}</h2>
+						<p className="text-sm text-muted-foreground">{currentStepMeta?.description ?? ""}</p>
 					</div>
 					<div className="flex items-center gap-3">
 						{message ? <span className="text-xs font-medium text-emerald-600">{message}</span> : null}
@@ -1197,16 +1217,16 @@ export function ExperienceWizard({
 									step.status === "complete"
 										? "border-primary bg-primary text-primary-foreground"
 										: step.status === "current"
-										? "border-[#EC4050] bg-[#EC4050] text-primary-foreground"
+										? "border-brand bg-brand text-brand-foreground"
 										: "border-border/70 text-muted-foreground";
-								const lineClasses = step.status === "complete" ? "bg-primary" : step.status === "current" ? "bg-[#EC4050]/60" : "bg-border/60";
+								const lineClasses = step.status === "complete" ? "bg-primary" : step.status === "current" ? "bg-brand/60" : "bg-border/60";
 								return (
-									<li key={step.title} className={`flex items-center gap-3 ${isLast ? "ml-auto flex-none justify-end" : "flex-1"}`}>
+									<li key={step.key ?? step.title} className={`flex items-center gap-3 ${isLast ? "ml-auto flex-none justify-end" : "flex-1"}`}>
 										<div className="flex items-center gap-3">
 											<span className={`${circleBase} ${currentClasses}`}>{step.index + 1}</span>
 											<div className="min-w-0">
 												{(() => {
-													const titleClasses = step.status === "current" ? "text-[#EC4050]" : "text-muted-foreground";
+													const titleClasses = step.status === "current" ? "text-brand" : "text-muted-foreground";
 													return <p className={`truncate text-xs font-semibold uppercase tracking-[0.2em] ${titleClasses}`}>{step.title}</p>;
 												})()}
 											</div>

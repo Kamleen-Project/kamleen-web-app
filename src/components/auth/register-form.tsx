@@ -6,8 +6,13 @@ import { signIn } from "next-auth/react";
 
 import { CtaButton } from "@/components/ui/cta-button";
 import { InputField } from "@/components/ui/input-field";
+import { sanitizeRelativePath } from "@/lib/sanitize-relative-path";
 
-export function RegisterForm() {
+type RegisterFormProps = {
+	onboardingNext?: string;
+};
+
+export function RegisterForm({ onboardingNext }: RegisterFormProps = {}) {
 	const router = useRouter();
 	const [error, setError] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +62,13 @@ export function RegisterForm() {
 			return;
 		}
 
-		router.push("/onboarding?start=welcome");
+		const params = new URLSearchParams({ start: "welcome" });
+		const safeNext = sanitizeRelativePath(onboardingNext);
+		if (safeNext) {
+			params.set("next", safeNext);
+		}
+
+		router.push(`/onboarding?${params.toString()}`);
 		router.refresh();
 	}
 

@@ -38,9 +38,7 @@ export type BookingStatusCardProps = {
 	} | null;
 };
 
-function formatCurrency(value: number, currency: string) {
-	return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(value);
-}
+import { formatCurrency } from "@/lib/format-currency";
 
 function getStatusMeta(status: BookingStatusValue) {
 	switch (status) {

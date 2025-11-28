@@ -147,6 +147,7 @@ export function EditExperienceModal({
 											: undefined
 									}
 									sessionsOnly={Boolean(sessionsOnly)}
+									showSessionsStep={Boolean(sessionsOnly)}
 								/>
 							)}
 						</div>

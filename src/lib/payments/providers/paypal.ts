@@ -8,11 +8,18 @@ function getEnv(name: string): string {
 }
 
 async function resolvePaypalCredentials() {
-  const settings = await prisma.paymentSettings.findFirst()
-  const clientId = settings?.paypalClientId || process.env.PAYPAL_CLIENT_ID
-  const secret = settings?.paypalClientSecret || process.env.PAYPAL_CLIENT_SECRET
-  if (!clientId || !secret) throw new Error("Missing PayPal credentials (set in settings or env)")
-  const testMode = settings?.testMode ?? (process.env.NEXT_PUBLIC_TEST_MODE === "true" || process.env.TEST_MODE === "true")
+  // Prefer new PaymentGateway config
+  const gateway = await prisma.paymentGateway.findUnique({ where: { key: "paypal" } })
+  const cfg = (gateway?.config as null | { clientId?: string; clientSecret?: string }) || {}
+  const clientId = (typeof cfg.clientId === "string" && cfg.clientId.length > 0) ? cfg.clientId : (process.env.PAYPAL_CLIENT_ID || null)
+  const secret =
+    (typeof cfg.clientSecret === "string" && cfg.clientSecret.length > 0 && !cfg.clientSecret.startsWith("env:"))
+      ? cfg.clientSecret
+      : (typeof cfg.clientSecret === "string" && cfg.clientSecret.startsWith("env:")
+          ? process.env[cfg.clientSecret.slice(4)]
+          : process.env.PAYPAL_CLIENT_SECRET)
+  if (!clientId || !secret) throw new Error("Missing PayPal credentials (DB or env)")
+  const testMode = gateway?.testMode ?? (process.env.NEXT_PUBLIC_TEST_MODE === "true" || process.env.TEST_MODE === "true")
   const base = testMode ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com"
   return { clientId, secret, base }
 }

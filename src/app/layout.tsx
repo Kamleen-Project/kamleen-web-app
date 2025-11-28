@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
+
+// test
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooterConditional } from "@/components/layout/site-footer-conditional";
 import { AuthProvider } from "@/components/providers/session-provider";

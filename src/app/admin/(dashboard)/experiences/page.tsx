@@ -4,8 +4,9 @@ import { formatDistanceToNowStrict } from "date-fns";
 
 import { ConsolePage } from "@/components/console/page";
 import { Table, TableBody, TableCell, TableContainer, TableEmpty, TableHead, TableHeader, TableHeaderRow, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { CtaIconButton } from "@/components/ui/cta-icon-button";
+import { formatCurrency } from "@/lib/format-currency";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { prisma } from "@/lib/prisma";
 import type { Prisma, $Enums } from "@/generated/prisma";
 import { getServerAuthSession } from "@/lib/auth";
@@ -35,11 +36,11 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 		...(statusQuery !== "__ALL__" ? { status: statusQuery as $Enums.ExperienceStatus } : {}),
 		...(q
 			? {
-					OR: [
-						{ title: { contains: q, mode: "insensitive" } },
-						{ organizer: { name: { contains: q, mode: "insensitive" } } as unknown as Prisma.UserWhereInput },
-					],
-			  }
+				OR: [
+					{ title: { contains: q, mode: "insensitive" } },
+					{ organizer: { name: { contains: q, mode: "insensitive" } } as unknown as Prisma.UserWhereInput },
+				],
+			}
 			: {}),
 	};
 
@@ -115,10 +116,10 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 										<span className="text-foreground">{exp.category ?? "—"}</span>
 									</TableCell>
 									<TableCell>
-										<VerificationBadge value={exp.verificationStatus} />
+										<StatusBadge value={formatLabel(exp.verificationStatus)} variation={mapVerificationVariation(exp.verificationStatus)} />
 									</TableCell>
 									<TableCell>
-										<StatusBadge value={exp.status} />
+										<StatusBadge value={formatLabel(exp.status)} variation={mapPublishVariation(exp.status)} />
 									</TableCell>
 									<TableCell>
 										<div className="flex flex-col leading-tight">
@@ -180,26 +181,28 @@ function clampPageSize(size: number): number {
 
 function formatPrice(amount: number, currency: string | null | undefined) {
 	try {
-		return new Intl.NumberFormat("en", { style: "currency", currency: currency || "USD", maximumFractionDigits: 0 }).format(amount);
+		return formatCurrency(amount, currency || "USD");
 	} catch {
 		return `${amount} ${currency || "USD"}`;
 	}
 }
 
-function VerificationBadge({ value }: { value: string }) {
-	const label = value.toLowerCase().replace(/_/g, " ");
-	if (value === "VERIFIED") return <Badge className="bg-emerald-600 text-white border-transparent">{label}</Badge>;
-	if (value === "PENDING") return <Badge className="bg-amber-500 text-white border-transparent">{label}</Badge>;
-	if (value === "REJECTED") return <Badge className="bg-rose-600 text-white border-transparent">{label}</Badge>;
-	return <Badge variant="outline">{label}</Badge>;
+function formatLabel(value: string): string {
+	return value.toLowerCase().replace(/_/g, " ");
 }
 
-function StatusBadge({ value }: { value: string }) {
-	const label = value.toLowerCase();
-	if (value === "PUBLISHED") return <Badge className="bg-emerald-600 text-white border-transparent">{label}</Badge>;
-	if (value === "DRAFT") return <Badge className="bg-slate-500 text-white border-transparent">{label}</Badge>;
-	if (value === "UNPUBLISHED") return <Badge className="bg-amber-500 text-white border-transparent">{label}</Badge>;
-	if (value === "UNLISTED") return <Badge variant="soft">{label}</Badge>;
-	if (value === "ARCHIVED") return <Badge className="bg-rose-700 text-white border-transparent">{label}</Badge>;
-	return <Badge variant="outline">{label}</Badge>;
+function mapVerificationVariation(value: string): "success" | "warning" | "danger" | "outline" {
+	if (value === "VERIFIED") return "success";
+	if (value === "PENDING") return "warning";
+	if (value === "REJECTED") return "danger";
+	return "outline";
+}
+
+function mapPublishVariation(value: string): "success" | "warning" | "danger" | "muted" | "soft" | "outline" {
+	if (value === "PUBLISHED") return "success";
+	if (value === "DRAFT") return "muted";
+	if (value === "UNPUBLISHED") return "warning";
+	if (value === "UNLISTED") return "soft";
+	if (value === "ARCHIVED") return "danger";
+	return "outline";
 }

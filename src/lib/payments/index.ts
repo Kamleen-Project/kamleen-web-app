@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { stripeProvider, verifyStripeWebhookSignature } from "@/lib/payments/providers/stripe"
 import { payzoneProvider } from "@/lib/payments/providers/payzone"
 import { paypalProvider } from "@/lib/payments/providers/paypal"
+import { cashProvider } from "@/lib/payments/providers/cash"
+import { cmiProvider } from "@/lib/payments/providers/cmi"
 import { PaymentProvider, PaymentProviderId, CreateCheckoutParams, CreateCheckoutResult, ProviderCreateRefundParams, ProviderCreateRefundResult } from "@/lib/payments/types"
 
 function providerFor(id: PaymentProviderId): PaymentProvider {
@@ -13,21 +15,40 @@ function providerFor(id: PaymentProviderId): PaymentProvider {
       return payzoneProvider
     case "paypal":
       return paypalProvider
+    case "cash":
+      return cashProvider
+    case "cmi":
+      return cmiProvider
     default:
       throw new Error(`Unsupported provider: ${id}`)
   }
 }
 
-export async function getPaymentSettings() {
-  const existing = await prisma.paymentSettings.findFirst()
-  if (existing) return existing
-  return await prisma.paymentSettings.create({
-    data: {
-      defaultProvider: "STRIPE",
-      enabledProviders: ["STRIPE"],
-      testMode: true,
-    },
+async function getEnabledGateways(): Promise<Array<{ key: PaymentProviderId }>> {
+  const gateways = await prisma.paymentGateway.findMany({
+    where: { isEnabled: true },
+    select: { key: true },
+    orderBy: { createdAt: "asc" },
   })
+  // Narrow keys to known provider ids
+  const known: Set<string> = new Set(["stripe", "payzone", "paypal", "cash", "cmi"])
+  return gateways.filter((g) => known.has(g.key)).map((g) => ({ key: g.key as PaymentProviderId }))
+}
+
+function toPrismaProviderEnum(id: PaymentProviderId): any {
+  // Map lowercase id to Prisma enum without importing generated types
+  switch (id) {
+    case "stripe":
+      return "STRIPE" as any
+    case "payzone":
+      return "PAYZONE" as any
+    case "paypal":
+      return "PAYPAL" as any
+    case "cmi":
+      return "CMI" as any
+    case "cash":
+      return "CASH" as any
+  }
 }
 
 export async function createCheckoutForBooking(params: {
@@ -35,64 +56,86 @@ export async function createCheckoutForBooking(params: {
   successUrl: string
   cancelUrl: string
   providerId?: PaymentProviderId
-}) {
+}): Promise<{ url: string; paymentId: string; providerPaymentId?: string | null }> {
   const booking = await prisma.experienceBooking.findUnique({
     where: { id: params.bookingId },
     include: { experience: true, explorer: true, session: true },
   })
   if (!booking) throw new Error("Booking not found")
-  const settings = await getPaymentSettings()
-  const implemented = new Set<PaymentProviderId>(["stripe", "payzone", "paypal", "cash"]) // currently supported
+
+  const implemented = new Set<PaymentProviderId>(["stripe", "payzone", "paypal", "cash", "cmi"])
   const requested = params.providerId
-  const defaultCandidate = settings.defaultProvider.toLowerCase() as PaymentProviderId
-  const enabledCandidates = (settings.enabledProviders || []).map((p) => p.toLowerCase() as PaymentProviderId)
-  const candidates = [requested ?? defaultCandidate, ...enabledCandidates].filter((id, idx, arr) => arr.indexOf(id) === idx)
+  const enabledGateways = await getEnabledGateways()
+  const enabledCandidates = enabledGateways.map((g) => g.key)
+
+  // Use enabled gateways as the fallback order, instead of hardcoded list
+  const candidates = [
+    ...(requested ? [requested] : []),
+    ...enabledCandidates,
+  ].filter((id, idx, arr) => arr.indexOf(id) === idx)
+
   const chosen = candidates.find((id) => implemented.has(id))
   if (!chosen) {
-    throw new Error("No supported payment provider is enabled. Enable Stripe or Payzone in settings.")
+    throw new Error("No supported payment provider is enabled. Enable Stripe, Payzone, CMI, PayPal or Cash.")
   }
-  // Cash flow: confirm immediately, create Payment with status PROCESSING, no redirect to external gateway
-  if (chosen === "cash") {
-    const payment = await prisma.payment.create({
+
+  // Enforce unique payment per booking: check for ANY existing payment
+  let payment = await prisma.payment.findFirst({
+    where: { bookingId: booking.id },
+    orderBy: { createdAt: "desc" },
+  })
+
+  if (payment) {
+    if (payment.status === "SUCCEEDED") {
+      // If already paid, just return the success URL (or throw, but returning success is friendlier)
+      return { url: params.successUrl, paymentId: payment.id, providerPaymentId: payment.providerPaymentId }
+    }
+
+    // Reuse existing payment record (recycling it for the new attempt)
+    payment = await prisma.payment.update({
+      where: { id: payment.id },
       data: {
-        bookingId: booking.id,
-        // cast to avoid dependency on generated enums before migration/generate runs
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        provider: "CASH" as any,
+        provider: toPrismaProviderEnum(chosen),
         amount: Math.round(booking.totalPrice * 100),
         currency: booking.experience.currency,
-        status: "PROCESSING",
+        status: chosen === "cash" ? "PROCESSING" : "REQUIRES_PAYMENT_METHOD",
+        metadata: { bookingId: booking.id },
+        // Reset error fields if retrying
+        errorCode: null,
+        errorMessage: null,
+      },
+    })
+  } else {
+    // Create the initial payment record if none exists
+    payment = await prisma.payment.create({
+      data: {
+        bookingId: booking.id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        provider: toPrismaProviderEnum(chosen),
+        amount: Math.round(booking.totalPrice * 100),
+        currency: booking.experience.currency,
+        status: chosen === "cash" ? "PROCESSING" : "REQUIRES_PAYMENT_METHOD",
         metadata: { bookingId: booking.id },
       },
     })
-
-    await prisma.experienceBooking.update({
-      where: { id: booking.id },
-      data: { status: "CONFIRMED", paymentId: payment.id, paymentStatus: "PROCESSING", expiresAt: null },
-    })
-
-    // For now, we redirect back to successUrl; optional: trigger tickets and notifications elsewhere
-    return { url: params.successUrl, paymentId: payment.id }
   }
 
-  const payment = await prisma.payment.create({
+  // Update booking with payment linkage
+  await prisma.experienceBooking.update({
+    where: { id: booking.id },
     data: {
-      bookingId: booking.id,
-      // Seed with configured default (typed from Prisma) to satisfy type constraints;
-      // we correct it below if we fall back to another provider.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      provider: (chosen.toUpperCase()) as any,
-      amount: Math.round(booking.totalPrice * 100),
-      currency: booking.experience.currency,
-      status: "REQUIRES_PAYMENT_METHOD",
-      metadata: { bookingId: booking.id },
+      paymentId: payment.id,
+      paymentStatus: chosen === "cash" ? "PROCESSING" : "REQUIRES_PAYMENT_METHOD"
     },
   })
 
   let result: CreateCheckoutResult | null = null
   let lastError: unknown = null
+
   // Try chosen, then any other implemented+enabled providers as fallback, in order
   const tryOrder = [chosen, ...enabledCandidates.filter((id) => id !== chosen && implemented.has(id))]
+
   for (const id of tryOrder) {
     try {
       const prov = providerFor(id)
@@ -106,11 +149,11 @@ export async function createCheckoutForBooking(params: {
         customerEmail: booking.explorer.email ?? undefined,
         metadata: { bookingId: booking.id, paymentId: payment.id },
       } as CreateCheckoutParams)
+
       // Update provider in case of fallback
       if (id !== chosen) {
-        // Narrowing Prisma enum type for update without tying to client internals
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await prisma.payment.update({ where: { id: payment.id }, data: { provider: id.toUpperCase() as any } })
+        await prisma.payment.update({ where: { id: payment.id }, data: { provider: toPrismaProviderEnum(id) } })
       }
       break
     } catch (e) {
@@ -118,6 +161,7 @@ export async function createCheckoutForBooking(params: {
       // continue to next
     }
   }
+
   if (!result) {
     const message = (() => {
       if (lastError && typeof lastError === "object" && "message" in (lastError as { message?: unknown })) {
@@ -137,13 +181,7 @@ export async function createCheckoutForBooking(params: {
     })
   }
 
-  // Link latest payment to booking and mark awaiting action
-  await prisma.experienceBooking.update({
-    where: { id: booking.id },
-    data: { paymentId: payment.id, paymentStatus: "REQUIRES_PAYMENT_METHOD" },
-  })
-
-  return { url: result.url, paymentId: payment.id }
+  return { url: result.url, paymentId: payment.id, providerPaymentId: result.providerPaymentId ?? null }
 }
 
 type StripeEvent = { type: string; data: { object: Record<string, unknown> } }

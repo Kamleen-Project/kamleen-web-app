@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrency } from "@/lib/format-currency";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, MapPin, Star } from "lucide-react";
@@ -39,18 +40,14 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
 	const reviews = typeof experience.reviews === "number" ? experience.reviews : 0;
 	const hasReviews = reviews > 0;
 	const currency = experience.currency ?? "USD";
-	const formattedPrice = new Intl.NumberFormat("en", {
-		style: "currency",
-		currency,
-		maximumFractionDigits: 0,
-	}).format(experience.price);
+	const formattedPrice = formatCurrency(experience.price, experience.currency);
 
 	const now = new Date();
 	const upcomingDate = experience.sessions
 		? experience.sessions
-				.map((session) => new Date(session.startAt))
-				.filter((date) => !Number.isNaN(date.getTime()) && date >= now)
-				.sort((a, b) => a.getTime() - b.getTime())[0] ?? null
+			.map((session) => new Date(session.startAt))
+			.filter((date) => !Number.isNaN(date.getTime()) && date >= now)
+			.sort((a, b) => a.getTime() - b.getTime())[0] ?? null
 		: null;
 
 	const formattedUpcomingDate = upcomingDate ? upcomingDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
