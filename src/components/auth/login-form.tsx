@@ -44,7 +44,7 @@ export function LoginForm({ redirectTo = "/dashboard", mode = "user" }: LoginFor
 		if (typeof window !== "undefined") {
 			try {
 				callbackUrl = new URL(redirectTo, window.location.origin).toString();
-			} catch {}
+			} catch { }
 		}
 
 		const result = await signIn("credentials", {
@@ -85,7 +85,7 @@ export function LoginForm({ redirectTo = "/dashboard", mode = "user" }: LoginFor
 			<CtaButton type="submit" disabled={isSubmitting} className="w-full" color="black" size="lg">
 				{isSubmitting ? "Signing in..." : "Sign in"}
 			</CtaButton>
-			<div className="pt-2">
+			{/* <div className="pt-2">
 				<div className="mb-2 text-center text-xs text-muted-foreground">Quick logins</div>
 				{mode === "admin" ? (
 					<div className="grid grid-cols-1 gap-2">
@@ -103,7 +103,7 @@ export function LoginForm({ redirectTo = "/dashboard", mode = "user" }: LoginFor
 						</CtaButton>
 					</div>
 				)}
-			</div>
+			</div> */}
 		</form>
 	);
 }
