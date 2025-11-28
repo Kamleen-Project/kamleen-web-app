@@ -15,10 +15,10 @@ const companyLinks = [
 ];
 
 const socialLinks: { label: string; href: string; icon: LucideIcon }[] = [
-	{ label: "LinkedIn", href: "https://www.linkedin.com/company/kamleen", icon: Linkedin },
-	{ label: "Instagram", href: "https://www.instagram.com/kamleen", icon: Instagram },
-	{ label: "Facebook", href: "https://www.facebook.com/kamleen", icon: Facebook },
-	{ label: "YouTube", href: "https://www.youtube.com/@kamleen", icon: Youtube },
+	// { label: "LinkedIn", href: "https://www.linkedin.com/company/kamleen", icon: Linkedin },
+	{ label: "Instagram", href: "https://www.instagram.com/kamleencom", icon: Instagram },
+	// { label: "Facebook", href: "https://www.facebook.com/kamleen", icon: Facebook },
+	// { label: "YouTube", href: "https://www.youtube.com/@kamleen", icon: Youtube },
 ];
 
 const bottomLinks = [
