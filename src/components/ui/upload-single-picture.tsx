@@ -12,6 +12,8 @@ export type UploadSinglePictureProps = {
 	previewUrl?: string | null;
 	// Called when a new file is selected
 	onChangeFile: (file: File) => void;
+	// Object fit mode for preview image (default: cover)
+	objectFit?: "cover" | "contain";
 	// Called when remove is clicked
 	onRemove?: () => void;
 	// Visual label texts
@@ -54,6 +56,7 @@ export function UploadSinglePicture({
 	loading = false,
     compress = true,
     compressOptions,
+	objectFit = "cover",
 }: UploadSinglePictureProps) {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const generatedId = useId();
@@ -72,7 +75,9 @@ export function UploadSinglePicture({
 				}
 			}
 			onChangeFile(toSend);
-			event.currentTarget.value = "";
+			if (inputRef.current) {
+				inputRef.current.value = "";
+			}
 		}
 	}
 
@@ -103,7 +108,14 @@ export function UploadSinglePicture({
 			<input ref={inputRef} id={inputId} name={name} type="file" accept="image/*" className="hidden" onChange={handleInputChange} />
 			{previewUrl ? (
 				<>
-					<Image src={previewUrl} alt="Selected image" fill unoptimized sizes="200px" className="object-cover" />
+					<Image
+						src={previewUrl}
+						alt="Selected image"
+						fill
+						unoptimized
+						sizes="200px"
+						className={objectFit === "contain" ? "object-contain" : "object-cover"}
+					/>
 					{loading ? (
 						<div className="absolute inset-0 flex items-center justify-center bg-black/40">
 							<div className="h-8 w-8 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />

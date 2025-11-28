@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 
 import CtaIconButton from "../ui/cta-icon-button";
+import { SelectField } from "@/components/ui/select-field";
+import { InputField } from "@/components/ui/input-field";
 
 export function UsersFilters({ initialRole, initialOrganizer, initialQuery }: { initialRole: string; initialOrganizer: string; initialQuery: string | null }) {
 	const router = useRouter();
@@ -74,28 +76,32 @@ export function UsersFilters({ initialRole, initialOrganizer, initialQuery }: { 
 	return (
 		<div className="flex w-full items-center gap-2">
 			<div className="flex items-center gap-2">
-				<select
+				<SelectField
 					aria-label="Role filter"
 					value={role}
 					onChange={(e) => onChangeRole(e.target.value)}
-					className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm text-foreground shadow-sm focus:outline-none"
-				>
-					<option value="__ALL__">All roles</option>
-					<option value="EXPLORER">Explorer</option>
-					<option value="ORGANIZER">Organizer</option>
-				</select>
-				<select
+					className="h-9"
+					containerClassName="w-[160px]"
+					options={[
+						{ value: "__ALL__", label: "All roles" },
+						{ value: "EXPLORER", label: "Explorer" },
+						{ value: "ORGANIZER", label: "Organizer" },
+					]}
+				/>
+				<SelectField
 					aria-label="Organizer request filter"
 					value={organizer}
 					onChange={(e) => onChangeOrganizer(e.target.value)}
-					className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm text-foreground shadow-sm focus:outline-none"
-				>
-					<option value="__ALL__">All organizer requests</option>
-					<option value="NOT_APPLIED">Not applied</option>
-					<option value="PENDING">Pending</option>
-					<option value="APPROVED">Approved</option>
-					<option value="REJECTED">Rejected</option>
-				</select>
+					className="h-9"
+					containerClassName="w-[200px]"
+					options={[
+						{ value: "__ALL__", label: "All organizer requests" },
+						{ value: "NOT_APPLIED", label: "Not applied" },
+						{ value: "PENDING", label: "Pending" },
+						{ value: "APPROVED", label: "Approved" },
+						{ value: "REJECTED", label: "Rejected" },
+					]}
+				/>
 				{role !== "__ALL__" || organizer !== "__ALL__" || (q ?? "").trim().length > 0 ? (
 					<CtaIconButton color="whiteBorder" size="md" ariaLabel="Reset filters" onClick={onReset}>
 						<X />
@@ -105,13 +111,13 @@ export function UsersFilters({ initialRole, initialOrganizer, initialQuery }: { 
 			<div className="ml-auto flex items-center gap-2">
 				<div className="relative">
 					<Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-					<input
+					<InputField
 						type="search"
 						aria-label="Search users"
 						placeholder="Search name or email..."
 						value={q}
 						onChange={(e) => setQ(e.target.value)}
-						className="h-9 w-64 rounded-md border border-border/60 bg-background pl-8 pr-3 text-sm text-foreground shadow-sm focus:outline-none"
+						className="pl-8 h-9 w-64"
 					/>
 				</div>
 			</div>

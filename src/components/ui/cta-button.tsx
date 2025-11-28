@@ -41,7 +41,7 @@ const colorClass = {
 	black: "bg-black text-white hover:bg-black/80 border border-transparent",
 	white: "bg-white text-black hover:bg-zinc-100 border border-transparent",
 	whiteBorder: "bg-white text-black hover:bg-zinc-100 border border-input",
-	primary: "bg-[#EC4050] text-white hover:bg-[#EC4050]/80 border border-transparent",
+	primary: "bg-brand text-brand-foreground hover:bg-brand/90 border border-transparent",
 };
 
 export function CtaButton({

@@ -1197,16 +1197,16 @@ export function ExperienceWizard({
 									step.status === "complete"
 										? "border-primary bg-primary text-primary-foreground"
 										: step.status === "current"
-										? "border-[#EC4050] bg-[#EC4050] text-primary-foreground"
+										? "border-brand bg-brand text-brand-foreground"
 										: "border-border/70 text-muted-foreground";
-								const lineClasses = step.status === "complete" ? "bg-primary" : step.status === "current" ? "bg-[#EC4050]/60" : "bg-border/60";
+								const lineClasses = step.status === "complete" ? "bg-primary" : step.status === "current" ? "bg-brand/60" : "bg-border/60";
 								return (
 									<li key={step.title} className={`flex items-center gap-3 ${isLast ? "ml-auto flex-none justify-end" : "flex-1"}`}>
 										<div className="flex items-center gap-3">
 											<span className={`${circleBase} ${currentClasses}`}>{step.index + 1}</span>
 											<div className="min-w-0">
 												{(() => {
-													const titleClasses = step.status === "current" ? "text-[#EC4050]" : "text-muted-foreground";
+													const titleClasses = step.status === "current" ? "text-brand" : "text-muted-foreground";
 													return <p className={`truncate text-xs font-semibold uppercase tracking-[0.2em] ${titleClasses}`}>{step.title}</p>;
 												})()}
 											</div>
