@@ -45,10 +45,10 @@ export function ExperienceStatusSelect({ experienceId, currentStatus, type }: Ex
         startTransition(async () => {
             try {
                 if (type === "PUBLISHING") {
-                    // @ts-expect-error
+                    // @ts-expect-error -- TODO: Fix type mismatch in updateExperienceStatus
                     await updateExperienceStatus(experienceId, value);
                 } else {
-                    // @ts-expect-error
+                    // @ts-expect-error -- TODO: Fix type mismatch in updateExperienceReservationStatus
                     await updateExperienceReservationStatus(experienceId, value);
                 }
             } catch (error) {
