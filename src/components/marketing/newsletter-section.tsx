@@ -71,7 +71,7 @@ export function NewsletterSection() {
 						<Image src="/images/leen-mail.png" alt="" height={320} width={320} className="h-full" aria-hidden />
 						<div className={"flex flex-col items-start gap-8 py-14 sm:py-16"}>
 							<div className={"space-y-2"}>
-								<h2 className={"text-3xl font-semibold tracking-tight text-white"}>Join our adventurous community</h2>
+								<h2 className={"text-3xl font-semibold tracking-tight text-white"}>Join our adventurous community!</h2>
 								<p className={"max-w-2xl text-md text-white/70"}>
 									Get stories from our hosts and explorers, plus fresh experiences and offers. Unsubscribe anytime.
 								</p>
