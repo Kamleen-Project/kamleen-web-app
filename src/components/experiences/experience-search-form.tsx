@@ -97,23 +97,24 @@ export function ExperienceSearchForm({ initialValues }: ExperienceSearchFormProp
 				allowTextInput={false}
 				monthCount={2}
 			/>
-			<div className="flex flex-col gap-2 text-left">
+			<div className="flex flex-row gap-2 justify-between ">
 				{/* Hidden field carries the numeric value for form submission */}
 				<input id="exp-search-guests" type="hidden" name="guests" value={guests} readOnly />
 				<div className="flex items-center justify-between">
 					<Stepper value={guests} onChange={(value) => setGuests(value)} min={1} max={100} className="" />
 				</div>
-			</div>
-			<div className="flex items-end justify-end gap-2">
-				{hasFilters ? (
-					<CtaIconButton type="button" color="whiteBorder" size="lg" className="h-12 w-12" ariaLabel="Reset search" onClick={handleReset}>
-						<X className="size-5" />
+				<div className="flex items-end justify-end gap-2">
+					{hasFilters ? (
+						<CtaIconButton type="button" color="whiteBorder" size="lg" className="h-12 w-12" ariaLabel="Reset search" onClick={handleReset}>
+							<X className="size-5" />
+						</CtaIconButton>
+					) : null}
+					<CtaIconButton type="submit" color="black" size="lg" className="h-12 w-12" ariaLabel="Search experiences">
+						<Search className="size-5" />
 					</CtaIconButton>
-				) : null}
-				<CtaIconButton type="submit" color="black" size="lg" className="h-12 w-12" ariaLabel="Search experiences">
-					<Search className="size-5" />
-				</CtaIconButton>
+				</div>
 			</div>
+
 		</form>
 	);
 }

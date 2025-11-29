@@ -137,10 +137,18 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 
 	const now = new Date();
 	const futureSessions = experience.sessions.filter((session) => session.startAt >= now);
-	const upcomingTwoSessions = futureSessions.slice(0, 2);
+
+	const isReservationOpen = experience.reservationStatus === "OPEN";
+	const isComingSoon = experience.reservationStatus === "COMING_SOON";
+	const isClosed = experience.reservationStatus === "CLOSED";
+
+	// Hide sessions if not open
+	const visibleSessions = isReservationOpen ? futureSessions : [];
+	const upcomingTwoSessions = visibleSessions.slice(0, 2);
+
 	const itinerary = experience.itinerarySteps;
 	const galleryImages = experience.galleryImages;
-	const reservationSessions = futureSessions.map((session) => {
+	const reservationSessions = visibleSessions.map((session) => {
 		const used =
 			"bookings" in session && Array.isArray((session as { bookings?: { guests: number }[] }).bookings)
 				? (session as { bookings: { guests: number }[] }).bookings.reduce((acc, b) => acc + (b.guests || 0), 0)
@@ -403,6 +411,8 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 										buttonSize="lg"
 										buttonClassName="w-full sm:w-auto"
 										buttonId="experience-reserve-button"
+										buttonLabel={isComingSoon ? "Coming Soon" : isClosed ? "Closed" : "Reserve a spot"}
+										disabled={!isReservationOpen}
 										viewerPendingBooking={
 											pendingViewerBooking
 												? {
@@ -450,11 +460,13 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 											/>
 										))
 									) : (
-										<p className="text-sm text-muted-foreground">New sessions will be announced soon.</p>
+										<p className="text-sm text-muted-foreground">
+											{isComingSoon ? "New sessions will be announced soon." : isClosed ? "Reservations are currently closed." : "No upcoming sessions available."}
+										</p>
 									)}
 								</div>
 
-								{futureSessions.length ? <OpenReservationButton targetButtonId="experience-reserve-button" className="w-full" /> : null}
+								{futureSessions.length && isReservationOpen ? <OpenReservationButton targetButtonId="experience-reserve-button" className="w-full" /> : null}
 
 								<div className="space-y-1 text-sm text-muted-foreground">
 									<p className="font-medium text-foreground">Need to coordinate?</p>

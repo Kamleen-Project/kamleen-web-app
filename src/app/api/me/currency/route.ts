@@ -7,7 +7,7 @@ export async function GET() {
   const session = await getServerAuthSession()
 
   if (!session?.user) {
-    return NextResponse.json({ currency: "USD" })
+    return NextResponse.json({ currency: "MAD" })
   }
 
   const user = await prisma.user.findUnique({
@@ -15,7 +15,7 @@ export async function GET() {
     select: { preferredCurrency: true },
   })
 
-  const currency = (user?.preferredCurrency || "USD").toUpperCase()
+  const currency = (user?.preferredCurrency || "MAD").toUpperCase()
   return NextResponse.json({ currency })
 }
 

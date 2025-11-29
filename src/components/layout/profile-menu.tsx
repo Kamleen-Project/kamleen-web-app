@@ -53,6 +53,7 @@ export function ProfileMenu() {
 					className="text-sm font-medium"
 					onClick={() => {
 						setAuthMode("login");
+						setAuthOpen(true);
 					}}
 				>
 					Sign in

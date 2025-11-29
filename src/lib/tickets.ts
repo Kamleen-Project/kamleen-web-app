@@ -216,7 +216,7 @@ async function buildTicketsHtml(template: string, entries: { code: string; seatN
     if (patternBuf) {
       patternDataUrl = `data:image/png;base64,${patternBuf.toString("base64")}`
     }
-  } catch {}
+  } catch { }
 
   const brandName = "Kamleen"
 
@@ -267,7 +267,7 @@ async function buildTicketsHtml(template: string, entries: { code: string; seatN
 
   function formatPricePerSpot(amount: number | null | undefined, currency: string): string {
     if (!amount || amount <= 0) return ""
-    const cur = (currency || "USD").toUpperCase()
+    const cur = (currency || "MAD").toUpperCase()
     const fixed = Number(amount).toFixed(2)
     return `${fixed} ${cur} / Spot`
   }
@@ -278,7 +278,7 @@ async function buildTicketsHtml(template: string, entries: { code: string; seatN
     try {
       const png = await renderBarcodePngBuffer(e.code)
       barcodeDataUrl = `data:image/png;base64,${png.toString("base64")}`
-    } catch {}
+    } catch { }
 
     // Build cover image data URL (supports local public paths and remote URLs)
     let coverDataUrl = ""
@@ -295,7 +295,7 @@ async function buildTicketsHtml(template: string, entries: { code: string; seatN
             const contentType = res.headers.get("content-type") || "image/jpeg"
             coverDataUrl = `data:${contentType};base64,${buf.toString("base64")}`
           }
-        } catch {}
+        } catch { }
       }
 
       if (!coverDataUrl) {
@@ -315,7 +315,7 @@ async function buildTicketsHtml(template: string, entries: { code: string; seatN
           }
         }
       }
-    } catch {}
+    } catch { }
 
     const sessionStartDate = ctx.session?.startAt ? new Date(ctx.session.startAt) : null
     const totalMinutes = parseDurationToMinutes(ctx.session?.duration ?? ctx.experience?.duration ?? null)
@@ -328,7 +328,7 @@ async function buildTicketsHtml(template: string, entries: { code: string; seatN
     const effectivePrice = (ctx.session?.priceOverride ?? null) != null && (ctx.session?.priceOverride as number | null) !== null
       ? (ctx.session?.priceOverride as number)
       : (ctx.experience?.price ?? null)
-    const pricePerSpot = formatPricePerSpot(effectivePrice ?? null, ctx.experience?.currency || "USD")
+    const pricePerSpot = formatPricePerSpot(effectivePrice ?? null, ctx.experience?.currency || "MAD")
     const sessionWeekday = sessionStartDate ? new Intl.DateTimeFormat("en", { weekday: "long" }).format(sessionStartDate) : ""
     const sessionDay = sessionStartDate ? String(sessionStartDate.getDate()) : ""
     const sessionMonth = sessionStartDate ? new Intl.DateTimeFormat("en", { month: "long" }).format(sessionStartDate) : ""
@@ -344,7 +344,7 @@ async function buildTicketsHtml(template: string, entries: { code: string; seatN
         const png = await renderQrPngBuffer(experienceUrl)
         qrcodeDataUrl = `data:image/png;base64,${png.toString("base64")}`
       }
-    } catch {}
+    } catch { }
 
     const reservationDateLabel = ctx.reservationDate ? formatDateNoWeekday(new Date(ctx.reservationDate)) : ""
 
@@ -435,7 +435,7 @@ async function renderHtmlToPdf(html: string): Promise<Buffer | null> {
       const tmpPath = path.join(process.cwd(), ".next-cache", `ticket-preview-${Date.now()}.html`)
       await fs.mkdir(path.dirname(tmpPath), { recursive: true })
       await fs.writeFile(tmpPath, html)
-    } catch {}
+    } catch { }
     return null
   }
 }

@@ -39,7 +39,7 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
 	const rating = typeof experience.rating === "number" ? experience.rating : 0;
 	const reviews = typeof experience.reviews === "number" ? experience.reviews : 0;
 	const hasReviews = reviews > 0;
-	const currency = experience.currency ?? "USD";
+	const currency = experience.currency ?? "MAD";
 	const formattedPrice = formatCurrency(experience.price, experience.currency);
 
 	const now = new Date();

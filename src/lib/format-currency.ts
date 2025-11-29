@@ -1,4 +1,4 @@
-export function formatCurrency(value: number, currency: string = "USD"): string {
+export function formatCurrency(value: number, currency: string = "MAD"): string {
     const formattedValue = new Intl.NumberFormat("en-US", {
         style: "decimal",
         minimumFractionDigits: 2,

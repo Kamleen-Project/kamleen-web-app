@@ -154,7 +154,7 @@ export function mapExperienceToCard(experience: ExperienceCardPayload) {
     reviews: experience.reviewCount ?? 0,
     price: experience.price,
     image: experience.heroImage ?? undefined,
-    currency: experience.currency ?? "USD",
+    currency: experience.currency ?? "MAD",
     slug: experience.slug,
     duration: experience.duration ?? undefined,
     sessions: experience.sessions?.map((session) => ({

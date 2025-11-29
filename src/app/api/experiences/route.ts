@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       return parseInteger(getRequiredString(formData, "price"))
     })()
     const userSettings = await getUserSettingsData()
-    const currency = (userSettings?.preferredCurrency || "USD").toUpperCase()
+    const currency = (userSettings?.preferredCurrency || "MAD").toUpperCase()
     const categoryId = getOptionalString(formData, "categoryId")
     const category = getOptionalString(formData, "category")
     const duration = (getOptionalString(formData, "duration") || (isDraft ? "0 min" : null)) ?? getRequiredString(formData, "duration")
@@ -260,33 +260,33 @@ export async function POST(request: Request) {
         cityId: cityId ?? null,
         ...(sessionsInput.length
           ? {
-              sessions: {
-                create: sessionsInput.map((item) => ({
-                  startAt: new Date(item.startAt),
-                  duration: item.duration ?? null,
-                  capacity: item.capacity,
-                  priceOverride: item.priceOverride ?? null,
-                  meetingAddress: item.meetingAddress ?? null,
-                  meetingLatitude: item.meetingLatitude ?? null,
-                  meetingLongitude: item.meetingLongitude ?? null,
-                })),
-              },
-            }
+            sessions: {
+              create: sessionsInput.map((item) => ({
+                startAt: new Date(item.startAt),
+                duration: item.duration ?? null,
+                capacity: item.capacity,
+                priceOverride: item.priceOverride ?? null,
+                meetingAddress: item.meetingAddress ?? null,
+                meetingLatitude: item.meetingLatitude ?? null,
+                meetingLongitude: item.meetingLongitude ?? null,
+              })),
+            },
+          }
           : {}),
         ...(itinerarySteps.length
           ? {
-              itinerarySteps: {
-                create: itinerarySteps
-                  .sort((a, b) => a.order - b.order)
-                  .map((step) => ({
-                    order: step.order,
-                    title: step.title,
-                    subtitle: step.subtitle,
-                    image: step.image,
-                    duration: step.duration,
-                  })),
-              },
-            }
+            itinerarySteps: {
+              create: itinerarySteps
+                .sort((a, b) => a.order - b.order)
+                .map((step) => ({
+                  order: step.order,
+                  title: step.title,
+                  subtitle: step.subtitle,
+                  image: step.image,
+                  duration: step.duration,
+                })),
+            },
+          }
           : {}),
       },
       select: {

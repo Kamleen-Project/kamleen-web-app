@@ -17,6 +17,7 @@ const LANGUAGE_LABELS: Record<string, string> = {
 }
 
 const CURRENCY_LABELS: Record<string, string> = {
+  MAD: "Moroccan Dirham",
   USD: "US Dollar",
   EUR: "Euro",
   GBP: "British Pound",
@@ -68,7 +69,7 @@ export function formatUserPreferences(user: UserPreferencesData | null): Prefere
   if (!user) {
     return {
       languageLabel: "English",
-      currencyLabel: "US Dollar",
+      currencyLabel: "Moroccan Dirham",
       timezoneLabel: "Coordinated Universal Time",
     }
   }

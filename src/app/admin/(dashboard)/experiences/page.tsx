@@ -14,6 +14,7 @@ import { EditExperienceModal } from "@/components/organizer/edit-experience-moda
 import { ExperiencesFilters } from "@/components/admin/experiences-filters";
 import { ExperiencesPagination } from "../../../../components/admin/experiences-pagination";
 import { ExperiencesActions } from "@/components/admin/experiences-actions";
+import { ExperienceStatusSelect } from "@/components/admin/experience-status-select";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -59,6 +60,7 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 			averageRating: true,
 			reviewCount: true,
 			verificationStatus: true,
+			reservationStatus: true,
 			status: true,
 			updatedAt: true,
 			createdAt: true,
@@ -91,6 +93,7 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 							<TableHead>Category</TableHead>
 							<TableHead>Verification</TableHead>
 							<TableHead>Publish</TableHead>
+							<TableHead>Reservation</TableHead>
 							<TableHead>Creat./Updated</TableHead>
 							<TableHead>Actions</TableHead>
 						</TableHeaderRow>
@@ -119,7 +122,10 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 										<StatusBadge value={formatLabel(exp.verificationStatus)} variation={mapVerificationVariation(exp.verificationStatus)} />
 									</TableCell>
 									<TableCell>
-										<StatusBadge value={formatLabel(exp.status)} variation={mapPublishVariation(exp.status)} />
+										<ExperienceStatusSelect experienceId={exp.id} currentStatus={exp.status} type="PUBLISHING" />
+									</TableCell>
+									<TableCell>
+										<ExperienceStatusSelect experienceId={exp.id} currentStatus={exp.reservationStatus} type="RESERVATION" />
 									</TableCell>
 									<TableCell>
 										<div className="flex flex-col leading-tight">

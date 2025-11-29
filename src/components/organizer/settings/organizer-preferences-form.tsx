@@ -19,6 +19,7 @@ const LANGUAGE_OPTIONS = [
 ];
 
 const CURRENCY_OPTIONS = [
+	{ value: "MAD", label: "Moroccan Dirham" },
 	{ value: "USD", label: "US Dollar" },
 	{ value: "EUR", label: "Euro" },
 	{ value: "GBP", label: "British Pound" },

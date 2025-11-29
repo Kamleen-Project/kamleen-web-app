@@ -324,7 +324,7 @@ export function ExperienceWizard({
 	const displayCurrency = useMemo(() => {
 		const fromProp = typeof currency === "string" && currency.trim() ? currency.trim() : "";
 		const fromInitial = typeof initialData?.currency === "string" && initialData.currency?.trim() ? (initialData.currency as string).trim() : "";
-		return fromProp || fromInitial || "USD";
+		return fromProp || fromInitial || "MAD";
 	}, [currency, initialData?.currency]);
 
 	useEffect(() => {
@@ -583,10 +583,10 @@ export function ExperienceWizard({
 			itinerary: prev.itinerary.map((item) =>
 				item.id === id
 					? {
-							...item,
-							file,
-							preview,
-					  }
+						...item,
+						file,
+						preview,
+					}
 					: item
 			),
 		}));
@@ -628,9 +628,9 @@ export function ExperienceWizard({
 				.map((item) =>
 					item.id === id
 						? {
-								...item,
-								removed: item.status === "existing",
-						  }
+							...item,
+							removed: item.status === "existing",
+						}
 						: item
 				)
 				.filter((item) => !(item.status === "new" && !item.url && !item.file && item.id === id)),
@@ -643,9 +643,9 @@ export function ExperienceWizard({
 			itinerary: prev.itinerary.map((item) =>
 				item.id === id
 					? {
-							...item,
-							[key]: value,
-					  }
+						...item,
+						[key]: value,
+					}
 					: item
 			),
 		}));
@@ -684,9 +684,9 @@ export function ExperienceWizard({
 			sessions: prev.sessions.map((session) =>
 				session.id === id
 					? {
-							...session,
-							[key]: value,
-					  }
+						...session,
+						[key]: value,
+					}
 					: session
 			),
 		}));
@@ -857,7 +857,7 @@ export function ExperienceWizard({
 					else if (lower.includes("session")) target = organizerIntro ? 5 : 4;
 					else if (lower.includes("city") || lower.includes("state") || lower.includes("country") || lower.includes("meeting")) target = organizerIntro ? 4 : 3;
 					setCurrentStep(Math.max(0, Math.min(steps.length - 1, target)));
-				} catch {}
+				} catch { }
 				setSubmissionOverlay({ type: "error", title: "Submission failed", message: msg });
 				return;
 			}
@@ -1217,8 +1217,8 @@ export function ExperienceWizard({
 									step.status === "complete"
 										? "border-primary bg-primary text-primary-foreground"
 										: step.status === "current"
-										? "border-brand bg-brand text-brand-foreground"
-										: "border-border/70 text-muted-foreground";
+											? "border-brand bg-brand text-brand-foreground"
+											: "border-border/70 text-muted-foreground";
 								const lineClasses = step.status === "complete" ? "bg-primary" : step.status === "current" ? "bg-brand/60" : "bg-border/60";
 								return (
 									<li key={step.key ?? step.title} className={`flex items-center gap-3 ${isLast ? "ml-auto flex-none justify-end" : "flex-1"}`}>
@@ -1304,12 +1304,12 @@ export function ExperienceWizard({
 									{pending
 										? "Saving..."
 										: submissionMode === "organizer-request"
-										? "Submit request"
-										: verificationStep?.enabled
-										? mode === "create"
-											? "Submit for verification"
-											: "Save changes"
-										: "Submit for verification"}
+											? "Submit request"
+											: verificationStep?.enabled
+												? mode === "create"
+													? "Submit for verification"
+													: "Save changes"
+												: "Submit for verification"}
 								</CtaButton>
 							</>
 						)}

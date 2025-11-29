@@ -76,7 +76,7 @@ export function OrganizerBookingSessionCard({ session, experienceMeta, onUpdateS
 					<OrganizerBookingReservationCard
 						key={b.id}
 						reservation={b}
-						currency={experienceMeta.currency || "USD"}
+						currency={experienceMeta.currency || "MAD"}
 						pendingActionId={pendingActionId}
 						isActionLoading={isActionLoading}
 						onUpdateStatus={onUpdateStatus}

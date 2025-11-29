@@ -70,6 +70,12 @@ enum ExperienceStatus {
   ARCHIVED
 }
 
+enum ReservationStatus {
+  OPEN
+  COMING_SOON
+  CLOSED
+}
+
 enum ExperienceVerificationStatus {
   NOT_SUBMITTED
   PENDING
@@ -134,6 +140,7 @@ model Experience {
   description        String?
   location           String
   status             ExperienceStatus          @default(PUBLISHED)
+  reservationStatus  ReservationStatus         @default(OPEN)
   verificationStatus ExperienceVerificationStatus @default(NOT_SUBMITTED)
   verificationNote   String?
   heroImage          String?

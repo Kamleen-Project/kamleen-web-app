@@ -52,6 +52,7 @@ type ExperienceReservationModalProps = {
 		guests: number;
 		expiresAt: string | null;
 	} | null;
+	disabled?: boolean;
 };
 
 type Step = "select-session" | "payment-method" | "pay" | "complete";
@@ -181,6 +182,7 @@ export function ExperienceReservationModal({
 	buttonClassName,
 	buttonId,
 	viewerPendingBooking = null,
+	disabled = false,
 }: ExperienceReservationModalProps) {
 	const [mounted, setMounted] = useState(false);
 	const [open, setOpen] = useState(false);
@@ -706,7 +708,7 @@ export function ExperienceReservationModal({
 				if (!res.ok) return;
 				const { clientId } = (await res.json()) as { clientId: string };
 				const script = document.createElement("script");
-				const sdkCurrency = encodeURIComponent((experience.currency || "USD").toUpperCase());
+				const sdkCurrency = encodeURIComponent((experience.currency || "MAD").toUpperCase());
 				script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&components=buttons&intent=capture&currency=${sdkCurrency}`;
 				script.async = true;
 				script.onload = () => {
@@ -1272,7 +1274,7 @@ export function ExperienceReservationModal({
 				size={buttonSize === "lg" ? "lg" : buttonSize === "sm" ? "sm" : "md"}
 				className={buttonClassName}
 				onClick={handleTriggerClick}
-				disabled={!hasSessions}
+				disabled={disabled || !hasSessions}
 			/>
 			{modalContent}
 			<AuthModal open={authOpen} mode={authMode} onOpenChange={setAuthOpen} onModeChange={setAuthMode} redirectTo={authRedirect ?? undefined} />
