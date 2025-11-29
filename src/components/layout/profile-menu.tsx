@@ -53,10 +53,9 @@ export function ProfileMenu() {
 					className="text-sm font-medium"
 					onClick={() => {
 						setAuthMode("login");
-						setAuthOpen(true);
 					}}
 				>
-					Log in
+					Sign in
 				</CtaButton>
 				<CtaButton
 					color="black"
