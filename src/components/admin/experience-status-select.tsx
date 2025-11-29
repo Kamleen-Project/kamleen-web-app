@@ -45,10 +45,10 @@ export function ExperienceStatusSelect({ experienceId, currentStatus, type }: Ex
         startTransition(async () => {
             try {
                 if (type === "PUBLISHING") {
-                    // @ts-ignore
+                    // @ts-expect-error
                     await updateExperienceStatus(experienceId, value);
                 } else {
-                    // @ts-ignore
+                    // @ts-expect-error
                     await updateExperienceReservationStatus(experienceId, value);
                 }
             } catch (error) {
@@ -71,9 +71,7 @@ export function ExperienceStatusSelect({ experienceId, currentStatus, type }: Ex
                 >
                     <div className="flex items-center gap-1">
                         <StatusBadge
-                            // @ts-ignore
                             value={selectedStatus.label}
-                            // @ts-ignore
                             variation={selectedStatus.variation}
                             className={cn("cursor-pointer transition-opacity hover:opacity-80", pending && "opacity-50")}
                         />
