@@ -87,22 +87,22 @@ export function OrganizerBookingSessionCard({ session, experienceMeta, onUpdateS
 	);
 }
 
-function formatDate(value: string) {
-	return new Intl.DateTimeFormat("en", {
-		month: "short",
-		day: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	}).format(new Date(value));
-}
+// function formatDate(value: string) {
+// 	return new Intl.DateTimeFormat("en", {
+// 		month: "short",
+// 		day: "numeric",
+// 		hour: "numeric",
+// 		minute: "2-digit",
+// 	}).format(new Date(value));
+// }
 
-import { formatCurrency } from "@/lib/format-currency";
+// import { formatCurrency } from "@/lib/format-currency";
 
-function StatusBadge({ status }: { status: "PENDING" | "CONFIRMED" | "CANCELLED" }) {
-	const statusStyles =
-		status === "CONFIRMED" ? "bg-emerald-100 text-emerald-700" : status === "CANCELLED" ? "bg-destructive/10 text-destructive" : "bg-amber-100 text-amber-700";
-	return <Badge className={cn("text-xs", statusStyles)}>{status}</Badge>;
-}
+// function StatusBadge({ status }: { status: "PENDING" | "CONFIRMED" | "CANCELLED" }) {
+// 	const statusStyles =
+// 		status === "CONFIRMED" ? "bg-emerald-100 text-emerald-700" : status === "CANCELLED" ? "bg-destructive/10 text-destructive" : "bg-amber-100 text-amber-700";
+// 	return <Badge className={cn("text-xs", statusStyles)}>{status}</Badge>;
+// }
 
 function formatSessionTime(startIso: string, durationLabel: string | null, fallbackDurationLabel: string | null) {
 	const start = new Date(startIso);

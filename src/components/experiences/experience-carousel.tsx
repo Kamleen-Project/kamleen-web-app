@@ -50,8 +50,8 @@ export function ExperienceCarousel({ eyebrow, title, description, experiences, c
 
 	return (
 		<div className={cn("space-y-6", className)}>
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-				<div className="max-w-3xl space-y-2">
+			<div className="flex flex-row items-end justify-between gap-4">
+				<div className="max-w-3xl space-y-2 flex-1">
 					{eyebrow ? <p className="text-sm font-medium uppercase tracking-wider text-primary">{eyebrow}</p> : null}
 					<h3 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{title}</h3>
 					{description ? <p className="text-sm text-muted-foreground sm:text-base">{description}</p> : null}

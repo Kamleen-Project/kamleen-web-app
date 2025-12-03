@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import CtaIconButton from "@/components/ui/cta-icon-button";
 import { InputField } from "@/components/ui/input-field";
 import { Stepper } from "@/components/ui/stepper";
@@ -81,37 +82,96 @@ export function ExperienceSearchForm({ initialValues }: ExperienceSearchFormProp
 		setGuests("1");
 	}, []);
 
+	const [isExpanded, setIsExpanded] = useState(false);
+	const formRef = useRef<HTMLFormElement>(null);
+
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (formRef.current && !formRef.current.contains(event.target as Node)) {
+				setIsExpanded(false);
+			}
+		}
+
+		if (isExpanded) {
+			document.addEventListener("mousedown", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [isExpanded]);
+
 	const hasFilters = q.trim() !== "" || Boolean(dateRange?.from || dateRange?.to) || guests !== "1";
 
 	return (
-		<form onSubmit={handleSubmit} className="grid gap-4 p-4 text-black sm:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto]">
-			<InputField id="exp-search-q" name="q" value={q} onChange={(e) => setQ(e.currentTarget.value)} placeholder="City, host, or experience" />
-			<DateField
-				id="exp-search-dates"
-				range
-				nameStart="start"
-				nameEnd="end"
-				valueRange={dateRange}
-				onChangeRange={(range) => setDateRange(range ?? {})}
-				placeholder="Add dates"
-				allowTextInput={false}
-				monthCount={2}
-			/>
-			<div className="flex flex-row gap-2 justify-between ">
-				{/* Hidden field carries the numeric value for form submission */}
-				<input id="exp-search-guests" type="hidden" name="guests" value={guests} readOnly />
-				<div className="flex items-center justify-between">
-					<Stepper value={guests} onChange={(value) => setGuests(value)} min={1} max={100} className="" />
-				</div>
-				<div className="flex items-end justify-end gap-2">
-					{hasFilters ? (
-						<CtaIconButton type="button" color="whiteBorder" size="lg" className="h-12 w-12" ariaLabel="Reset search" onClick={handleReset}>
-							<X className="size-5" />
-						</CtaIconButton>
-					) : null}
+		<form
+			ref={formRef}
+			onSubmit={handleSubmit}
+			className={cn(
+				"grid gap-4 p-4 text-black sm:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto]",
+				!isExpanded && "gap-0 sm:pb-4 sm:gap-4"
+			)}
+		>
+			<div className="flex w-full items-center gap-2 sm:contents">
+				<InputField
+					id="exp-search-q"
+					name="q"
+					value={q}
+					onChange={(e) => setQ(e.currentTarget.value)}
+					onFocus={() => setIsExpanded(true)}
+					placeholder="City, host, or experience"
+					className="text-md"
+					containerClassName="flex-1"
+				/>
+				<div className={cn("sm:hidden", isExpanded && "hidden")}>
 					<CtaIconButton type="submit" color="black" size="lg" className="h-12 w-12" ariaLabel="Search experiences">
 						<Search className="size-5" />
 					</CtaIconButton>
+				</div>
+			</div>
+
+			<div
+				className={cn(
+					"grid transition-[grid-template-rows] duration-300 ease-in-out sm:contents",
+					isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+				)}
+			>
+				<div className="overflow-hidden sm:contents">
+					<DateField
+						id="exp-search-dates"
+						range
+						nameStart="start"
+						nameEnd="end"
+						valueRange={dateRange}
+						onChangeRange={(range) => setDateRange(range ?? {})}
+						placeholder="Add dates"
+						allowTextInput={false}
+						monthCount={2}
+					/>
+					<div className="flex flex-row gap-2 justify-between pt-4 sm:pt-0">
+						{/* Hidden field carries the numeric value for form submission */}
+						<input id="exp-search-guests" type="hidden" name="guests" value={guests} readOnly />
+						<div className="flex items-center justify-between">
+							<Stepper value={guests} onChange={(value) => setGuests(value)} min={1} max={100} className="" />
+						</div>
+						<div className="flex items-end justify-end gap-2">
+							{hasFilters ? (
+								<CtaIconButton
+									type="button"
+									color="whiteBorder"
+									size="lg"
+									className="h-12 w-12"
+									ariaLabel="Reset search"
+									onClick={handleReset}
+								>
+									<X className="size-5" />
+								</CtaIconButton>
+							) : null}
+							<CtaIconButton type="submit" color="black" size="lg" className="h-12 w-12" ariaLabel="Search experiences">
+								<Search className="size-5" />
+							</CtaIconButton>
+						</div>
+					</div>
 				</div>
 			</div>
 

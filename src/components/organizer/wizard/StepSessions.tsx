@@ -111,7 +111,7 @@ function SessionSummary({
 	displayCurrency: string;
 }) {
 	const capacityNum = session.capacity ? Number.parseInt(session.capacity, 10) : 0;
-	const capacityLabel = capacityNum ? `${capacityNum} spot${capacityNum === 1 ? "" : "s"}` : "";
+	// const capacityLabel = capacityNum ? `${capacityNum} spot${capacityNum === 1 ? "" : "s"}` : "";
 	const effective = session.useDifferentPrice && session.priceOverride ? session.priceOverride : state.price;
 	const priceText = effective ? `${effective} ${displayCurrency} / spot` : "";
 	const reserved = Math.max(0, Number.parseInt(String(session.reservedGuests ?? 0), 10) || 0);

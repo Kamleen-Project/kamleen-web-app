@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { Facebook, Globe2, Instagram, Linkedin, Youtube } from "lucide-react";
+import { Globe2, Instagram } from "lucide-react";
 
 import { TogetherLogo } from "@/components/branding";
 import { Container } from "@/components/layout/container";

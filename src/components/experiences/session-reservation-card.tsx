@@ -59,15 +59,15 @@ function formatTimeRange(startIso: string, durationLabel: string | null | undefi
 	return `${startStr} to ${endStr}`;
 }
 
-function formatDateLabel(value: string) {
-	const date = new Date(value);
-	return new Intl.DateTimeFormat("en", {
-		weekday: "long",
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	}).format(date);
-}
+// function formatDateLabel(value: string) {
+// 	const date = new Date(value);
+// 	return new Intl.DateTimeFormat("en", {
+// 		weekday: "long",
+// 		month: "short",
+// 		day: "numeric",
+// 		year: "numeric",
+// 	}).format(date);
+// }
 
 function formatDateLabelNoYear(value: string) {
 	const date = new Date(value);

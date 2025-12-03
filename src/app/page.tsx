@@ -134,54 +134,54 @@ async function loadCarouselGroups(): Promise<CarouselGroup[]> {
 		orderBy: Prisma.ExperienceOrderByWithRelationInput[];
 		take: number;
 	}[] = [
-		{
-			key: "tangier",
-			title: "Tangier experiences",
-			where: {
-				heroImage: { not: null },
-				OR: [{ meetingCity: { equals: "Tangier" } }, { location: { contains: "Tangier", mode: "insensitive" } }],
+			{
+				key: "tangier",
+				title: "Tangier experiences",
+				where: {
+					heroImage: { not: null },
+					OR: [{ meetingCity: { equals: "Tangier" } }, { location: { contains: "Tangier", mode: "insensitive" } }],
+				},
+				orderBy: [{ averageRating: "desc" }, { createdAt: "desc" }],
+				take: 16,
 			},
-			orderBy: [{ averageRating: "desc" }, { createdAt: "desc" }],
-			take: 16,
-		},
-		{
-			key: "hangzhou",
-			title: "Hangzhou experiences",
-			where: {
-				heroImage: { not: null },
-				OR: [{ meetingCity: { equals: "Hangzhou" } }, { location: { contains: "Hangzhou", mode: "insensitive" as const } }],
+			{
+				key: "hangzhou",
+				title: "Hangzhou experiences",
+				where: {
+					heroImage: { not: null },
+					OR: [{ meetingCity: { equals: "Hangzhou" } }, { location: { contains: "Hangzhou", mode: "insensitive" as const } }],
+				},
+				orderBy: [{ averageRating: "desc" }, { createdAt: "desc" }],
+				take: 16,
 			},
-			orderBy: [{ averageRating: "desc" }, { createdAt: "desc" }],
-			take: 16,
-		},
-		{
-			key: "city",
-			title: "Experiences by city",
-			where: {
-				heroImage: { not: null },
-				meetingCity: { not: null },
+			{
+				key: "city",
+				title: "Experiences by city",
+				where: {
+					heroImage: { not: null },
+					meetingCity: { not: null },
+				},
+				orderBy: [{ meetingCity: "asc" }, { averageRating: "desc" }, { createdAt: "desc" }],
+				take: 16,
 			},
-			orderBy: [{ meetingCity: "asc" }, { averageRating: "desc" }, { createdAt: "desc" }],
-			take: 16,
-		},
-		{
-			key: "weekend",
-			title: "This weekend's highlights",
-			where: {
-				heroImage: { not: null },
-				sessions: {
-					some: {
-						startAt: {
-							gte: now,
-							lte: weekendEnd,
+			{
+				key: "weekend",
+				title: "This weekend's highlights",
+				where: {
+					heroImage: { not: null },
+					sessions: {
+						some: {
+							startAt: {
+								gte: now,
+								lte: weekendEnd,
+							},
 						},
 					},
 				},
+				orderBy: [{ averageRating: "desc" }, { createdAt: "desc" }],
+				take: 16,
 			},
-			orderBy: [{ averageRating: "desc" }, { createdAt: "desc" }],
-			take: 16,
-		},
-	];
+		];
 
 	const results = await Promise.all(
 		groups.map((group) =>
@@ -226,9 +226,9 @@ export default async function Home() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<StickySearchSection />
-			<div className="relative overflow-hidden mt-12">
+			<div className="relative overflow-hidden mt-4 sm:mt-12">
 				<div className="pointer-events-none absolute inset-x-0 top-[-20%] z-[-1] h-[600px] bg-gradient-to-b from-primary/10 via-transparent to-transparent blur-3xl" />
-				<main className="space-y-24 pb-24">
+				<main className="space-y-4 sm:space-y-24 pb-24">
 					{categories.length ? (
 						<section>
 							<Container className="space-y-8">

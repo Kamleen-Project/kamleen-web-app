@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
 import { UploadSinglePicture } from "@/components/ui/upload-single-picture";
 import { UploadMultiplePictures } from "@/components/ui/upload-multiple-pictures";
 import CtaIconButton from "@/components/ui/cta-icon-button";
