@@ -5,6 +5,7 @@ import type { NextAuthOptions } from "next-auth"
 import type { JWT } from "next-auth/jwt"
 import type { AccountStatus, OrganizerStatus, UserRole } from "@/generated/prisma"
 import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
 
 import { prisma } from "@/lib/prisma"
 
@@ -98,14 +99,68 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          emailVerified: new Date(),
+          accountStatus: "ONBOARDING",
+          role: "EXPLORER",
+          activeRole: "EXPLORER",
+          organizerStatus: "NOT_APPLIED",
+        }
+      },
+    }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      console.log("SignIn callback triggered", { provider: account?.provider, email: user.email })
+      if (account?.provider === "google" && user.email) {
+        try {
+          const email = user.email.toLowerCase()
+          const existingUser = await prisma.user.findUnique({
+            where: { email },
+          })
+
+          console.log("Existing user found:", !!existingUser)
+
+          if (existingUser) {
+            const updates: any = {}
+            if (!existingUser.emailVerified) {
+              updates.emailVerified = new Date()
+              console.log("Marking email as verified")
+            }
+            if (existingUser.accountStatus === "PENDING_VERIFICATION") {
+              updates.accountStatus = "ONBOARDING"
+              console.log("Updating status to ONBOARDING")
+            }
+
+            if (Object.keys(updates).length > 0) {
+              await prisma.user.update({
+                where: { id: existingUser.id },
+                data: updates,
+              })
+              console.log("User updated successfully")
+            }
+          }
+        } catch (error) {
+          console.error("Error auto-verifying Google user:", error)
+        }
+      }
+      return true
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role
         token.activeRole = user.activeRole
         token.organizerStatus = user.organizerStatus
-        ;(token as JWT & { accountStatus?: AccountStatus }).accountStatus = (user as unknown as { accountStatus?: AccountStatus }).accountStatus
+          ; (token as JWT & { accountStatus?: AccountStatus }).accountStatus = (user as unknown as { accountStatus?: AccountStatus }).accountStatus
       }
 
       if (trigger === "update") {
@@ -142,6 +197,23 @@ export const authOptions: NextAuthOptions = {
       }
 
       return session
+    },
+  },
+  events: {
+    async linkAccount({ user, account }) {
+      if (account.provider === "google") {
+        try {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              emailVerified: new Date(),
+              accountStatus: "ONBOARDING", // Ensure they are not stuck in PENDING_VERIFICATION
+            },
+          })
+        } catch (error) {
+          console.error("Error updating user on linkAccount:", error)
+        }
+      }
     },
   },
   secret: process.env.NEXTAUTH_SECRET,

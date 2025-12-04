@@ -6,6 +6,7 @@ import { signIn, getSession } from "next-auth/react";
 
 import { CtaButton } from "@/components/ui/cta-button";
 import { InputField } from "@/components/ui/input-field";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 
 type LoginFormProps = {
 	redirectTo?: string;
@@ -85,6 +86,15 @@ export function LoginForm({ redirectTo = "/dashboard", mode = "user" }: LoginFor
 			<CtaButton type="submit" disabled={isSubmitting} className="w-full" color="black" size="lg">
 				{isSubmitting ? "Signing in..." : "Sign in"}
 			</CtaButton>
+			<div className="relative">
+				<div className="absolute inset-0 flex items-center">
+					<span className="w-full border-t" />
+				</div>
+				<div className="relative flex justify-center text-xs uppercase">
+					<span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+				</div>
+			</div>
+			<GoogleSignInButton />
 			{/* <div className="pt-2">
 				<div className="mb-2 text-center text-xs text-muted-foreground">Quick logins</div>
 				{mode === "admin" ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -8,7 +8,7 @@ import { ExperienceCard, type Experience } from "@/components/cards/experience-c
 import CtaIconButton from "@/components/ui/cta-icon-button";
 import { cn } from "@/lib/utils";
 
-const PAGE_SIZE = 4;
+
 
 type ExperienceCarouselProps = {
 	eyebrow?: string;
@@ -19,34 +19,40 @@ type ExperienceCarouselProps = {
 };
 
 export function ExperienceCarousel({ eyebrow, title, description, experiences, className }: ExperienceCarouselProps) {
-	const pages = useMemo(() => {
-		const chunks: Experience[][] = [];
-		for (let index = 0; index < experiences.length; index += PAGE_SIZE) {
-			chunks.push(experiences.slice(index, index + PAGE_SIZE));
-		}
-		return chunks;
-	}, [experiences]);
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
+	const [canScrollPrev, setCanScrollPrev] = useState(false);
+	const [canScrollNext, setCanScrollNext] = useState(true);
 
-	const [page, setPage] = useState(0);
-	const totalPages = pages.length;
-	const current = pages[page] ?? [];
+	const checkScroll = () => {
+		if (scrollContainerRef.current) {
+			const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+			setCanScrollPrev(scrollLeft > 0);
+			setCanScrollNext(scrollLeft < scrollWidth - clientWidth - 1); // -1 for rounding errors
+		}
+	};
 
 	useEffect(() => {
-		setPage(0);
+		checkScroll();
+		window.addEventListener("resize", checkScroll);
+		return () => window.removeEventListener("resize", checkScroll);
 	}, [experiences]);
 
-	useEffect(() => {
-		if (page > totalPages - 1) {
-			setPage(Math.max(totalPages - 1, 0));
+	const scroll = (direction: "left" | "right") => {
+		if (scrollContainerRef.current) {
+			const container = scrollContainerRef.current;
+			const scrollAmount = container.clientWidth; // Scroll by one full view width
+			const newScrollLeft = direction === "left" ? container.scrollLeft - scrollAmount : container.scrollLeft + scrollAmount;
+
+			container.scrollTo({
+				left: newScrollLeft,
+				behavior: "smooth",
+			});
 		}
-	}, [page, totalPages]);
+	};
 
 	if (!experiences.length) {
 		return null;
 	}
-
-	const goToPrev = () => setPage((prev) => Math.max(prev - 1, 0));
-	const goToNext = () => setPage((prev) => Math.min(prev + 1, totalPages - 1));
 
 	return (
 		<div className={cn("space-y-6", className)}>
@@ -56,29 +62,43 @@ export function ExperienceCarousel({ eyebrow, title, description, experiences, c
 					<h3 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{title}</h3>
 					{description ? <p className="text-sm text-muted-foreground sm:text-base">{description}</p> : null}
 				</div>
-				{totalPages > 1 ? (
-					<div className="flex shrink-0 items-center gap-2">
-						<CtaIconButton color="white" size="md" onClick={goToPrev} disabled={page === 0} ariaLabel="Show previous experiences">
-							<ChevronLeft className="size-4" />
-						</CtaIconButton>
-						<CtaIconButton color="white" size="md" onClick={goToNext} disabled={page === totalPages - 1} ariaLabel="Show next experiences">
-							<ChevronRight className="size-4" />
-						</CtaIconButton>
-					</div>
-				) : null}
+				<div className="flex shrink-0 items-center gap-2">
+					<CtaIconButton
+						color="white"
+						size="md"
+						onClick={() => scroll("left")}
+						disabled={!canScrollPrev}
+						ariaLabel="Show previous experiences"
+					>
+						<ChevronLeft className="size-4" />
+					</CtaIconButton>
+					<CtaIconButton
+						color="white"
+						size="md"
+						onClick={() => scroll("right")}
+						disabled={!canScrollNext}
+						ariaLabel="Show next experiences"
+					>
+						<ChevronRight className="size-4" />
+					</CtaIconButton>
+				</div>
 			</div>
 
-			<div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
-				{current.map((experience) => (
-					<ExperienceCard key={experience.id} experience={experience} />
+			<div
+				ref={scrollContainerRef}
+				onScroll={checkScroll}
+				className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mb-4 scrollbar-hide"
+				style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+			>
+				{experiences.map((experience) => (
+					<div
+						key={experience.id}
+						className="flex-none w-full snap-start sm:w-[calc(50%-12px)] md:w-[calc(25%-18px)]"
+					>
+						<ExperienceCard experience={experience} />
+					</div>
 				))}
 			</div>
-
-			{totalPages > 1 ? (
-				<p className="text-right text-xs text-muted-foreground">
-					Page {page + 1} of {totalPages}
-				</p>
-			) : null}
 		</div>
 	);
 }

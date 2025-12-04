@@ -51,7 +51,7 @@ export function NewsletterSection() {
 				}}
 				className="z-[-2]"
 			>
-				<Container className={"p-0 sm:p-0"}>
+				<Container className={"px-6 sm:px-0"}>
 					<div
 						aria-hidden
 						className="pointer-events-none absolute inset-0 z-[0] text-primary opacity-25"
@@ -69,7 +69,7 @@ export function NewsletterSection() {
 					/>
 					<div className={"flex flex-col items-start gap-6 sm:flex-row sm:items-center relative z-[1]"}>
 						<Image src="/images/leen-mail.png" alt="" height={320} width={320} className="h-full" aria-hidden />
-						<div className={"flex flex-col items-start gap-8 py-14 sm:py-16"}>
+						<div className={"flex flex-col flex-wrap w-full gap-8 pb-12 pt-0 sm:pb-16 sm:pt-16"}>
 							<div className={"space-y-2"}>
 								<h2 className={"text-3xl font-semibold tracking-tight text-white"}>Join our adventurous community!</h2>
 								<p className={"max-w-2xl text-md text-white/70"}>
@@ -93,8 +93,17 @@ export function NewsletterSection() {
 											className="rounded-full pl-9"
 										/>
 									</div>
-									<CtaButton type={"submit"} size={"lg"} color={"black"} isLoading={submitting} aria-label={"Subscribe"}>
-										Subscribe
+									<CtaButton
+										type={"submit"}
+										size={"lg"}
+										color={"black"}
+										isLoading={submitting}
+										aria-label={"Subscribe"}
+										className="px-3 sm:px-6"
+
+									>
+										<span className="hidden sm:inline">Subscribe</span>
+										<ArrowRight className="sm:hidden" />
 									</CtaButton>
 								</div>
 							</form>
