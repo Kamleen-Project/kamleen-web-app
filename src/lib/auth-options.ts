@@ -131,7 +131,7 @@ export const authOptions: NextAuthOptions = {
           console.log("Existing user found:", !!existingUser)
 
           if (existingUser) {
-            const updates: any = {}
+            const updates: { emailVerified?: Date; accountStatus?: AccountStatus } = {}
             if (!existingUser.emailVerified) {
               updates.emailVerified = new Date()
               console.log("Marking email as verified")
