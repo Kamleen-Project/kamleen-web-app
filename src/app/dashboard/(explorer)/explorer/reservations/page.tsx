@@ -143,7 +143,7 @@ export default async function ExplorerReservationsPage({ searchParams }: { searc
 	const cancelled = (sp.cancelled ?? "") === "1";
 
 	return (
-		<ConsolePage title="Your Kamleen itinerary" subtitle="Track confirmations, share details, and stay coordinated with your hosts.">
+		<ConsolePage title="Reservations" subtitle="Your upcoming and past reservations">
 			{paid || cancelled ? (
 				<div
 					className={

@@ -112,12 +112,12 @@ export function ProfileMenu() {
 				trigger={
 					<button
 						type="button"
-						className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition hover:bg-background focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
+						className="flex items-center gap-2 m-2 text-sm font-medium transition cursor-pointer  focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
 						aria-expanded={open}
 						aria-haspopup="menu"
 						aria-controls={menuId}
 					>
-						<span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary">
+						<span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary hover:scale-[1.1] focus:scale-[1.1]">
 							{avatarSrc ? (
 								<Image
 									src={avatarSrc}
@@ -150,7 +150,7 @@ export function ProfileMenu() {
 				</DropdownPanelHeader>
 				<DropdownPanelContent className="flex flex-col gap-1">
 					<MenuItem href={profileHref}>View profile</MenuItem>
-					<MenuItem href="/dashboard">Go to dashboard</MenuItem>
+					{/* <MenuItem href="/dashboard">Go to dashboard</MenuItem> */}
 					{!(isAdmin && consoleLabel === "Your console") ? <MenuItem href={consoleHref}>{consoleLabel}</MenuItem> : null}
 					{showBecomeOrganizer ? (
 						<BecomeOrganizerModal

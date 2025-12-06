@@ -35,7 +35,7 @@ export function SiteFooter() {
 					<div className="max-w-xl space-y-4">
 						<TogetherLogo title="Kamleen" variant="dark" size="lg" />
 						<p className="text-sm text-white/70">
-							Digital experiences that connect curious explorers with inspiring hosts. Thoughtfully curated, globally trusted.
+							Experiences that connect curious explorers with inspiring hosts.
 						</p>
 					</div>
 					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6 lg:flex-col lg:items-end">
@@ -63,7 +63,7 @@ export function SiteFooter() {
 					</div>
 				</div>
 
-				<div className="grid gap-10 border-t border-white/10 pt-10 sm:grid-cols-2 lg:grid-cols-3">
+				{/* <div className="grid gap-10 border-t border-white/10 pt-10 sm:grid-cols-2 lg:grid-cols-3">
 					<div className="space-y-4">
 						<h3 className="text-sm font-semibold uppercase tracking-wide text-white/70">Company</h3>
 						<ul className="space-y-3 text-sm text-white/80">
@@ -121,7 +121,7 @@ export function SiteFooter() {
 							</CtaButton>
 						</form>
 					</div>
-				</div>
+				</div> */}
 
 				<div className="flex flex-col gap-4 border-t border-white/10 pt-8 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between">
 					<p>© {new Date().getFullYear()} Kamleen. All rights reserved.</p>

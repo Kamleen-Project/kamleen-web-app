@@ -25,7 +25,7 @@ jobs:
           --health-retries 10
 
     env:
-      DATABASE_URL: postgres://together:together@localhost:5433/together_dev
+      PRISMA_DATABASE_URL: postgres://together:together@localhost:5433/together_dev
       NEXTAUTH_SECRET: ci_test_secret
       BASE_URL: http://localhost:3000
 

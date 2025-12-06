@@ -25,9 +25,9 @@ export default async function DashboardPage() {
 				<div className="flex flex-col gap-2">
 					<div className="flex flex-wrap items-center gap-3">
 						<h1 className="text-3xl font-semibold tracking-tight text-foreground">Welcome back, {user.name ?? "Explorer"}</h1>
-						<Badge variant="soft" className="text-xs">
+						{/* <Badge variant="soft" className="text-xs">
 							Active role: {user.activeRole.toLowerCase()}
-						</Badge>
+						</Badge> */}
 					</div>
 					<p className="text-sm text-muted-foreground">Manage your reservations, bookmark experiences, and stay in sync with your hosts.</p>
 				</div>

@@ -24,8 +24,8 @@ export default async function ExplorerLayout({ children }: { children: React.Rea
 
 	return (
 		<ConsoleLayout
-			title="Trip Planner"
-			subtitle="Explorer Console"
+			title="Console"
+			subtitle="Explorer"
 			headerHref="/dashboard/explorer"
 			navItems={explorerNavItems}
 			footer={

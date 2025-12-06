@@ -209,8 +209,12 @@ async function loadCarouselGroups(): Promise<CarouselGroup[]> {
 	return output;
 }
 
+import { HeroBanner } from "@/components/marketing/hero-banner";
+
+// ... existing imports
+
 export default async function Home() {
-	const [featuredRaw, carouselGroups, categories] = await Promise.all([
+	const [featuredRaw, carouselGroups, categories, banner] = await Promise.all([
 		prisma.experience.findMany({
 			select: experienceCardSelect,
 			where: { status: "PUBLISHED" },
@@ -219,6 +223,9 @@ export default async function Home() {
 		}),
 		loadCarouselGroups(),
 		loadCategoriesForCarousel(),
+		prisma.banner.findUnique({
+			where: { label: "home-hero" },
+		}),
 	]);
 
 	const experiences = featuredRaw.map(mapExperienceToCard);
@@ -228,6 +235,25 @@ export default async function Home() {
 			<StickySearchSection />
 			<div className="relative overflow-hidden mt-4 sm:mt-12">
 				<div className="pointer-events-none absolute inset-x-0 top-[-20%] z-[-1] h-[600px] bg-gradient-to-b from-primary/10 via-transparent to-transparent blur-3xl" />
+
+				{/* Banner Section */}
+				{banner?.isActive && banner.mobileImage && banner.desktopImage ? (
+					<div className="mb-4 sm:mb-8">
+						<Container>
+							<HeroBanner
+								mobileImage={banner.mobileImage}
+								desktopImage={banner.desktopImage}
+								className="rounded-xl shadow-sm"
+								actionType={banner.actionType}
+								linkUrl={banner.linkUrl}
+								modalTitle={banner.modalTitle}
+								modalContent={banner.modalContent}
+								requiresAuth={banner.requiresAuth}
+							/>
+						</Container>
+					</div>
+				) : null}
+
 				<main className="space-y-4 sm:space-y-12 pb-12">
 					{categories.length ? (
 						<section>

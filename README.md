@@ -56,7 +56,7 @@ npm run test:e2e
 Environment variables used by tests:
 
 - BASE_URL (default: http://localhost:3000)
-- DATABASE_URL (default: postgres://together:together@localhost:5433/together_dev)
+- PRISMA_DATABASE_URL (default: postgres://together:together@localhost:5433/together_dev)
 - NEXTAUTH_SECRET (default for local test runner: devtestsecret)
 
 CI publishes Robot `report.html`, `log.html`, and `xunit.xml` as workflow artifacts.

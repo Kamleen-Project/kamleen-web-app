@@ -5,13 +5,13 @@ ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 : "${BASE_URL:=http://localhost:3000}"
-: "${DATABASE_URL:=postgres://together:together@localhost:5433/together_dev}"
+: "${PRISMA_DATABASE_URL:=postgres://together:together@localhost:5433/together_dev}"
 : "${NEXTAUTH_SECRET:=devtestsecret}"
 
 echo "[robot-run] Using BASE_URL=${BASE_URL}"
-echo "[robot-run] Using DATABASE_URL=${DATABASE_URL}"
+echo "[robot-run] Using PRISMA_DATABASE_URL=${PRISMA_DATABASE_URL}"
 
-export DATABASE_URL
+export PRISMA_DATABASE_URL
 export NEXTAUTH_SECRET
 
 echo "[robot-run] Prisma deploy..."

@@ -139,6 +139,12 @@ export const adminNavItems: ConsoleNavItem[] = [
 		icon: "Mail",
 	},
 	{
+		href: "/admin/content",
+		label: "Content",
+		// description: "Manage site banners and content",
+		icon: "LayoutTemplate",
+	},
+	{
 		href: "/admin/settings",
 		label: "Settings",
 		// description: "Configure platform settings",

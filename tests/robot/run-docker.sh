@@ -5,14 +5,14 @@ ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 : "${BASE_URL:=http://host.docker.internal:3000}"
-: "${DATABASE_URL:=postgres://together:together@localhost:5433/together_dev}"
+: "${PRISMA_DATABASE_URL:=postgres://together:together@localhost:5433/together_dev}"
 : "${NEXTAUTH_SECRET:=devtestsecret}"
 
 echo "[robot-docker] Bringing up Postgres..."
 docker compose up -d postgres
 
 echo "[robot-docker] Applying migrations..."
-export DATABASE_URL
+export PRISMA_DATABASE_URL
 export NEXTAUTH_SECRET
 npm run prisma:deploy --silent
 

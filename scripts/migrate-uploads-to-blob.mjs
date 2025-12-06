@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Migrate local files under public/uploads to Vercel Blob and update DB URLs
-// Usage: BLOB_READ_WRITE_TOKEN=... DATABASE_URL=... node scripts/migrate-uploads-to-blob.mjs [--dry-run]
+// Usage: BLOB_READ_WRITE_TOKEN=... PRISMA_DATABASE_URL=... node scripts/migrate-uploads-to-blob.mjs [--dry-run]
 
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -182,8 +182,8 @@ async function main() {
     console.error("Missing BLOB_READ_WRITE_TOKEN in env. Aborting.");
     process.exit(1);
   }
-  if (!process.env.DATABASE_URL) {
-    console.error("Missing DATABASE_URL in env. Aborting.");
+  if (!process.env.PRISMA_DATABASE_URL) {
+    console.error("Missing PRISMA_DATABASE_URL in env. Aborting.");
     process.exit(1);
   }
 

@@ -607,3 +607,24 @@ enum CampaignStatus {
   SENT
   FAILED
 }
+
+
+enum BannerActionType {
+  LINK
+  MODAL
+}
+
+model Banner {
+  id           String           @id @default(cuid())
+  label        String           @unique
+  mobileImage  String
+  desktopImage String
+  isActive     Boolean          @default(true)
+  actionType   BannerActionType @default(LINK)
+  linkUrl      String?
+  modalTitle   String?
+  modalContent String?
+  requiresAuth Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}

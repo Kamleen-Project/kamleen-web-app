@@ -49,7 +49,7 @@ export default async function ExplorerProfilePage() {
 	}
 
 	return (
-		<ConsolePage title="Keep your traveler profile current" subtitle="These details help hosts tailor experiences and keep your group in sync.">
+		<ConsolePage title="Profile" subtitle="Keep your explorer profile current">
 			<div className="space-y-8">
 				<UserProfileForm user={user} />
 			</div>
