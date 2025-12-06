@@ -8,7 +8,7 @@ import { getServerAuthSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: { callbackUrl?: string } }) {
 	const session = await getServerAuthSession();
 
 	if (session?.user) {
@@ -26,7 +26,7 @@ export default async function LoginPage() {
 						</div>
 					</CardHeader>
 					<CardContent className="gap-6">
-						<LoginForm mode="user" />
+						<LoginForm mode="user" redirectTo={searchParams?.callbackUrl} />
 					</CardContent>
 					<CardFooter className="mt-6 flex flex-col gap-3 border-t border-border/60 pt-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
 						<span className="text-center sm:text-left">New here?</span>

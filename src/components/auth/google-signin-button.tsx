@@ -4,13 +4,17 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { CtaButton } from "@/components/ui/cta-button";
 
-export function GoogleSignInButton() {
+type GoogleSignInButtonProps = {
+    redirectTo?: string;
+};
+
+export function GoogleSignInButton({ redirectTo }: GoogleSignInButtonProps) {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleGoogleSignIn = async () => {
         setIsLoading(true);
         try {
-            await signIn("google", { callbackUrl: "/dashboard" });
+            await signIn("google", { callbackUrl: redirectTo || "/dashboard" });
         } catch (error) {
             console.error("Google sign in error:", error);
             setIsLoading(false);

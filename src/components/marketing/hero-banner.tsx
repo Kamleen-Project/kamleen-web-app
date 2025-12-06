@@ -89,6 +89,7 @@ export function HeroBanner({
                 mode="register" // Default to register as per requirement ("open the sign up modal")
                 onOpenChange={setAuthOpen}
                 onModeChange={() => { }} // Simple toggle, no mode switch needed inside here for this context usually, but required prop
+                redirectTo={typeof window !== "undefined" ? window.location.pathname : undefined}
             />
 
             <Dialog open={modalOpen} onOpenChange={setModalOpen}>

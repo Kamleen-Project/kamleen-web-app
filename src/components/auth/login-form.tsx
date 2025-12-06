@@ -80,7 +80,7 @@ export function LoginForm({ redirectTo = "/dashboard", mode = "user" }: LoginFor
 
 	return (
 		<form className="space-y-5" onSubmit={handleSubmit}>
-			<GoogleSignInButton />
+			<GoogleSignInButton redirectTo={redirectTo} />
 			<div className="relative">
 				<div className="absolute inset-0 flex items-center">
 					<span className="w-full border-t" />

@@ -69,7 +69,7 @@ export function ProfileMenu() {
 				>
 					Sign up
 				</CtaButton>
-				<AuthModal open={authOpen} mode={authMode} onOpenChange={setAuthOpen} onModeChange={setAuthMode} />
+				<AuthModal open={authOpen} mode={authMode} onOpenChange={setAuthOpen} onModeChange={setAuthMode} redirectTo={pathname} />
 			</div>
 		);
 	}
