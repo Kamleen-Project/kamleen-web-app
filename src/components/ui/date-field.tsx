@@ -79,7 +79,7 @@ export function DateField({
 
 	React.useEffect(() => {
 		if (!range) setText(singleFormatted);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		 
 	}, [singleFormatted, range]);
 
 	function tryCommitText(next: string) {

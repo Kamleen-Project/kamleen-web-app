@@ -140,7 +140,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
 												<span className="text-xs text-muted-foreground">-</span>
 											)}
 											{b.payment ? (
-												// eslint-disable-next-line @typescript-eslint/no-explicit-any
+												 
 												<PaymentInfoButton payment={b.payment as any} />
 											) : null}
 										</div>
@@ -150,7 +150,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
 									</TableCell>
 									<TableCell align="right">
 										<div className="flex items-center justify-end gap-2">
-											{/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+											{ }
 											<BookingInfoButton booking={b as any} />
 											{b.status === "PENDING" && b.paymentStatus === "PROCESSING" ? <MarkPaidButton bookingId={b.id} /> : null}
 										</div>

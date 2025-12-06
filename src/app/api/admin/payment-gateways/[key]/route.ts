@@ -36,8 +36,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       ...(typeof body.name === "string" ? { name: body.name } : {}),
       ...(typeof body.type === "string" ? { type: body.type as "CARD" | "CASH" | "PAYPAL" } : {}),
       ...(typeof body.logoUrl === "string" || body.logoUrl === null ? { logoUrl: (body.logoUrl as string | null) ?? null } : {}),
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
+       
       ...(body.config !== undefined ? { config: (body.config as any) } : {}),
       ...(typeof body.testMode === "boolean" ? { testMode: body.testMode } : {}),
       ...(typeof body.isEnabled === "boolean" ? { isEnabled: body.isEnabled } : {}),

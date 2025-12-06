@@ -35,24 +35,24 @@ async function getEnabledGateways(): Promise<Array<{ key: PaymentProviderId }>> 
   return gateways.filter((g) => known.has(g.key)).map((g) => ({ key: g.key as PaymentProviderId }))
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function toPrismaProviderEnum(id: PaymentProviderId): any {
   // Map lowercase id to Prisma enum without importing generated types
   switch (id) {
     case "stripe":
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       return "STRIPE" as any
     case "payzone":
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       return "PAYZONE" as any
     case "paypal":
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       return "PAYPAL" as any
     case "cmi":
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       return "CMI" as any
     case "cash":
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       return "CASH" as any
   }
 }
@@ -101,7 +101,7 @@ export async function createCheckoutForBooking(params: {
     payment = await prisma.payment.update({
       where: { id: payment.id },
       data: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         provider: toPrismaProviderEnum(chosen),
         amount: Math.round(booking.totalPrice * 100),
         currency: booking.experience.currency,
@@ -117,7 +117,7 @@ export async function createCheckoutForBooking(params: {
     payment = await prisma.payment.create({
       data: {
         bookingId: booking.id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         provider: toPrismaProviderEnum(chosen),
         amount: Math.round(booking.totalPrice * 100),
         currency: booking.experience.currency,
@@ -158,7 +158,7 @@ export async function createCheckoutForBooking(params: {
 
       // Update provider in case of fallback
       if (id !== chosen) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         await prisma.payment.update({ where: { id: payment.id }, data: { provider: toPrismaProviderEnum(id) } })
       }
       break

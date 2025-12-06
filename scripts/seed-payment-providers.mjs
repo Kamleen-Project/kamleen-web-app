@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
+ 
 import { PrismaClient } from "../src/generated/prisma/index.js";
 
 const prisma = new PrismaClient();
