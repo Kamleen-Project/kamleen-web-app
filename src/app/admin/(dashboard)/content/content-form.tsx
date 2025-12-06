@@ -33,7 +33,7 @@ export function ContentForm({ initialBanner }: ContentFormProps) {
                     message: "Banner updated successfully",
                     intent: "success",
                 });
-            } catch (error) {
+            } catch {
                 notify({
                     title: "Error",
                     message: "Failed to update banner",
@@ -163,6 +163,6 @@ export function ContentForm({ initialBanner }: ContentFormProps) {
     );
 }
 
-function BannerUploader({ name, initialValue, aspect }: { name: string, initialValue?: string, aspect: any }) {
+function BannerUploader({ name, initialValue, aspect }: { name: string, initialValue?: string, aspect: "square" | "threeFour" | "fullWidth" | "twentyOneNine" | "twentyOneSix" }) {
     return <ClientBannerUploader name={name} initialValue={initialValue} aspect={aspect} />
 }
