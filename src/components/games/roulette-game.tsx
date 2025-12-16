@@ -426,7 +426,7 @@ export function RouletteGame({ prizes, onSpinEnd, className }: RouletteGameProps
                 {/* Decorative Base - Roulette SVG Star */}
                 <div className="absolute top-0 right-0 w-[300px] h-[440px] md:w-[400px] md:h-[564px]">
                     <Image
-                        src="/roulette-background.svg"
+                        src="/Roulette-background.svg"
                         alt="Roulette Stand"
                         fill
                         className="object-contain"
@@ -438,7 +438,7 @@ export function RouletteGame({ prizes, onSpinEnd, className }: RouletteGameProps
                 </div>
                 <div className="absolute top-0 right-0 w-[300px] h-[440px] md:w-[400px] md:h-[564px]">
                     <Image
-                        src="/roulette.svg"
+                        src="/Roulette.svg"
                         alt="Roulette Stand"
                         fill
                         className="object-contain"
