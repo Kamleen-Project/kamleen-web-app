@@ -25,14 +25,15 @@ const DialogOverlay = React.forwardRef<React.ElementRef<typeof DialogPrimitive.O
 );
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
-const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Content>, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>>(
-	({ className, children, ...props }, ref) => (
+const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Content>, React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { fullHeight?: boolean }>(
+	({ className, children, fullHeight, ...props }, ref) => (
 		<DialogPortal>
 			<DialogOverlay />
 			<DialogPrimitive.Content
 				ref={ref}
 				className={cn(
-					"fixed left-1/2 top-1/2 z-50 flex max-h-[85vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border/60 bg-card p-0 shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out-0",
+					"fixed left-1/2 top-1/2 z-50 flex w-full max-w-xl md:min-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border/60 bg-card p-0 shadow-xl outline-none data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=closed]:fade-out-0",
+					!fullHeight ? "max-h-[85vh]" : "",
 					className
 				)}
 				{...props}
@@ -41,9 +42,11 @@ const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.C
 					<X className="h-4 w-4" />
 					<span className="sr-only">Close</span>
 				</DialogPrimitive.Close>
-				<div className="flex-1 overflow-y-auto p-6 grid gap-4">
-					{children}
-				</div>
+				{fullHeight ? children : (
+					<div className="flex-1 overflow-y-auto p-6 grid gap-4">
+						{children}
+					</div>
+				)}
 			</DialogPrimitive.Content>
 		</DialogPortal>
 	)

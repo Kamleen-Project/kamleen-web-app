@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import Image from "next/image";
 import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
-import { ArrowLeft, CheckCircle2, Loader2, MapPin, Star, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, MapPin, Star, X, Ticket } from "lucide-react";
 import { Stepper } from "@/components/ui/stepper";
+
+import { applyCouponToBooking, removeCouponFromBooking } from "@/app/actions/coupons";
 
 import { CtaButton } from "@/components/ui/cta-button";
 import { SessionReservationCard } from "@/components/experiences/session-reservation-card";
@@ -624,6 +626,73 @@ export function ExperienceReservationModal({
 		setStep("payment-method");
 	}, []);
 
+	// --- Coupon Logic ---
+	const [couponCode, setCouponCode] = useState("");
+	const [appliedCoupon, setAppliedCoupon] = useState<{ code: string, discount: number } | null>(null);
+	const [couponError, setCouponError] = useState<string | null>(null);
+	const [couponLoading, setCouponLoading] = useState(false);
+
+	// Import actions dynamically or assume they are available via import at top
+	// Note: Since I can't add imports easily with replace_file_content without context of top, 
+	// I made sure to implement actions in a way that I can move forward. 
+	// Ideally I would add `import { applyCouponToBooking, removeCouponFromBooking } from "@/app/actions/coupons"` at the top.
+	// For now, I will use "require" style or just assume imports are added in next step?
+	// Actually, I should use multi_replace for imports + logic.
+	// But I'm using replace_file_content here for the logic block.
+	// I will do imports separately or assume I can't.
+	// Let's rely on adding imports in a separate call or use multi_replace.
+	// I'll proceed with logic here.
+
+	const handleApplyCoupon = async () => {
+		if (!activeBooking || !couponCode) return;
+		setCouponLoading(true);
+		setCouponError(null);
+
+		try {
+			// Need to import this. For now assuming it's available or I'll fix imports next.
+			const { applyCouponToBooking } = await import("@/app/actions/coupons");
+			const res = await applyCouponToBooking(activeBooking.id, couponCode);
+			if (res.error) {
+				setCouponError(res.error);
+			} else if (res.success && res.newPrice !== undefined) {
+				setAppliedCoupon({ code: res.code!, discount: res.discountAmount! });
+				// Update visual total? But `activeBooking` doesn't hold price. 
+				// The modal calculates price from `guests * pricePerGuest`. 
+				// I need a way to override the displayed total price.
+				// I'll add a `priceOverride` state?
+				// Or better, `activeBooking` should just be the source of truth? 
+				// But `activeBooking` type doesn't have price field.
+				// I'll add `discountedPrice` state.
+				setDiscountedTotal(res.newPrice);
+			}
+		} catch (err) {
+			setCouponError("Failed to apply coupon");
+		} finally {
+			setCouponLoading(false);
+		}
+	};
+
+	const handleRemoveCoupon = async () => {
+		if (!activeBooking) return;
+		setCouponLoading(true);
+		try {
+			const { removeCouponFromBooking } = await import("@/app/actions/coupons");
+			const res = await removeCouponFromBooking(activeBooking.id);
+			if (res.success) {
+				setAppliedCoupon(null);
+				setCouponCode("");
+				setDiscountedTotal(null); // Revert to calc
+			} else {
+				setCouponError(res.error || "Failed to remove");
+			}
+		} finally {
+			setCouponLoading(false);
+		}
+	}
+
+	const [discountedTotal, setDiscountedTotal] = useState<number | null>(null);
+	const displayTotal = discountedTotal !== null ? discountedTotal : totalPrice;
+
 	const handleSubmit = useCallback(async () => {
 		if (!selectedSession || !activeBooking) {
 			setReservationError("Select a session and start your reservation first.");
@@ -1112,11 +1181,57 @@ export function ExperienceReservationModal({
 												<span>Price per spot</span>
 												<span className="font-medium text-foreground">{formatCurrency(pricePerGuest, experience.currency)}</span>
 											</div>
-											<div className="flex items-center justify-between text-muted-foreground">
+
+											<div className="py-2 border-t border-border/40 my-2 pt-2">
+												{!appliedCoupon ? (
+													<div className="flex gap-2">
+														<input
+															className="flex-1 rounded-md border border-border/60 bg-background px-3 py-2 text-xs outline-none focus:border-primary/60"
+															placeholder="Add promo code"
+															value={couponCode}
+															onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+															disabled={couponLoading}
+														/>
+														<button
+															type="button"
+															onClick={handleApplyCoupon}
+															disabled={!couponCode || couponLoading}
+															className="rounded-md bg-secondary/80 px-3 py-2 text-xs font-medium text-secondary-foreground hover:bg-secondary disabled:opacity-50"
+														>
+															{couponLoading ? <Loader2 className="size-3 animate-spin" /> : "Apply"}
+														</button>
+													</div>
+												) : (
+													<div className="flex items-center justify-between rounded-md border border-emerald-500/20 bg-emerald-50/50 p-2 text-xs text-emerald-700">
+														<div className="flex items-center gap-1.5">
+															<Ticket className="size-3.5" />
+															<span>Coupon <strong>{appliedCoupon.code}</strong> applied</span>
+														</div>
+														<button
+															type="button"
+															onClick={handleRemoveCoupon}
+															disabled={couponLoading}
+															className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 hover:underline"
+														>
+															Remove
+														</button>
+													</div>
+												)}
+												{couponError ? <p className="mt-1.5 text-xs text-destructive">{couponError}</p> : null}
+											</div>
+
+											{appliedCoupon ? (
+												<div className="flex items-center justify-between text-emerald-600">
+													<span>Discount</span>
+													<span className="font-medium">-{formatCurrency(appliedCoupon.discount, experience.currency)}</span>
+												</div>
+											) : null}
+
+											<div className="flex items-center justify-between text-muted-foreground pt-1">
 												<span>
 													Total ({guestCount} spot{guestCount === 1 ? "" : "s"})
 												</span>
-												<span className="text-lg font-semibold text-foreground">{formatCurrency(totalPrice, experience.currency)}</span>
+												<span className="text-lg font-semibold text-foreground">{formatCurrency(displayTotal, experience.currency)}</span>
 											</div>
 											<div className="mt-3 grid gap-2">
 												{/* Payment-method specific section */}

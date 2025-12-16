@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 595.3 841.9">
+  <!-- Generator: Adobe Illustrator 29.5.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 141)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: url(#radial-gradient22);
+      }
+
+      .st1 {
+        fill: url(#radial-gradient20);
+      }
+
+      .st2 {
+        fill: url(#radial-gradient21);
+      }
+
+      .st3 {
+        fill: url(#radial-gradient16);
+      }
+
+      .st4 {
+        fill: url(#radial-gradient17);
+      }
+
+      .st5 {
+        fill: url(#radial-gradient12);
+      }
+
+      .st6 {
+        fill: url(#radial-gradient15);
+      }
+
+      .st7 {
+        fill: url(#radial-gradient18);
+      }
+
+      .st8 {
+        fill: url(#radial-gradient10);
+      }
+
+      .st9 {
+        fill: url(#radial-gradient19);
+      }
+
+      .st10 {
+        fill: url(#radial-gradient13);
+      }
+
+      .st11 {
+        fill: url(#radial-gradient11);
+      }
+
+      .st12 {
+        fill: url(#radial-gradient14);
+      }
+
+      .st13 {
+        fill: url(#radial-gradient);
+      }
+
+      .st14 {
+        fill: url(#radial-gradient1);
+      }
+
+      .st15 {
+        fill: url(#radial-gradient6);
+      }
+
+      .st16 {
+        fill: url(#radial-gradient9);
+      }
+
+      .st17 {
+        fill: url(#radial-gradient8);
+      }
+
+      .st18 {
+        fill: url(#radial-gradient3);
+      }
+
+      .st19 {
+        fill: url(#radial-gradient2);
+      }
+
+      .st20 {
+        fill: url(#radial-gradient5);
+      }
+
+      .st21 {
+        fill: url(#radial-gradient4);
+      }
+
+      .st22 {
+        fill: url(#radial-gradient7);
+      }
+    </style>
+    <radialGradient id="radial-gradient" cx="415.9" cy="522.6" fx="415.9" fy="522.6" r="7.7" gradientTransform="translate(-71.5 98.6) rotate(-17)" gradientUnits="userSpaceOnUse">
+      <stop offset=".2" stop-color="#fff039"/>
+      <stop offset=".3" stop-color="#fdec38" stop-opacity="1"/>
+      <stop offset=".5" stop-color="#f9e237" stop-opacity=".9"/>
+      <stop offset=".6" stop-color="#f3d136" stop-opacity=".9"/>
+      <stop offset=".8" stop-color="#ebb934" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#e09c32" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#e09b32" stop-opacity=".6"/>
+    </radialGradient>
+    <radialGradient id="radial-gradient1" cx="124.8" cy="508.6" fx="124.8" fy="508.6" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient2" cx="96.7" cy="454.7" fx="96.7" fy="454.7" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient3" cx="71.1" cy="405.8" fx="71.1" fy="405.8" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient4" cx="48.4" cy="349.8" fx="48.4" fy="349.8" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient5" cx="41.6" cy="291.1" fx="41.6" fy="291.1" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient6" cx="48.6" cy="232.3" fx="48.6" fy="232.3" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient7" cx="69.2" cy="176.8" fx="69.2" fy="176.8" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient8" cx="102.1" cy="127.6" fx="102.1" fy="127.6" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient9" cx="145.6" cy="87.5" fx="145.6" fy="87.5" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient10" cx="197.3" cy="58.6" fx="197.3" fy="58.6" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient11" cx="254.2" cy="42.5" fx="254.2" fy="42.5" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient12" cx="313.3" cy="40.2" fx="313.3" fy="40.2" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient13" cx="425.2" cy="76.3" fx="425.2" fy="76.3" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient14" cx="471.7" cy="112.9" fx="471.7" fy="112.9" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient15" cx="508.5" cy="159.3" fx="508.5" fy="159.3" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient16" cx="533.4" cy="212.9" fx="533.4" fy="212.9" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient17" cx="545.1" cy="270.9" fx="545.1" fy="270.9" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient18" cx="542" cy="330.1" fx="542" fy="330.1" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient19" cx="526" cy="386.9" fx="526" fy="386.9" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient20" cx="496.9" cy="437.9" fx="496.9" fy="437.9" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient21" cx="458.6" cy="480.8" fx="458.6" fy="480.8" r="7.7" xlink:href="#radial-gradient"/>
+    <radialGradient id="radial-gradient22" cx="371.4" cy="565.2" fx="371.4" fy="565.2" r="7.7" xlink:href="#radial-gradient"/>
+  </defs>
+  <circle class="st13" cx="479.3" cy="476.4" r="7.7"/>
+  <circle class="st14" cx="196.8" cy="548.3" r="7.7"/>
+  <circle class="st19" cx="154.1" cy="505" r="7.7"/>
+  <circle class="st18" cx="115.3" cy="465.8" r="7.7"/>
+  <circle class="st21" cx="77.2" cy="418.9" r="7.7"/>
+  <circle class="st20" cx="53.5" cy="364.7" r="7.7"/>
+  <circle class="st15" cx="43" cy="306.4" r="7.7"/>
+  <circle class="st22" cx="46.4" cy="247.3" r="7.7"/>
+  <circle class="st17" cx="63.5" cy="190.7" r="7.7"/>
+  <circle class="st16" cx="93.3" cy="139.6" r="7.7"/>
+  <circle class="st8" cx="134.2" cy="96.8" r="7.7"/>
+  <circle class="st11" cx="184" cy="64.8" r="7.7"/>
+  <circle class="st5" cx="239.8" cy="45.2" r="7.7"/>
+  <circle class="st10" cx="357.4" cy="47" r="7.7"/>
+  <circle class="st12" cx="412.6" cy="68.3" r="7.7"/>
+  <circle class="st6" cx="461.3" cy="101.9" r="7.7"/>
+  <circle class="st3" cx="500.8" cy="145.9" r="7.7"/>
+  <circle class="st4" cx="529.1" cy="197.9" r="7.7"/>
+  <circle class="st7" cx="543.4" cy="255.4" r="7.7"/>
+  <circle class="st9" cx="544.7" cy="314.4" r="7.7"/>
+  <circle class="st1" cx="531.9" cy="371.7" r="7.7"/>
+  <circle class="st2" cx="507.8" cy="423.9" r="7.7"/>
+  <circle class="st0" cx="449.2" cy="530.2" r="7.7"/>
+</svg>

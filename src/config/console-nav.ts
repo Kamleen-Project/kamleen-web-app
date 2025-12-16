@@ -33,6 +33,12 @@ export const organizerNavItems: ConsoleNavItem[] = [
 		icon: "CalendarCheck",
 	},
 	{
+		href: "/dashboard/organizer/coupons",
+		label: "Coupons",
+		// description: "Manage discounts and promotions",
+		icon: "Ticket",
+	},
+	{
 		href: "/dashboard/organizer/profile",
 		label: "Profile",
 		// description: "Manage your public host identity",
@@ -137,6 +143,18 @@ export const adminNavItems: ConsoleNavItem[] = [
 		label: "Newsletter",
 		// description: "Manage subscribers and campaigns",
 		icon: "Mail",
+	},
+	{
+		href: "/admin/coupons",
+		label: "Coupons",
+		// description: "Manage platform-wide and organizer coupons",
+		icon: "Ticket",
+	},
+	{
+		href: "/admin/games",
+		label: "Games",
+		// description: "Manage interactive games and events",
+		icon: "Gamepad2",
 	},
 	{
 		href: "/admin/content",
