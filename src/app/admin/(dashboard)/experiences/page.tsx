@@ -15,6 +15,7 @@ import { ExperiencesFilters } from "@/components/admin/experiences-filters";
 import { ExperiencesPagination } from "../../../../components/admin/experiences-pagination";
 import { ExperiencesActions } from "@/components/admin/experiences-actions";
 import { ExperienceStatusSelect } from "@/components/admin/experience-status-select";
+import { getExperienceViews } from "@/app/actions/analytics";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -72,6 +73,9 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 
 	const dateFmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" });
 
+	const slugs = experiences.map(e => e.slug);
+	const viewCounts = await getExperienceViews(slugs);
+
 	return (
 		<ConsolePage
 			title="Experiences"
@@ -107,10 +111,17 @@ export default async function AdminExperiencesPage({ searchParams }: { searchPar
 									<TableCell>
 										<div className="flex flex-col">
 											<span className="font-medium text-foreground">{exp.title}</span>
-											<span className="mt-1 inline-flex items-center gap-1 text-[12px] text-muted-foreground">
-												<User className="size-3.5" />
-												<span className="truncate max-w-[360px]">
-													{exp.organizer?.name ?? "Unknown"}, {exp.country?.name ?? "—"}
+											<span className="mt-1 inline-flex items-center gap-2 text-[12px] text-muted-foreground">
+												<span className="inline-flex items-center gap-1">
+													<User className="size-3.5" />
+													<span className="truncate max-w-[200px]">
+														{exp.organizer?.name ?? "Unknown"}
+													</span>
+												</span>
+												<span className="mx-1 h-3 w-px bg-border" />
+												<span className="inline-flex items-center gap-1">
+													<Eye className="size-3.5" />
+													<span>{viewCounts[exp.slug] || 0}</span>
 												</span>
 											</span>
 										</div>

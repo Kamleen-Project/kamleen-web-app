@@ -87,6 +87,12 @@ export const adminNavItems: ConsoleNavItem[] = [
 		icon: "LayoutDashboard",
 	},
 	{
+		href: "/admin/analytics",
+		label: "Analytics",
+		// description: "User engagement and traffic insights",
+		icon: "Activity",
+	},
+	{
 		href: "/admin/users",
 		label: "Users",
 		// description: "Manage status and account health",
