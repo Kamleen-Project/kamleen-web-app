@@ -22,11 +22,66 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Kamleen",
-	description: "Activities and experiences reservation platform",
+	title: {
+		default: "Kamleen",
+		template: "%s | Kamleen",
+	},
+	description: "Activities and experiences reservation platform - Discover and book amazing local experiences.",
 	metadataBase: new URL("https://kamleen.com"),
+	keywords: [
+		"activities",
+		"experiences",
+		"reservation",
+		"booking",
+		"events",
+		"kamleen",
+		"travel",
+		"local guides",
+		"tours",
+		"workshops",
+		"classes",
+		"tangier",
+		"rabat",
+		"marrakech",
+		"casablanca",
+		"fez",
+		"morocco",
+		"adventure",
+		"culture",
+		"things to do",
+	],
+	authors: [
+		{
+			name: "Kamleen Team",
+			url: "https://kamleen.com",
+		},
+	],
+	creator: "Kamleen",
+	openGraph: {
+		type: "website",
+		locale: "en_US",
+		url: "https://kamleen.com",
+		title: "Kamleen - Activities and experiences reservation platform",
+		description: "Discover and book unique activities and experiences with Kamleen. The best platform for finding your next adventure.",
+		siteName: "Kamleen",
+		images: [
+			{
+				url: "/images/meta-cover.png",
+				width: 1200,
+				height: 630,
+				alt: "Kamleen Platform Preview",
+			},
+		],
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "Kamleen - Activities and experiences reservation platform",
+		description: "Discover and book unique activities and experiences with Kamleen.",
+		images: ["/images/meta-cover.png"],
+	},
 	icons: {
 		icon: "/images/favicon.png",
+		apple: "/images/favicon.png",
 	},
 };
 
@@ -38,7 +93,7 @@ export default async function RootLayout({
 	const session = await getServerAuthSession();
 
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 				<AuthProvider session={session}>
 					<PostHogContextProvider>

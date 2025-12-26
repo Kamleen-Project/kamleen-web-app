@@ -1,20 +1,31 @@
+
 import { Activity } from "lucide-react";
 import Link from "next/link";
 
 import { ConsolePage } from "@/components/console/page";
 import { Button } from "@/components/ui/button";
-import { getAnalyticsStats, getAnalyticsTrend, getTopExperiences } from "@/app/actions/analytics";
+import { getAnalyticsStats, getAnalyticsTrend, getTopExperiences, AnalyticsPeriod } from "@/app/actions/analytics";
 import { AnalyticsStatsCards } from "@/components/admin/analytics/analytics-stats";
 import { AnalyticsChart } from "@/components/admin/analytics/analytics-chart";
 
 import { AnalyticsRefreshButton } from "@/components/admin/analytics/refresh-button";
 import { AnalyticsTopExperiences } from "@/components/admin/analytics/analytics-top-experiences";
+import { DateFilter } from "@/components/admin/analytics/date-filter";
 
-export default async function AdminAnalyticsPage() {
+interface AdminAnalyticsPageProps {
+    searchParams: Promise<{
+        period?: string;
+    }>;
+}
+
+export default async function AdminAnalyticsPage({ searchParams }: AdminAnalyticsPageProps) {
+    const resolvedSearchParams = await searchParams;
+    const period = (resolvedSearchParams?.period as AnalyticsPeriod) || "7d";
+
     const [stats, trend, topExperiences] = await Promise.all([
-        getAnalyticsStats(),
-        getAnalyticsTrend(),
-        getTopExperiences(5)
+        getAnalyticsStats(period),
+        getAnalyticsTrend(period),
+        getTopExperiences(5, period)
     ]);
 
     return (
@@ -23,11 +34,18 @@ export default async function AdminAnalyticsPage() {
             subtitle="View user engagement and traffic insights."
             action={
                 <div className="flex items-center gap-2">
+                    <DateFilter />
                     <AnalyticsRefreshButton />
-                    <Button asChild>
-                        <Link href="https://us.posthog.com/project/settings" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" asChild>
+                        <Link href="/admin/analytics/map">
                             <Activity className="mr-2 h-4 w-4" />
-                            Open PostHog
+                            Global Map
+                        </Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <Link href="/admin/analytics/live">
+                            <Activity className="mr-2 h-4 w-4 text-red-500 animate-pulse" />
+                            Live Visitors
                         </Link>
                     </Button>
                 </div>
