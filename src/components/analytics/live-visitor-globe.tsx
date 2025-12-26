@@ -2,7 +2,7 @@
 
 import createGlobe from "cobe";
 import React, { useEffect, useRef } from "react";
-import { useSpring, animated, to } from 'react-spring';
+import { useSpring, animated } from 'react-spring';
 
 interface Marker {
     location: [number, number];
@@ -33,12 +33,8 @@ const GlobeImplementation = React.memo(({ stateRef }: { stateRef: React.MutableR
     const pointerInteractionMovement = useRef(0);
     const globeInstanceRef = useRef<any>(null);
 
-    const [{ r, s, tx, ty, opacity }, api] = useSpring(() => ({
+    const [{ r }, api] = useSpring(() => ({
         r: 0,
-        s: 1,
-        tx: 0,
-        ty: 0,
-        opacity: 1,
         config: {
             mass: 1,
             tension: 280,
@@ -47,9 +43,7 @@ const GlobeImplementation = React.memo(({ stateRef }: { stateRef: React.MutableR
         },
     }));
 
-    const scaleRef = useRef(1);
     const phiRef = useRef(0);
-    const offsetRef = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         let width = 0;
@@ -79,8 +73,8 @@ const GlobeImplementation = React.memo(({ stateRef }: { stateRef: React.MutableR
                 markerColor: [236 / 255, 56 / 255, 86 / 255],
                 glowColor: [0.9, 0.9, 0.9],
                 offset: [0, 0],
-                scale: 0.6,
-                opacity: 1,
+                scale: 0.6, // Fixed scale
+                opacity: 1, // Fixed opacity
                 markers: stateRef.current.markers,
                 onRender: (state) => {
                     const currentR = r.get();
@@ -113,38 +107,14 @@ const GlobeImplementation = React.memo(({ stateRef }: { stateRef: React.MutableR
             console.error("Globe initialization failed", e);
         }
 
-        const handleWheel = (e: WheelEvent) => {
-            e.preventDefault();
-            if (!canvasRef.current) return;
-            const rect = canvasRef.current.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            const zoomSensitivity = 0.001;
-            const delta = -e.deltaY * zoomSensitivity;
-            const prevScale = scaleRef.current;
-            const newScale = Math.min(Math.max(prevScale + delta, 0.5), 4);
-
-            if (newScale !== prevScale) {
-                const newTx = mouseX - (mouseX - offsetRef.current.x) * (newScale / prevScale);
-                const newTy = mouseY - (mouseY - offsetRef.current.y) * (newScale / prevScale);
-                offsetRef.current = { x: newTx, y: newTy };
-                scaleRef.current = newScale;
-                api.start({ s: newScale, tx: newTx, ty: newTy });
-            }
-        };
-
-        const canvas = canvasRef.current;
-        if (canvas) canvas.addEventListener('wheel', handleWheel, { passive: false });
-
         return () => {
             if (globeInstanceRef.current) {
                 globeInstanceRef.current.destroy();
                 globeInstanceRef.current = null;
             }
             window.removeEventListener('resize', onResize);
-            if (canvas) canvas.removeEventListener('wheel', handleWheel);
         };
-    }, [api, stateRef]);
+    }, [api, stateRef, r]);
 
     return (
         <animated.canvas
@@ -153,14 +123,8 @@ const GlobeImplementation = React.memo(({ stateRef }: { stateRef: React.MutableR
                 width: '100%',
                 height: '100%',
                 contain: 'layout paint size',
-                opacity: opacity,
+                opacity: 1,
                 cursor: 'grab',
-                transform: to([s, tx, ty], (sV, txV, tyV) => {
-                    const scale = isFinite(sV) ? sV : 1;
-                    const x = isFinite(txV) ? txV : 0;
-                    const y = isFinite(tyV) ? tyV : 0;
-                    return `translate(${x}px, ${y}px) scale(${scale})`;
-                }),
                 transformOrigin: '0 0',
             }}
             onPointerDown={(e) => {
@@ -179,7 +143,7 @@ const GlobeImplementation = React.memo(({ stateRef }: { stateRef: React.MutableR
                 if (pointerInteracting.current !== null) {
                     const delta = e.clientX - pointerInteracting.current;
                     pointerInteractionMovement.current = delta;
-                    api.start({ r: delta / (200 * scaleRef.current) });
+                    api.start({ r: delta / 200 });
                 }
             }}
             onTouchMove={(e) => {
