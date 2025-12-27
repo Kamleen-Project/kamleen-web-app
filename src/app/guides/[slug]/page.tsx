@@ -56,7 +56,7 @@ export default async function GuidePage({ params }: { params: Params }) {
         <main className="min-h-screen bg-background pb-20">
             <PreviewBar status={guide.status} editUrl={`/admin/guides/${guide.id}`} />
             {/* Hero */}
-            <div className="relative w-full bg-muted">
+            <div className="relative w-full">
                 <div className="relative h-[200px] md:h-[400px]">
                     <ImageWithFallback
                         src={guide.featuredImage || "/images/exp-placeholder.png"}
@@ -67,7 +67,7 @@ export default async function GuidePage({ params }: { params: Params }) {
                         className="object-cover opacity-85"
                     />
                 </div>
-                <Container className="pt-6 md:pt-12 pb-6 max-w-5xl lg:px-0">
+                <Container className="pt-6 md:pt-12 pb-2 max-w-5xl lg:px-0">
                     <div className="max-w-4xl space-y-4">
                         <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground leading-[1.4]">{guide.title}</h1>
                         <div className="flex items-center gap-2 text-sm md:text-base font-medium text-muted-foreground/90">

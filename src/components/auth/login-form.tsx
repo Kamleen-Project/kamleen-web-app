@@ -80,15 +80,19 @@ export function LoginForm({ redirectTo = "/dashboard", mode = "user" }: LoginFor
 
 	return (
 		<form className="space-y-5" onSubmit={handleSubmit}>
-			<GoogleSignInButton redirectTo={redirectTo} />
-			<div className="relative">
-				<div className="absolute inset-0 flex items-center">
-					<span className="w-full border-t" />
-				</div>
-				<div className="relative flex justify-center text-xs uppercase">
-					<span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
-				</div>
-			</div>
+			{mode !== "admin" && (
+				<>
+					<GoogleSignInButton redirectTo={redirectTo} />
+					<div className="relative">
+						<div className="absolute inset-0 flex items-center">
+							<span className="w-full border-t" />
+						</div>
+						<div className="relative flex justify-center text-xs uppercase">
+							<span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+						</div>
+					</div>
+				</>
+			)}
 			<InputField id="email" name="email" type="email" label="Email" placeholder="you@example.com" autoComplete="email" required />
 			<InputField id="password" name="password" type="password" label="Password" placeholder="••••••••" autoComplete="current-password" required />
 			{error && <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}

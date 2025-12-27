@@ -27,7 +27,7 @@ export function ConsoleLayout({ title, subtitle, headerHref, navItems, footer, c
 						)
 					)}
 				</ConsoleSidebar>
-				<main className="flex-1 px-5 py-10 sm:px-8 lg:px-12 h-[100dvh] overflow-y-auto lg:h-auto lg:overflow-visible">
+				<main className="flex-1 px-5 py-6 sm:px-8 lg:px-12 h-[100dvh] overflow-y-auto lg:h-auto lg:overflow-visible">
 					<div className="mb-6 flex flex-col gap-2 lg:hidden">
 						<p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">{subtitle}</p>
 						<h1 className="text-2xl font-semibold text-foreground">{title}</h1>

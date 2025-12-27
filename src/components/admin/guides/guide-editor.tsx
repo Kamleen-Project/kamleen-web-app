@@ -28,6 +28,7 @@ import { SelectField } from "@/components/ui/select-field";
 import MapLatLng from "@/components/ui/map-latlng";
 import type { CountriesInput } from "@/lib/locations";
 
+
 type Guide = {
     id: string;
     title: string;
@@ -308,19 +309,23 @@ export function GuideEditor({ guide, countries }: { guide: Guide; countries: Cou
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-6 py-4 backdrop-blur">
-                <div className="flex items-center gap-4">
+            <div className="sticky top-0 lg:top-16 z-10 flex items-center justify-between border-b bg-background/95 px-6 py-4 backdrop-blur">
+                <div className="flex items-center gap-4 grow">
                     <Button variant="ghost" size="sm" asChild>
                         <Link href="/admin/guides">
                             <ChevronLeft className="mr-2 h-4 w-4" />
                             Back
                         </Link>
                     </Button>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col w-full items-stretch grow">
                         <span className="text-sm font-medium text-muted-foreground">Editing Guide</span>
-                        <h1 className="text-lg font-bold">{title || "Untitled Guide"}</h1>
+                        <InputField
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="h-auto w-full border-none rounded-none bg-transparent p-0 text-lg font-bold shadow-none placeholder:text-muted-foreground focus-visible:ring-0"
+                            placeholder="Untitled Guide"
+                        />
                     </div>
-                    <StatusBadge value={status} variation={status === "PUBLISHED" ? "success" : "muted"} />
                 </div>
                 <div className="flex items-center gap-2">
                     <CtaIconButton color="whiteBorder" size="md" asChild ariaLabel="Preview">
@@ -339,20 +344,11 @@ export function GuideEditor({ guide, countries }: { guide: Guide; countries: Cou
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-6 p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 py-4">
                 {/* Main Content */}
-                <div className="space-y-6">
-                    <div className="space-y-2">
-                        <InputField
-                            value={title}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
-                            className="text-3xl font-bold border-none px-4 py-8 h-auto focus-visible:ring-0"
-                            placeholder="Guide Title"
-                        />
-                    </div>
-
+                <div className="space-y-4">
                     {/* Toolbar */}
-                    <div className="sticky top-[80px] z-10 mx-auto max-w-4xl rounded-lg border bg-background p-2 shadow-sm flex flex-wrap gap-1">
+                    <div className="sticky top-[80px] lg:top-[160px] z-10 mx-auto max-w-4xl rounded-lg border bg-background p-2 shadow-sm flex flex-wrap gap-1">
                         <Button
                             variant={editor.isActive('bold') ? "default" : "ghost"}
                             size="icon"
@@ -446,16 +442,20 @@ export function GuideEditor({ guide, countries }: { guide: Guide; countries: Cou
                         </Button>
                     </div>
 
-                    <div className="border rounded-lg min-h-[500px] bg-white text-black p-4">
+                    <div className="border rounded-lg max-h-[640px] overflow-scroll bg-white text-black p-4 lg:sticky lg:top-[226px] lg:h-fit">
                         <EditorContent editor={editor} />
                     </div>
                 </div>
 
                 {/* Sidebar */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {/* Publishing */}
                     <div className="rounded-lg border bg-card p-4 space-y-4">
-                        <h3 className="font-semibold">Publishing</h3>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-semibold">Publishing</h3>
+                            <StatusBadge value={status} variation={status === "PUBLISHED" ? "success" : "muted"} />
+                        </div>
+
                         <div className="flex items-center justify-between">
                             <Label htmlFor="publish-switch">Published</Label>
                             <Switch

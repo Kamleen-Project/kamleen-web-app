@@ -19,7 +19,7 @@ function getAppearanceClass(variation: StatusBadgeProps["variation"]): string | 
 }
 
 export function StatusBadge({ value, variation, className, ...props }: StatusBadgeProps) {
-	const baseClasses = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wide";
+	const baseClasses = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wide w-fit";
 	const defaultVariantClass = "border-transparent bg-primary text-primary-foreground";
 	const appearanceClass = getAppearanceClass(variation);
 	return (

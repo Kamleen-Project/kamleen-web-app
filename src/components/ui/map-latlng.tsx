@@ -99,7 +99,7 @@ export function MapLatLng({ lat, lng, onLatChange, onLngChange, onMapChange, hei
 			if (Number.isFinite(parsed) && parsed >= 2 && parsed <= 19) {
 				savedZoomRef.current = parsed;
 			}
-		} catch {}
+		} catch { }
 	}, []);
 
 	useEffect(() => {
@@ -109,7 +109,7 @@ export function MapLatLng({ lat, lng, onLatChange, onLngChange, onMapChange, hei
 			.then(() => {
 				if (!cancelled) setLoaded(true);
 			})
-			.catch(() => {});
+			.catch(() => { });
 		return () => {
 			cancelled = true;
 		};
@@ -188,7 +188,7 @@ export function MapLatLng({ lat, lng, onLatChange, onLngChange, onMapChange, hei
 				savedZoomRef.current = z;
 				try {
 					window.localStorage.setItem("mini-map-zoom", String(z));
-				} catch {}
+				} catch { }
 			}
 		});
 		setEngine("google");
@@ -260,7 +260,7 @@ export function MapLatLng({ lat, lng, onLatChange, onLngChange, onMapChange, hei
 				savedZoomRef.current = z;
 				try {
 					window.localStorage.setItem("mini-map-zoom", String(z));
-				} catch {}
+				} catch { }
 			}
 		});
 		setEngine("leaflet");
@@ -323,10 +323,10 @@ export function MapLatLng({ lat, lng, onLatChange, onLngChange, onMapChange, hei
 							return "relative w-full aspect-[16/9]";
 						})()}`}
 					>
-						<div ref={containerRef} className="absolute inset-0" style={{ borderRadius: 12, overflow: "hidden" }} />
+						<div ref={containerRef} className="absolute inset-0" style={{ borderRadius: 12, overflow: "hidden", zIndex: 1 }} />
 					</div>
 				) : (
-					<div ref={containerRef} style={{ height: `${height}px`, width: "100%", borderRadius: 12, overflow: "hidden" }} />
+					<div ref={containerRef} style={{ height: `${height}px`, width: "100%", borderRadius: 12, overflow: "hidden", zIndex: 1 }} />
 				)}
 			</div>
 			{hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
