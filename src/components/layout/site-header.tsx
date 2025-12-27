@@ -10,7 +10,10 @@ import { TicketsMenu } from "@/components/layout/tickets-menu";
 import { RoleSwitcher } from "@/components/layout/role-switcher";
 // Removed BecomeOrganizerModal from top nav; moved into profile dropdown
 
-const navItems = [{ name: "Experiences", href: "/experiences" }];
+const navItems = [
+	{ name: "Experiences", href: "/experiences" },
+	{ name: "Guides", href: "/guides" },
+];
 
 export function SiteHeader({ session }: { session: Session | null }) {
 	const isOrganizerApproved = session?.user?.organizerStatus === "APPROVED";

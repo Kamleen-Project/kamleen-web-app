@@ -120,6 +120,8 @@ model User {
   notificationPreference NotificationPreference?
   createdCoupons     Coupon[]            @relation("CreatedCoupons")
   redeemedCoupons    CouponUsage[]
+  guides             Guide[]
+  guideComments      GuideComment[]
 
   @@index([role])
   @@index([activeRole])
@@ -209,6 +211,7 @@ model Country {
   states      State[]
   cities      City[]
   experiences Experience[] @relation("CountryExperiences")
+  guides      Guide[]      @relation("CountryGuides")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -226,6 +229,7 @@ model State {
   country     Country      @relation(fields: [countryId], references: [id], onDelete: Cascade)
   cities      City[]
   experiences Experience[] @relation("StateExperiences")
+  guides      Guide[]      @relation("StateGuides")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -245,6 +249,7 @@ model City {
   country     Country      @relation(fields: [countryId], references: [id], onDelete: Cascade)
   state       State?       @relation(fields: [stateId], references: [id], onDelete: Cascade)
   experiences Experience[] @relation("CityExperiences")
+  guides      Guide[]      @relation("CityGuides")
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -742,3 +747,84 @@ model GamePrize {
   @@index([couponId])
 }
 
+
+enum GuideStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+  TRASHED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
+model Guide {
+  id            String      @id @default(cuid())
+  slug          String      @unique
+  title         String
+  content       String      @db.Text
+  excerpt       String?
+  featuredImage String?
+  
+  metaTitle       String?
+  metaDescription String?
+  
+  status        GuideStatus @default(DRAFT)
+  publishedAt   DateTime?
+  
+  authorId      String
+  author        User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  tags          String[]    @default([])
+
+  // Location fields
+  address       String?
+  city          String?
+  state         String?
+  country       String?
+  latitude      Decimal?    @db.Decimal(10, 7)
+  longitude     Decimal?    @db.Decimal(10, 7)
+  
+  countryId     String?
+  stateId       String?
+  cityId        String?
+  countryRel    Country?    @relation("CountryGuides", fields: [countryId], references: [id])
+  stateRel      State?      @relation("StateGuides", fields: [stateId], references: [id])
+  cityRel       City?       @relation("CityGuides", fields: [cityId], references: [id])
+  
+  comments      GuideComment[]
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([authorId])
+  @@index([status])
+  @@index([slug])
+  @@index([countryId])
+  @@index([stateId])
+  @@index([cityId])
+}
+
+model GuideComment {
+  id        String        @id @default(cuid())
+  content   String        @db.Text
+  
+  guideId   String
+  guide     Guide         @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  status    CommentStatus @default(APPROVED)
+  
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  
+  @@index([guideId])
+  @@index([authorId])
+  @@index([status])
+}

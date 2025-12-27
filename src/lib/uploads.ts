@@ -35,12 +35,13 @@ export async function saveUploadedFile({
   const fileName = `${randomUUID()}${extension}`
   const key = `${directory.replace(/^\/+|\/+$/g, "")}/${fileName}`
 
-  // Use Vercel Blob in production (or when a Blob token is available), otherwise fall back to local FS for dev
-  const shouldUseVercelBlob = process.env.VERCEL === "1" || Boolean(process.env.BLOB_READ_WRITE_TOKEN)
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    throw new Error("BLOB_READ_WRITE_TOKEN is not set")
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  if (shouldUseVercelBlob) {
+  try {
     const uploaded = await put(key, buffer, {
       access: "public",
       contentType: file.type || "application/octet-stream",
@@ -49,14 +50,10 @@ export async function saveUploadedFile({
       filePath: uploaded.url,
       publicPath: uploaded.url,
     }
+  } catch (error) {
+    console.error("Vercel Blob Upload Error:", error);
+    throw new Error("Failed to upload to blob storage: " + (error instanceof Error ? error.message : String(error)));
   }
-
-  const uploadRoot = path.join(process.cwd(), "public", "uploads")
-  const targetDir = path.join(uploadRoot, directory)
-  await fs.mkdir(targetDir, { recursive: true })
-  const filePath = path.join(targetDir, fileName)
-  await fs.writeFile(filePath, buffer)
-  return { filePath, publicPath: `/uploads/${directory}/${fileName}` }
 }
 
 function determineExtension(file: File) {
@@ -71,7 +68,7 @@ function determineExtension(file: File) {
 
 function extractExtension(filename: string) {
   const ext = path.extname(filename)
-  return ext
+  return ext.toLowerCase()
 }
 
 function inferExtensionFromMime(mime: string) {

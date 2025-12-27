@@ -163,6 +163,22 @@ export const adminNavItems: ConsoleNavItem[] = [
 		icon: "Gamepad2",
 	},
 	{
+		href: "/admin/guides",
+		label: "Guides",
+		// description: "Manage blog posts and comments",
+		icon: "BookOpen",
+		children: [
+			{
+				href: "/admin/guides",
+				label: "All Guides",
+			},
+			{
+				href: "/admin/guides/comments",
+				label: "Comments",
+			},
+		],
+	},
+	{
 		href: "/admin/content",
 		label: "Content",
 		// description: "Manage site banners and content",
