@@ -430,6 +430,72 @@ export async function getExperienceViews(slugs: string[]): Promise<Record<string
     }
 }
 
+export async function getGuideViews(slugs: string[]): Promise<Record<string, number>> {
+    if (slugs.length === 0) return {};
+
+    const queryPayload = {
+        query: {
+            kind: "HogQLQuery",
+            query: `
+                select
+                    properties.$current_url,
+                    count() as view_count
+                from events
+                where event = '$pageview'
+                  and properties.$current_url like '%/guides/%'
+                group by properties.$current_url
+            `
+        }
+    };
+
+    try {
+        const response = await fetch(`${POSTHOG_HOST}/api/projects/${POSTHOG_PROJECT_ID}/query`, {
+            method: "POST",
+            body: JSON.stringify(queryPayload),
+            headers: {
+                Authorization: `Bearer ${POSTHOG_API_KEY}`,
+                "Content-Type": "application/json",
+            },
+            next: { revalidate: 60 }
+        });
+
+        if (!response.ok) return {};
+
+        const data = await response.json();
+        const results: Record<string, number> = {};
+
+        if (data.results) {
+            data.results.forEach((row: any) => {
+                const url = row[0] as string;
+                const count = Number(row[1]);
+
+                let pathname = url;
+                if (url.startsWith('http')) {
+                    try {
+                        const urlObj = new URL(url);
+                        pathname = urlObj.pathname;
+                    } catch (e) { }
+                }
+
+                const pathParts = pathname.split('/').filter(Boolean);
+                const guideIndex = pathParts.indexOf('guides');
+
+                if (guideIndex !== -1 && guideIndex + 1 < pathParts.length) {
+                    const slug = pathParts[guideIndex + 1];
+                    if (slugs.includes(slug)) {
+                        results[slug] = (results[slug] || 0) + count;
+                    }
+                }
+            });
+        }
+        return results;
+
+    } catch (error) {
+        console.error("Analytics: Error fetching guide views", error);
+        return {};
+    }
+}
+
 
 export async function getRealTimeVisitorMapData(period: '30m' | '24h' | '7d' | '30d' = '30m'): Promise<{
     countries: { country: string; visitors: number }[];

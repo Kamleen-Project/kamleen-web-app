@@ -488,6 +488,104 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 					experienceId={experience.id}
 				/>
 			</Container>
+
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(
+						visibleSessions.length > 0
+							? visibleSessions.map((session) => {
+								const minutes = parseDurationToMinutes(session.duration ?? experience.duration);
+								const endDate = minutes ? new Date(session.startAt.getTime() + minutes * 60 * 1000) : undefined;
+
+								return {
+									"@context": "https://schema.org",
+									"@type": "Event",
+									name: experience.title,
+									description: experience.description ?? experience.summary,
+									startDate: session.startAt.toISOString(),
+									endDate: endDate?.toISOString(),
+									eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+									eventStatus: "https://schema.org/EventScheduled",
+									location: {
+										"@type": "Place",
+										name: session.locationLabel ?? experience.location,
+										address: {
+											"@type": "PostalAddress",
+											streetAddress: session.meetingAddress ?? experience.meetingAddress,
+											addressLocality: experience.meetingCity,
+											addressCountry: experience.meetingCountry,
+										},
+										geo:
+											experience.meetingLatitude && experience.meetingLongitude
+												? {
+													"@type": "GeoCoordinates",
+													latitude: Number(experience.meetingLatitude),
+													longitude: Number(experience.meetingLongitude),
+												}
+												: undefined,
+									},
+									image: [experience.heroImage, ...experience.galleryImages].filter(Boolean),
+									organizer: {
+										"@type": "Person",
+										name: experience.organizer.name,
+										image: experience.organizer.image,
+									},
+									offers: {
+										"@type": "Offer",
+										price: session.priceOverride ?? experience.price,
+										priceCurrency: experience.currency,
+										availability:
+											computeAvailableSpotsForSession(session as { capacity: number; bookings?: { guests: number }[] }) > 0
+												? "https://schema.org/InStock"
+												: "https://schema.org/SoldOut",
+										url: `https://kamleen.com/experiences/${slug}`,
+										validFrom: session.createdAt.toISOString(),
+									},
+									performer: {
+										"@type": "Person",
+										name: experience.organizer.name,
+										image: experience.organizer.image,
+									},
+									aggregateRating:
+										(experience.reviewCount ?? 0) > 0
+											? {
+												"@type": "AggregateRating",
+												ratingValue: experience.averageRating,
+												reviewCount: experience.reviewCount,
+											}
+											: undefined,
+								};
+							})
+							: {
+								"@context": "https://schema.org",
+								"@type": "Product",
+								name: experience.title,
+								description: experience.description ?? experience.summary,
+								image: [experience.heroImage, ...experience.galleryImages].filter(Boolean),
+								brand: {
+									"@type": "Brand",
+									name: "Kamleen",
+								},
+								offers: {
+									"@type": "Offer",
+									price: experience.price,
+									priceCurrency: experience.currency,
+									availability: isReservationOpen ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+									url: `https://kamleen.com/experiences/${slug}`,
+								},
+								aggregateRating:
+									(experience.reviewCount ?? 0) > 0
+										? {
+											"@type": "AggregateRating",
+											ratingValue: experience.averageRating,
+											reviewCount: experience.reviewCount,
+										}
+										: undefined,
+							}
+					),
+				}}
+			/>
 		</div>
 	);
 }

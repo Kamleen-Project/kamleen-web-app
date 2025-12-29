@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { GuidesActions } from "@/components/admin/guides/guides-actions";
 import { createGuide } from "@/app/actions/guides";
+import { getGuideViews } from "@/app/actions/analytics";
 
 // Simple pagination for now or reuse existing if generic
 // Using Next.js searchParams
@@ -34,6 +35,9 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
             _count: { select: { comments: true } },
         },
     });
+
+    const slugs = guides.map(g => g.slug);
+    const viewCounts = await getGuideViews(slugs);
 
     const total = await prisma.guide.count();
 
@@ -79,7 +83,14 @@ export default async function AdminGuidesPage({ searchParams }: { searchParams: 
                                     <TableCell>
                                         <div className="flex flex-col">
                                             <span className="font-medium text-foreground">{guide.title}</span>
-                                            <span className="text-xs text-muted-foreground">/{guide.slug}</span>
+                                            <span className="mt-1 inline-flex items-center gap-2 text-xs text-muted-foreground">
+                                                <span>/{guide.slug}</span>
+                                                <span className="mx-1 h-3 w-px bg-border" />
+                                                <span className="inline-flex items-center gap-1">
+                                                    <Eye className="size-3.5" />
+                                                    <span>{viewCounts[guide.slug] || 0}</span>
+                                                </span>
+                                            </span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
