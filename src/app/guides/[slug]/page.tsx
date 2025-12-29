@@ -136,6 +136,38 @@ export default async function GuidePage({ params }: { params: Params }) {
                     </div>
                 )}
             </Container>
+
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "Article",
+                        headline: guide.title,
+                        description: guide.excerpt ?? guide.metaDescription,
+                        image: guide.featuredImage ? [guide.featuredImage] : undefined,
+                        datePublished: guide.publishedAt ? new Date(guide.publishedAt).toISOString() : new Date(guide.createdAt).toISOString(),
+                        dateModified: new Date(guide.updatedAt).toISOString(),
+                        author: {
+                            "@type": "Person",
+                            name: guide.author.name,
+                            image: guide.author.image,
+                        },
+                        publisher: {
+                            "@type": "Organization",
+                            name: "Kamleen",
+                            logo: {
+                                "@type": "ImageObject",
+                                url: "https://kamleen.com/images/logo.png", // Replace with your actual logo URL if different
+                            },
+                        },
+                        mainEntityOfPage: {
+                            "@type": "WebPage",
+                            "@id": `https://kamleen.com/guides/${guide.slug}`,
+                        },
+                    }),
+                }}
+            />
         </main>
     );
 }
