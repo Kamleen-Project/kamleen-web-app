@@ -2,6 +2,8 @@
 import { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = 'https://kamleen.com'
 
@@ -39,7 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // Guides
-    let guides: { slug: string; updatedAt: Date; publishedAt: Date | null }[] = []
+    let guides: { slug: string; updatedAt: Date }[] = []
     try {
         guides = await prisma.guide.findMany({
             where: {
@@ -48,7 +50,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             select: {
                 slug: true,
                 updatedAt: true,
-                publishedAt: true,
             },
         })
     } catch (error) {
