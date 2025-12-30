@@ -23,27 +23,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Dynamic routes
 
     // Experiences
-    const experiences = await prisma.experience.findMany({
-        where: {
-            status: 'PUBLISHED',
-        },
-        select: {
-            slug: true,
-            updatedAt: true,
-        },
-    })
+    let experiences: { slug: string; updatedAt: Date }[] = []
+    try {
+        experiences = await prisma.experience.findMany({
+            where: {
+                status: 'PUBLISHED',
+            },
+            select: {
+                slug: true,
+                updatedAt: true,
+            },
+        })
+    } catch (error) {
+        console.error('Failed to fetch experiences for sitemap:', error)
+    }
 
     // Guides
-    const guides = await prisma.guide.findMany({
-        where: {
-            status: 'PUBLISHED',
-        },
-        select: {
-            slug: true,
-            updatedAt: true,
-            publishedAt: true,
-        },
-    })
+    let guides: { slug: string; updatedAt: Date; publishedAt: Date | null }[] = []
+    try {
+        guides = await prisma.guide.findMany({
+            where: {
+                status: 'PUBLISHED',
+            },
+            select: {
+                slug: true,
+                updatedAt: true,
+                publishedAt: true,
+            },
+        })
+    } catch (error) {
+        console.error('Failed to fetch guides for sitemap:', error)
+    }
 
     // Experience URLs
     const experienceUrls = experiences.map((experience) => ({
