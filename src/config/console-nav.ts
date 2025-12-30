@@ -176,6 +176,10 @@ export const adminNavItems: ConsoleNavItem[] = [
 				href: "/admin/guides/comments",
 				label: "Comments",
 			},
+			{
+				href: "/admin/guides/gallery",
+				label: "Gallery",
+			},
 		],
 	},
 	{

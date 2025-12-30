@@ -797,6 +797,7 @@ model Guide {
   cityRel       City?       @relation("CityGuides", fields: [cityId], references: [id])
   
   comments      GuideComment[]
+  images        GuideImage[]
   
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -826,5 +827,38 @@ model GuideComment {
   
   @@index([guideId])
   @@index([authorId])
+  @@index([status])
+}
+
+enum ImageStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model GuideImage {
+  id          String      @id @default(cuid())
+  url         String
+  alt         String?
+  caption     String?
+  width       Int?
+  height      Int?
+  size        Int?        // in bytes
+  mimeType    String?     // e.g. image/jpeg
+  extension   String?     // e.g. jpg
+  
+  // Geo location
+  latitude    Decimal?    @db.Decimal(10, 7)
+  longitude   Decimal?    @db.Decimal(10, 7)
+  
+  status      ImageStatus @default(PENDING)
+  
+  guideId     String?
+  guide       Guide?       @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@index([guideId])
   @@index([status])
 }

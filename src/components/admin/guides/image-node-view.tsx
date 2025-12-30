@@ -6,15 +6,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { InputField } from "@/components/ui/input-field";
+import { useGuideLightbox } from "@/components/guides/guide-lightbox-provider";
+import { cn } from "@/lib/utils";
 
 export function ImageNodeView(props: NodeViewProps) {
-    const { node, updateAttributes, selected } = props;
+    const { node, updateAttributes, selected, editor } = props;
+    const isEditable = editor.isEditable;
     const [isOpen, setIsOpen] = useState(false);
 
-    // Initialize state from props whenever modal opens, 
-    // or just keep them in sync. 
-    // Better to init from node.attrs when opening or use effects, 
-    // but for simplicity we can just read from node.attrs for the initial state of the modal.
+    // Safely try to get context, it might be missing if used outside of GuideContent (e.g. editor page)
+    // We can conditionally use it.
+    let lightboxContext: any = null;
+    try {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        lightboxContext = useGuideLightbox();
+    } catch {
+        // Ignore if context is missing (e.g. in Admin Editor where we might not want lightbox or haven't wrapped it yet)
+    }
+
     const [alt, setAlt] = useState(node.attrs.alt || "");
     const [caption, setCaption] = useState(node.attrs.caption || "");
 
@@ -29,15 +38,30 @@ export function ImageNodeView(props: NodeViewProps) {
         setIsOpen(false);
     };
 
+    const handleImageClick = () => {
+        if (!isEditable && lightboxContext) {
+            lightboxContext.openLightbox(node.attrs.src);
+        }
+    };
+
     return (
         <NodeViewWrapper className="image-node-view relative group flex flex-col items-center my-0 not-prose">
-            <div className={`relative rounded-lg overflow-hidden border bg-muted w-full max-w-3xl transition-all ${selected ? "ring-2 ring-primary ring-offset-2" : ""}`}>
-                {/* Settings Button - Only visible on hover */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    <Button variant="secondary" size="icon" onClick={handleOpen} className="h-8 w-8 shadow-sm" type="button">
-                        <Settings className="h-4 w-4" />
-                    </Button>
-                </div>
+            <div
+                onClick={handleImageClick}
+                className={cn(
+                    "relative rounded-lg overflow-hidden border bg-muted w-full max-w-3xl transition-all",
+                    (selected && isEditable) ? "ring-2 ring-primary ring-offset-2" : "",
+                    (!isEditable && lightboxContext) ? "cursor-zoom-in hover:brightness-95 active:scale-[0.99]" : ""
+                )}
+            >
+                {/* Settings Button - Only visible on hover and if editable */}
+                {isEditable && (
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <Button variant="secondary" size="icon" onClick={(e) => { e.stopPropagation(); handleOpen(); }} className="h-8 w-8 shadow-sm" type="button">
+                            <Settings className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
 
                 {/* Image Display */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -57,7 +81,7 @@ export function ImageNodeView(props: NodeViewProps) {
 
             {/* Settings Modal */}
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent>
+                <DialogContent onClick={(e) => e.stopPropagation()}>
                     <DialogHeader>
                         <DialogTitle>Image Settings</DialogTitle>
                     </DialogHeader>

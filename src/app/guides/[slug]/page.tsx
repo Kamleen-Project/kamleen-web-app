@@ -13,6 +13,7 @@ import { CommentSection } from "@/components/guides/comment-section";
 import { getGuideBySlug, getRelatedGuides, getAdjacentGuides } from "@/app/actions/guides";
 import { getServerAuthSession } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { GuideContent } from "@/components/guides/guide-content";
 
 type Params = Promise<{ slug: string }>;
 
@@ -94,8 +95,8 @@ export default async function GuidePage({ params }: { params: Params }) {
             <Container className="mt-12">
                 <div className="max-w-5xl mx-auto">
                     {/* Article Content */}
-                    <article className="prose prose-lg dark:prose-invert max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: guide.content }} />
+                    <article>
+                        <GuideContent content={guide.content} />
                     </article>
                 </div>
 

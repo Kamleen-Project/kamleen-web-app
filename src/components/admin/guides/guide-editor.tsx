@@ -3,6 +3,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { CustomImageExtension } from "./image-extension";
+import { GalleryCarouselExtension } from "./gallery-carousel-extension";
 import LinkExtension from "@tiptap/extension-link";
 import YoutubeExtension from "@tiptap/extension-youtube";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -16,7 +17,7 @@ import { CtaButton } from "@/components/ui/cta-button";
 import { CtaIconButton } from "@/components/ui/cta-icon-button";
 import { updateGuide, checkSlugUnique } from "@/app/actions/guides";
 import { uploadFileAction } from "@/app/actions/upload";
-import { Bold, Italic, Link as LinkIcon, Image as ImageIcon, Youtube, Heading1, Heading2, Heading3, Pilcrow, List, ListOrdered, Save, Eye, CheckCircle, ChevronLeft, Loader2, XCircle } from "lucide-react";
+import { Bold, Italic, Link as LinkIcon, Image as ImageIcon, GalleryHorizontal, Youtube, Heading1, Heading2, Heading3, Pilcrow, List, ListOrdered, Save, Eye, CheckCircle, ChevronLeft, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { GuideStatus } from "@/generated/prisma";
@@ -27,7 +28,8 @@ import { ToggleField } from "@/components/ui/toggle-field";
 import { SelectField } from "@/components/ui/select-field";
 import MapLatLng from "@/components/ui/map-latlng";
 import type { CountriesInput } from "@/lib/locations";
-
+import { MediaGalleryModal } from "@/components/admin/media/media-gallery-modal";
+import type { GuideImage } from "@/generated/prisma";
 
 type Guide = {
     id: string;
@@ -76,6 +78,8 @@ export function GuideEditor({ guide, countries }: { guide: Guide; countries: Cou
     const [metaDescription, setMetaDescription] = useState(guide.metaDescription || "");
     const [tagInput, setTagInput] = useState("");
     const [saving, setSaving] = useState(false);
+    const [showGallery, setShowGallery] = useState(false);
+    const [galleryMode, setGalleryMode] = useState<'single' | 'carousel'>('single');
 
     // Location state
     const [showLocation, setShowLocation] = useState(!!(guide.latitude && guide.longitude));
@@ -157,6 +161,7 @@ export function GuideEditor({ guide, countries }: { guide: Guide; countries: Cou
         extensions: [
             StarterKit,
             CustomImageExtension,
+            GalleryCarouselExtension,
             LinkExtension.configure({
                 openOnClick: false,
             }),
@@ -245,45 +250,29 @@ export function GuideEditor({ guide, countries }: { guide: Guide; countries: Cou
         }
     };
 
+    const handleGallerySelect = (images: GuideImage[]) => {
+        if (!editor) return;
+
+        if (galleryMode === 'carousel') {
+            const carouselImages = images.map(img => ({ src: img.url, alt: img.alt || "" }));
+            editor.chain().focus().setGalleryCarousel({ images: carouselImages }).run();
+        } else {
+            let chain = editor.chain().focus();
+            images.forEach((img) => {
+                chain = chain.setImage({ src: img.url, alt: img.alt || "" });
+            });
+            chain.run();
+        }
+    };
+
     const addImageToEditor = () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.multiple = true;
-        input.onchange = async (e) => {
-            const files = (e.target as HTMLInputElement).files;
-            if (files && files.length > 0) {
-                const uploadPromises = Array.from(files).map(async (file) => {
-                    const formData = new FormData();
-                    formData.append("file", file);
-                    try {
-                        const res = await uploadFileAction(formData);
-                        return res.url;
-                    } catch (error: any) {
-                        console.error(`Failed to upload ${file.name}`, error);
-                        notify({
-                            title: "Error",
-                            message: `Failed to upload ${file.name}: ${error.message || "Unknown error"}`,
-                            intent: "error"
-                        });
-                        return null;
-                    }
-                });
+        setGalleryMode('single');
+        setShowGallery(true);
+    };
 
-                const urls = await Promise.all(uploadPromises);
-
-                if (editor) {
-                    let chain = editor.chain().focus();
-                    urls.forEach((url) => {
-                        if (url) {
-                            chain = chain.setImage({ src: url });
-                        }
-                    });
-                    chain.run();
-                }
-            }
-        };
-        input.click();
+    const addGalleryCarouselToEditor = () => {
+        setGalleryMode('carousel');
+        setShowGallery(true);
     };
 
     const addYoutubeToEditor = () => {
@@ -431,6 +420,15 @@ export function GuideEditor({ guide, countries }: { guide: Guide; countries: Cou
                             className="h-8 w-8"
                         >
                             <ImageIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={addGalleryCarouselToEditor}
+                            className="h-8 w-8"
+                            title="Add Gallery Carousel"
+                        >
+                            <GalleryHorizontal className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="ghost"
@@ -619,6 +617,13 @@ export function GuideEditor({ guide, countries }: { guide: Guide; countries: Cou
                     </div>
                 </div>
             </div>
+
+            <MediaGalleryModal
+                open={showGallery}
+                onOpenChange={setShowGallery}
+                onSelect={handleGallerySelect}
+                multiSelect={true}
+            />
         </div>
     );
 }
