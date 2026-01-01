@@ -115,10 +115,6 @@ export default async function ExperiencePreviewPage({ params }: { params: Promis
 							<CalendarDays className="size-4" />
 							{experience.category ?? "Experience"}
 						</span>
-						<span className="inline-flex items-center gap-2">
-							<Users className="size-4" />
-							Small group experience
-						</span>
 					</div>
 				</section>
 			</Container>

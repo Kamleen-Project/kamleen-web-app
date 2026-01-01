@@ -34,10 +34,10 @@ export type UploadSinglePictureProps = {
 	className?: string;
 	// Optional loading overlay
 	loading?: boolean;
-    // Enable client-side compression before emitting file (default: true)
-    compress?: boolean;
-    // Optional compression options override
-    compressOptions?: ImageProcessOptions;
+	// Enable client-side compression before emitting file (default: true)
+	compress?: boolean;
+	// Optional compression options override
+	compressOptions?: ImageProcessOptions;
 };
 
 export function UploadSinglePicture({
@@ -54,8 +54,8 @@ export function UploadSinglePicture({
 	name,
 	className = "",
 	loading = false,
-    compress = true,
-    compressOptions,
+	compress = true,
+	compressOptions,
 	objectFit = "cover",
 }: UploadSinglePictureProps) {
 	const inputRef = useRef<HTMLInputElement | null>(null);
@@ -162,16 +162,16 @@ export function UploadSinglePicture({
 }
 
 function deriveSingleDefaults(aspect: AspectMode): ImageProcessOptions {
-  switch (aspect) {
-    case "twentyOneSix":
-    case "twentyOneNine":
-      return { maxWidth: 1920, maxHeight: 1080, mimeType: "image/webp", quality: 0.82 }
-    case "threeFour":
-      return { maxWidth: 1600, maxHeight: 1600, mimeType: "image/webp", quality: 0.82 }
-    case "square":
-    default:
-      return { maxWidth: 1280, maxHeight: 1280, mimeType: "image/webp", quality: 0.82 }
-  }
+	switch (aspect) {
+		case "twentyOneSix":
+		case "twentyOneNine":
+			return { maxWidth: 1920, maxHeight: 1080, mimeType: "image/webp", quality: 0.82 }
+		case "threeFour":
+			return { maxWidth: 1600, maxHeight: 1600, mimeType: "image/webp", quality: 0.82 }
+		case "square":
+		default:
+			return { maxWidth: 1280, maxHeight: 1280, mimeType: "image/webp", quality: 0.82 }
+	}
 }
 
 export default UploadSinglePicture;

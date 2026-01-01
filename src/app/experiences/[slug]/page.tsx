@@ -277,10 +277,6 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 							<CalendarDays className="size-4" />
 							{experience.category ?? "Experience"}
 						</span>
-						<span className="inline-flex items-center gap-2">
-							<Users className="size-4" />
-							Small group experience
-						</span>
 					</div>
 				</section>
 			</Container>
@@ -338,33 +334,24 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 					</section>
 
 					<section className="rounded-2xl border border-border/60 bg-background/80 p-8 shadow-sm">
-						<div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-center sm:gap-8 sm:text-left">
-							<div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-muted">
+						<div className="flex flex-col items-start gap-6 text-center sm:flex-row sm:items-start sm:gap-8 sm:text-left">
+							<div className="relative flex h-24 w-24 items-start justify-center overflow-hidden rounded-full border border-border/60 bg-muted shrink-0 mt-8">
 								{organizerImage ? (
 									<Image src={organizerImage} alt={`${experience.organizer.name} portrait`} fill sizes="96px" className="object-cover" />
 								) : (
 									<span className="text-2xl font-semibold text-muted-foreground">{organizerInitials}</span>
 								)}
-								<span className="absolute bottom-2 right-2 h-3.5 w-3.5 rounded-full border-2 border-background bg-emerald-500" aria-hidden="true" />
 							</div>
 							<div className="space-y-3">
 								<div>
 									<p className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">Organizer</p>
-									<h2 className="mt-2 text-2xl font-semibold text-foreground">{organizerName}</h2>
+									<h2 className="my-2 text-2xl font-semibold text-foreground">{organizerName}</h2>
 									{experience.organizer.headline ? <p className="text-sm text-muted-foreground">{experience.organizer.headline}</p> : null}
 								</div>
 								{experience.organizer.bio ? <p className="text-sm text-muted-foreground">{experience.organizer.bio}</p> : null}
 								<p className="text-sm font-medium text-foreground">
 									{organizerExperienceCount} experience{organizerExperienceCount === 1 ? "" : "s"} hosted
 								</p>
-								<div className="flex flex-col gap-3 sm:flex-row">
-									<CtaButton size="md" color="black" className="w-full sm:w-auto" startIcon={<UserPlus className="size-4" />}>
-										Follow organizer
-									</CtaButton>
-									<CtaButton size="md" color="whiteBorder" className="w-full sm:w-auto" startIcon={<MessageCircle className="size-4" />}>
-										Message
-									</CtaButton>
-								</div>
 							</div>
 						</div>
 					</section>

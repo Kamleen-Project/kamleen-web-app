@@ -131,7 +131,7 @@ export async function PATCH(
   try {
     const existing = await prisma.user.findUnique({ where: { id: userId }, select: { organizerStatus: true } })
     prevOrganizerStatus = (existing?.organizerStatus as OrganizerStatus | undefined) ?? null
-  } catch {}
+  } catch { }
 
   try {
     await prisma.user.update({

@@ -9,6 +9,7 @@ import { FormControl, FormDescription, FormField, FormLabel, FormSelect } from "
 import { cn } from "@/lib/utils";
 
 import { ProfileDetailsSections } from "@/components/profile/profile-details-sections";
+import { useNotifications } from "@/components/providers/notification-provider";
 import type { AdminUserProfileData } from "@/components/profile/types";
 
 const USER_ROLES = ["EXPLORER", "ORGANIZER", "ADMIN"] as const;
@@ -30,6 +31,7 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [avatarPreview, setAvatarPreview] = useState<string>(user.image ?? "");
+	const notifications = useNotifications();
 	const [avatarFile, setAvatarFile] = useState<File | null>(null);
 	const [avatarRemoved, setAvatarRemoved] = useState(false);
 	const [objectUrl, setObjectUrl] = useState<string | null>(null);
@@ -69,6 +71,40 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 			setObjectUrl(previewUrl);
 			setAvatarFile(file);
 			setAvatarRemoved(false);
+
+			// Immediately persist the new avatar
+			startTransition(async () => {
+				setMessage(null);
+				setError(null);
+				try {
+					const fd = new FormData();
+					fd.set("avatar", file);
+					const response = await fetch(`/api/admin/users/${user.id}`, { method: "PATCH", body: fd });
+					if (!response.ok) {
+						const data = await response.json().catch(() => ({ message: "Unable to upload profile image" }));
+						setError(data.message ?? "Unable to upload profile image");
+						notifications?.notify({ title: "Update failed", message: data.message ?? "Unable to upload profile image", intent: "error" });
+						// rollback preview on failure
+						if (objectUrl) {
+							URL.revokeObjectURL(objectUrl);
+							setObjectUrl(null);
+						}
+						setAvatarFile(null);
+						setAvatarPreview(user.image ?? "");
+						return;
+					}
+					setMessage("Profile image updated");
+					notifications?.notify({ title: "Profile updated", message: "Profile image updated", intent: "success" });
+					router.refresh();
+				} catch (err) {
+					const msg = "Network error while uploading image";
+					setError(msg);
+					notifications?.notify({ title: "Update failed", message: msg, intent: "error" });
+					// rollback
+					setAvatarFile(null);
+					setAvatarPreview(user.image ?? "");
+				}
+			});
 		} else {
 			setAvatarFile(null);
 			setAvatarRemoved(false);
@@ -84,6 +120,35 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 		setAvatarFile(null);
 		setAvatarRemoved(true);
 		setAvatarPreview("");
+
+		startTransition(async () => {
+			setMessage(null);
+			setError(null);
+			try {
+				const fd = new FormData();
+				fd.set("removeAvatar", "true");
+				const response = await fetch(`/api/admin/users/${user.id}`, { method: "PATCH", body: fd });
+				if (!response.ok) {
+					const data = await response.json().catch(() => ({ message: "Unable to remove profile image" }));
+					setError(data.message ?? "Unable to remove profile image");
+					notifications?.notify({ title: "Update failed", message: data.message ?? "Unable to remove profile image", intent: "error" });
+					// rollback local state if server failed
+					setAvatarRemoved(false);
+					setAvatarPreview(user.image ?? "");
+					return;
+				}
+				setMessage("Profile image removed");
+				notifications?.notify({ title: "Profile updated", message: "Profile image removed", intent: "success" });
+				router.refresh();
+			} catch (err) {
+				const msg = "Network error while removing image";
+				setError(msg);
+				notifications?.notify({ title: "Update failed", message: msg, intent: "error" });
+				// rollback
+				setAvatarRemoved(false);
+				setAvatarPreview(user.image ?? "");
+			}
+		});
 	}
 
 	function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -101,8 +166,13 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 
 		if (!avatarFile) {
 			formData.delete("avatar");
+		} else {
+			formData.set("avatar", avatarFile);
 		}
-		if (!avatarRemoved) {
+
+		if (avatarRemoved) {
+			formData.set("removeAvatar", "true");
+		} else {
 			formData.set("removeAvatar", "false");
 		}
 
@@ -117,21 +187,29 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 			setMessage(null);
 			setError(null);
 
-			const response = await fetch(`/api/admin/users/${user.id}`, {
-				method: "PATCH",
-				body: formData,
-			});
+			try {
+				const response = await fetch(`/api/admin/users/${user.id}`, {
+					method: "PATCH",
+					body: formData,
+				});
 
-			if (!response.ok) {
-				const data = await response.json().catch(() => ({ message: "Unable to update user" }));
-				setError(data.message ?? "Unable to update user");
-				return;
+				if (!response.ok) {
+					const data = await response.json().catch(() => ({ message: "Unable to update user" }));
+					setError(data.message ?? "Unable to update user");
+					notifications?.notify({ title: "Update failed", message: data.message ?? "Unable to update user", intent: "error" });
+					return;
+				}
+
+				setMessage("User updated successfully");
+				notifications?.notify({ title: "User updated", message: "User updated successfully", intent: "success" });
+				setAvatarFile(null);
+				setAvatarRemoved(false);
+				router.refresh();
+			} catch (err) {
+				const msg = "Network error while updating user";
+				setError(msg);
+				notifications?.notify({ title: "Update failed", message: msg, intent: "error" });
 			}
-
-			setMessage("User updated successfully");
-			setAvatarFile(null);
-			setAvatarRemoved(false);
-			router.refresh();
 		});
 	}
 
@@ -233,8 +311,10 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 										if (!response.ok) {
 											const data = await response.json().catch(() => ({ message: "Unable to delete user" }));
 											setError(data.message ?? "Unable to delete user");
+											notifications?.notify({ title: "Delete failed", message: data.message ?? "Unable to delete user", intent: "error" });
 											return;
 										}
+										notifications?.notify({ title: "User deleted", message: "User deleted successfully", intent: "success" });
 										router.push("/admin/users");
 									});
 								}}
@@ -251,8 +331,6 @@ export function AdminUserForm({ user }: { user: AdminUserProfileData }) {
 					Save updates
 				</CtaButton>
 			</div>
-			{message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-			{error ? <p className="text-sm text-destructive">{error}</p> : null}
 		</form>
 	);
 }
