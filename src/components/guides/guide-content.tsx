@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { CustomImageExtension } from "@/components/admin/guides/image-extension";
 import { GalleryCarouselExtension } from "@/components/admin/guides/gallery-carousel-extension";
+import { ExperienceCarouselExtension } from "@/components/admin/guides/experience-carousel-extension";
 import LinkExtension from "@tiptap/extension-link";
 import YoutubeExtension from "@tiptap/extension-youtube";
 import { useEffect } from "react";
@@ -24,6 +25,7 @@ function GuideEditorView({ content }: GuideContentProps) {
             StarterKit,
             CustomImageExtension,
             GalleryCarouselExtension,
+            ExperienceCarouselExtension,
             LinkExtension.configure({
                 openOnClick: false,
                 HTMLAttributes: {

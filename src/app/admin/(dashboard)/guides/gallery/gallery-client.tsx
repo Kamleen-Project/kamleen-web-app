@@ -97,11 +97,11 @@ export function GalleryClient({ initialData }: GalleryProps) {
     return (
         <div className="space-y-6">
             {/* Gallery Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
                 {initialData.images.map((img) => (
                     <div key={img.id} className="group relative bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         {/* Image Preview */}
-                        <div className="aspect-square relative bg-muted">
+                        <div className="aspect-[3/2] relative bg-muted">
                             <Image
                                 src={img.url}
                                 alt={img.alt || "Guide image"}
@@ -109,33 +109,10 @@ export function GalleryClient({ initialData }: GalleryProps) {
                                 className="object-cover"
                                 unoptimized
                             />
-                            {/* Badges/Overlays */}
-                            <div className="absolute top-2 right-2 flex gap-2">
-                                <StatusBadge
-                                    value={img.status}
-                                    variation={
-                                        img.status === "APPROVED" ? "success" :
-                                            img.status === "PENDING" ? "warning" :
-                                                "danger"
-                                    }
-                                />
-                            </div>
-                        </div>
-
-                        {/* Info */}
-                        <div className="p-4 space-y-3">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-1">
-                                    <p className="font-medium truncate text-sm" title={img.guide?.title || "Unassigned"}>
-                                        {img.guide?.title || "Unassigned"}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground truncate" title={img.caption || img.alt || ""}>
-                                        {img.caption || img.alt || "No caption"}
-                                    </p>
-                                </div>
+                            <div className="absolute top-2 right-2">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                        <Button variant="secondary" size="icon" className="h-8 w-8">
                                             <MoreVertical className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -151,6 +128,20 @@ export function GalleryClient({ initialData }: GalleryProps) {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                            </div>
+                        </div>
+
+                        {/* Info */}
+                        <div className="p-4 space-y-3">
+                            <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                    <p className="font-medium truncate text-sm" title={img.guide?.title || "Unassigned"}>
+                                        {img.guide?.title || "Unassigned"}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground truncate" title={img.caption || img.alt || ""}>
+                                        {img.caption || img.alt || "No caption"}
+                                    </p>
+                                </div>
                             </div>
 
                             {/* Metadata */}

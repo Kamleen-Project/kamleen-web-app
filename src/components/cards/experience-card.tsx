@@ -33,9 +33,10 @@ export interface Experience {
 interface ExperienceCardProps {
 	experience: Experience;
 	className?: string;
+	hideLocation?: boolean;
 }
 
-export function ExperienceCard({ experience, className }: ExperienceCardProps) {
+export function ExperienceCard({ experience, className, hideLocation }: ExperienceCardProps) {
 	const rating = typeof experience.rating === "number" ? experience.rating : 0;
 	const reviews = typeof experience.reviews === "number" ? experience.reviews : 0;
 	const hasReviews = reviews > 0;
@@ -104,7 +105,7 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
 	};
 
 	return (
-		<div className={cn("flex h-full w-full min-h-[340px] flex-col", className)}>
+		<div className={cn("flex h-full w-full flex-col", className)}>
 			<Link href={`/experiences/${experience.slug}`} className="group relative block aspect-[4/3] w-full overflow-hidden rounded-lg">
 				<FallbackCover
 					src={experience.image ?? "/images/exp-placeholder.png"}
@@ -141,10 +142,12 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
 						{experience.title}
 					</Link>
 				</h3>
-				<div className="flex items-center gap-1 text-sm text-muted-foreground">
-					<MapPin className="size-4" />
-					<span>{experience.location}</span>
-				</div>
+				{!hideLocation && (
+					<div className="flex items-center gap-1 text-sm text-muted-foreground">
+						<MapPin className="size-4" />
+						<span>{experience.location}</span>
+					</div>
+				)}
 			</div>
 			<div className="mt-1 flex w-full flex-wrap items-center justify-between gap-3 text-sm">
 				<div className="flex items-center gap-1 text-amber-500">

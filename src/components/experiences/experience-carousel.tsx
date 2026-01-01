@@ -16,9 +16,10 @@ type ExperienceCarouselProps = {
 	description?: string;
 	experiences: Experience[];
 	className?: string;
+	hideLocation?: boolean;
 };
 
-export function ExperienceCarousel({ eyebrow, title, description, experiences, className }: ExperienceCarouselProps) {
+export function ExperienceCarousel({ eyebrow, title, description, experiences, className, hideLocation }: ExperienceCarouselProps) {
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const [canScrollPrev, setCanScrollPrev] = useState(false);
 	const [canScrollNext, setCanScrollNext] = useState(true);
@@ -95,7 +96,7 @@ export function ExperienceCarousel({ eyebrow, title, description, experiences, c
 						key={experience.id}
 						className="flex-none w-full snap-start sm:w-[calc(50%-12px)] md:w-[calc(25%-18px)]"
 					>
-						<ExperienceCard experience={experience} />
+						<ExperienceCard experience={experience} hideLocation={hideLocation} />
 					</div>
 				))}
 			</div>

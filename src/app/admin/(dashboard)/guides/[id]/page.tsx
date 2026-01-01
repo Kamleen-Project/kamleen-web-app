@@ -13,8 +13,8 @@ export default async function EditGuidePage({ params }: { params: Params }) {
 
     const { id } = await params;
 
-    // Fetch guide and location data in parallel
-    const [guide, countriesRaw] = await Promise.all([
+    // Fetch guide, location, and categories data in parallel
+    const [guide, countriesRaw, categories] = await Promise.all([
         getGuideAdmin(id),
         prisma.country.findMany({
             orderBy: { name: "asc" },
@@ -31,6 +31,10 @@ export default async function EditGuidePage({ params }: { params: Params }) {
                     select: { id: true, name: true, latitude: true, longitude: true },
                 },
             },
+        }),
+        prisma.experienceCategory.findMany({
+            orderBy: { name: "asc" },
+            select: { id: true, name: true },
         }),
     ]);
 
@@ -57,7 +61,7 @@ export default async function EditGuidePage({ params }: { params: Params }) {
 
     return (
         <div className="flex-1 bg-background">
-            <GuideEditor guide={serializedGuide} countries={countries} />
+            <GuideEditor guide={serializedGuide} countries={countries} categories={categories} />
         </div>
     );
 }

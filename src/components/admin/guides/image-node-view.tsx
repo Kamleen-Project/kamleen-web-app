@@ -45,7 +45,7 @@ export function ImageNodeView(props: NodeViewProps) {
     };
 
     return (
-        <NodeViewWrapper className="image-node-view relative group flex flex-col items-center my-0 not-prose">
+        <NodeViewWrapper className="image-node-view relative group/image-node flex flex-col items-center my-0 not-prose">
             <div
                 onClick={handleImageClick}
                 className={cn(
@@ -56,7 +56,7 @@ export function ImageNodeView(props: NodeViewProps) {
             >
                 {/* Settings Button - Only visible on hover and if editable */}
                 {isEditable && (
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <div className="absolute top-2 right-2 opacity-0 group-hover/image-node:opacity-100 transition-opacity z-10">
                         <Button variant="secondary" size="icon" onClick={(e) => { e.stopPropagation(); handleOpen(); }} className="h-8 w-8 shadow-sm" type="button">
                             <Settings className="h-4 w-4" />
                         </Button>
