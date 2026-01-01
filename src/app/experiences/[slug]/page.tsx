@@ -252,6 +252,7 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 						}
 						: null
 				}
+				reservationStatus={isComingSoon ? "COMING_SOON" : isClosed ? "CLOSED" : "OPEN"}
 			/>
 
 			<Container className="mt-8">
@@ -334,8 +335,8 @@ export default async function ExperiencePage({ params }: { params: Promise<{ slu
 					</section>
 
 					<section className="rounded-2xl border border-border/60 bg-background/80 p-8 shadow-sm">
-						<div className="flex flex-col items-start gap-6 text-center sm:flex-row sm:items-start sm:gap-8 sm:text-left">
-							<div className="relative flex h-24 w-24 items-start justify-center overflow-hidden rounded-full border border-border/60 bg-muted shrink-0 mt-8">
+						<div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:gap-8 sm:text-left">
+							<div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-muted shrink-0 mt-8">
 								{organizerImage ? (
 									<Image src={organizerImage} alt={`${experience.organizer.name} portrait`} fill sizes="96px" className="object-cover" />
 								) : (

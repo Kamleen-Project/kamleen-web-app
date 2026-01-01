@@ -89,6 +89,9 @@ export default async function ExperiencePreviewPage({ params }: { params: Promis
 				triggerId="experience-basic-info"
 				ctaTargetId="experience-reserve-button"
 				experienceId={experience.id}
+				reservationStatus={
+					experience.reservationStatus === "COMING_SOON" ? "COMING_SOON" : experience.reservationStatus === "CLOSED" ? "CLOSED" : "OPEN"
+				}
 			/>
 
 			<Container className="mt-8">
